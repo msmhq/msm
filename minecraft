@@ -31,11 +31,17 @@ now() {
 	date +%s
 }
 
+# This function is used to quite the stdout of another function
+# like this: quite $(other_func)
+quite() {
+    return $(true)
+}
+
 as_user() {
-	if [ $(whoami) == $USER ] ; then
+	if [ $(whoami) == $SERVER_USER ] ; then
 		bash -c "$1"
 	else
-		su - $USER -c "$1"
+		su - $SERVER_USER -c "$1"
 	fi
 }
 
@@ -55,7 +61,10 @@ log_line_get_time() {
 # $2: A UNIX timestamp (seconds since 1970) which the $1 line must be after
 # returns: When the line is found
 log_wait_for_line() {
-	regex="^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[.*\] ${1}"
+    # Make sure there is a server log to check
+    as_user "touch $SERVER_LOG"
+
+	regex="^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\] ${1}"
 
 	while read LINE
 	do
@@ -65,6 +74,7 @@ log_wait_for_line() {
 		if [[ $time -ge $2 && $LINE =~ $regex ]]
 		then
 			echo $LINE
+			break
 		fi
 	done < <(tail --follow --lines=100 --sleep-interval=0.1 $SERVER_LOG)
 }
@@ -75,9 +85,9 @@ log_wait_for_line() {
 server_is_running() {
 	if ps ax | grep -v grep | grep "$SCREEN_NAME $INVOCATION" > /dev/null
 	then
-		return true
+		return $(true)
 	else
-		return false
+		return $(false)
 	fi
 }
 
@@ -89,7 +99,7 @@ server_pid() {
 server_wait_for_stop() {
 	pid=$(server_pid)
 
-	while ps -p $(server_pid) > /dev/null
+	while ps -p $pid > /dev/null
 	do
 		sleep 0.1
 	done
@@ -120,9 +130,9 @@ worlds_get() {
 			WORLDNAME[$a]=$NAME
 			if [ -e ${WORLD_STORAGE_PATH}/$NAME/ramdisk ]
 			then
-				WORLDRAM[$a]=true
+				WORLDRAM[$a]=0
 			else
-				WORLDRAM[$a]=false
+				WORLDRAM[$a]=1
 			fi
 			a=$a+1
 		fi
@@ -191,7 +201,7 @@ worlds_ensure_links() {
 }
 
 world_to_ram() {
-	as_user "rsync -rt --exclude 'ramdisk' ${WORLD_STORAGE_PATH}/$1/ ${RAMDISK_PATH}/$1"
+	as_user "mkdir -p ${RAMDISK_PATH}/$1 && rsync -rt --exclude 'ramdisk' ${WORLD_STORAGE_PATH}/$1/ ${RAMDISK_PATH}/$1"
 }
 
 worlds_to_ram() {
@@ -248,10 +258,10 @@ world_toggle_ramdisk_state() {
 		rm ${RAMDISK_PATH}/$1
 		echo "Removed the RAM flag from \"$1\", and deleted it from RAM."
 	else
-		touch ${WORLD_STORAGE_PATH}/$1/ramdisk
+		as_user "touch ${WORLD_STORAGE_PATH}/$1/ramdisk"
 		echo "Added the RAM flag to \"$1\"."
 		printf "Copying world to RAM... "
-		$(world_to_ram "$1")
+		quite $(world_to_ram "$1")
 		echo "Done."
 	fi
 	echo "Changes will only take effect after server is restarted."	
@@ -271,8 +281,9 @@ server_start() {
 		time=$(now)
 
 		printf "Starting server... "
+		cd $SERVER_PATH
 		as_user "cd $SERVER_PATH && screen -dmS $SCREEN_NAME $INVOCATION"
-		$(log_wait_for_line "$CONFIRMATIONS_START" "$time")
+		quite $(log_wait_for_line "$CONFIRMATIONS_START" "$time")
 		echo "Done."
 	fi
 }
@@ -282,7 +293,7 @@ server_saveall() {
 	then
 		# Send the "save-all" command and wait for it to finish
 		printf "Forcing save... "
-		$(server_eval_and_wait "save-all" "$CONFIRMATIONS_SAVE_ALL")
+		quite $(server_eval_and_wait "save-all" "$CONFIRMATIONS_SAVE_ALL")
 		echo "Done."
 	else
 		echo "$JAR was not running. Not forcing save."
@@ -294,7 +305,7 @@ server_saveoff() {
 	then
 		# Send the "save-off" command and wait for it to finish
 		printf "Disabling level saving... "
-		$(server_eval_and_wait "save-off" "$CONFIRMATIONS_SAVE_OFF")
+		quite $(server_eval_and_wait "save-off" "$CONFIRMATIONS_SAVE_OFF")
 		echo "Done."
 
 		# Also save all
@@ -311,8 +322,8 @@ server_saveon() {
 	if server_is_running
 	then
 		# Send the "save-on" command and wait for it to finish
-		printf "Enabling level saving..."
-		$(server_eval_and_wait "save-on" "$CONFIRMATIONS_SAVE_ON")
+		printf "Enabling level saving... "
+		quite $(server_eval_and_wait "save-on" "$CONFIRMATIONS_SAVE_ON")
 		echo "Done."
 	else
 		echo "$JAR was not running. Not resuming saves."
@@ -410,17 +421,17 @@ backup_server() {
 	path=${COMPLETE_BACKUP_PATH}/$(date "+%Y-%m-%d-%H-%M-%S").zip
 	as_user "mkdir -p $COMPLETE_BACKUP_PATH"
 
-	zip_flags="rq"
+	zip_flags="-rq"
 
 	# Add the "y" flag if symbolic links should not be followed
-	if [ $COMPLETE_BACKUP_FOLLOW_SYMLINKS -eq $FALSE ]
+	if [ "$COMPLETE_BACKUP_FOLLOW_SYMLINKS" != "true" ]
 	then
 		zip_flags="${zip_flags}y"
 	fi
 	
 	# Zip up the server directory
 	printf "Backing up the entire server directory... "
-	as_user "cd ${SERVER_PATH} && zip -${zip_flags} $path $SERVER_PATH"
+	as_user "mkdir -p ${COMPLETE_BACKUP_PATH} && cd ${SERVER_PATH} && zip ${zip_flags} $path ."
 	echo "Done."
 }
 
@@ -433,7 +444,7 @@ backup_worlds() {
 
 		dir="${WORLD_SNAPSHOT_PATH}/${WORLDNAME[$INDEX]}"
 		file_name="$(date "+%Y-%m-%d-%H-%M-%S").zip"
-		as_user "mkdir -p ${dir} && cd ${dir} && zip -rq ${dir}/${file_name} ./*"
+		as_user "mkdir -p ${dir} && cd ${WORLD_STORAGE_PATH}/${WORLDNAME[$INDEX]} && zip -rq ${dir}/${file_name} ."
 
 		echo "Done."
 	done
@@ -460,11 +471,21 @@ log_roll() {
 	# Moves and Gzips the logfile, a big log file slows down the
 	# server A LOT (what was notch thinking?)
 
-	as_user "mkdir -p $LOG_PATH"
-	path=${LOG_ARCHIVE_PATH}/${SERVER_NAME}-$(date +%FT%T).log
+	path=${LOG_ARCHIVE_PATH}/${SERVER_NAME}-$(date +%F-%H-%M-%S).log
 
 	printf "Rolling server logs... "
-	as_user "mv $SERVER_LOG $path && gzip $path"
+	as_user "mkdir -p $LOG_ARCHIVE_PATH && cp $SERVER_LOG $path && gzip $path"
+	
+	if [ $? -eq 0 ]
+	then
+	    as_user "cp /dev/null $SERVER_LOG && echo \"Previous logs rolled to $path\" > $SERVER_LOG"
+	else
+	    echo "Failed to rotate logs to $path.gz"
+	fi
+	
+	# Make sure to create a new log file, to avoid possible confusion
+	as_user "touch $SERVER_LOG"
+	
 	echo "Done."
 }
 
@@ -485,9 +506,11 @@ case "$1" in
 			
 			echo "Issued the warning \"${MESSAGE_SERVER_STOP_WARNING}\" to players."
 			echo "Shutting down in ${CONFIG_SERVER_STOP_DELAY} seconds..."
+			
+			server_stop
+		else
+		    echo "$JAR was not running."
 		fi
-
-		server_stop
 		;;
 	restart)
 		if server_is_running
@@ -496,9 +519,11 @@ case "$1" in
 
 			echo "Issued the warning \"${MESSAGE_SERVER_RESTART_WARNING}\" to players."
 			echo "Restarting in ${CONFIG_SERVER_RESTART_DELAY} seconds..."
+			
+			server_restart
+		else
+		    echo "$JAR was not running. Cannot restart a stopped server. Try \"start\" instead."
 		fi
-
-		server_restart
 		;;
 	backup)
 		# Backs up worlds
@@ -528,6 +553,7 @@ case "$1" in
 
 			server_saveon
 			server_eval "say ${MESSAGE_SERVER_COMPLETE_BACKUP_FINISHED}"
+		fi
 		;;
 	update)
 		echo "Not supported yet."
@@ -571,9 +597,10 @@ case "$1" in
 		fi
 		;;
 	last)
+	    echo "Not yet supported."
 		# greps for recently logged in users
-		echo Recently logged in users:
-		cat $SERVER_LOG | awk '/entity|conn/ {sub(/lost/,"disconnected");print $1,$2,$4,$5}'
+		#echo Recently logged in users:
+		#cat $SERVER_LOG | awk '/entity|conn/ {sub(/lost/,"disconnected");print $1,$2,$4,$5}'
 		;;
 	status)
 		# Shows server status
@@ -591,7 +618,7 @@ case "$1" in
 		worlds_ensure_links
 		;;
 	ramdisk)
-		change_ramdisk_state $2
+		world_toggle_ramdisk_state $2
 		;;
 	worlds)
 		worlds_get
