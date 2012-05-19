@@ -483,9 +483,6 @@ log_roll() {
 	    echo "Failed to rotate logs to $path.gz"
 	fi
 	
-	# Make sure to create a new log file, to avoid possible confusion
-	as_user "touch $SERVER_LOG"
-	
 	echo "Done."
 }
 
