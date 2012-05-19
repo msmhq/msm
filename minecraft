@@ -330,22 +330,18 @@ server_saveon() {
 }
 
 server_stop() {
-	if server_is_running
-	then
-		sleep ${CONFIG_SERVER_STOP_DELAY}
-
-		server_saveall
-		
-		printf "Stopping the server... "
-		server_eval "stop"
-
-		server_wait_for_stop
+    if server_is_running
+    then
+        server_saveall
+        
+        printf "Stopping the server... "
+        server_eval "stop"
+        
+        server_wait_for_stop
 		echo "Done."
 	else
-		echo "$JAR was not running."
+	    echo "$JAR was not running."
 	fi
-
-	worlds_to_disk
 }
 
 server_restart() {
@@ -498,12 +494,18 @@ case "$1" in
 
 		if server_is_running
 		then
-			server_eval "say ${MESSAGE_SERVER_STOP_WARNING}"
+		    if [[ $2 != "now" ]]
+		    then
+			    server_eval "say ${MESSAGE_SERVER_STOP_WARNING}"
+			    
+			    echo "Issued the warning \"${MESSAGE_SERVER_STOP_WARNING}\" to players."
+			    echo "Shutting down in ${CONFIG_SERVER_STOP_DELAY} seconds..."
 			
-			echo "Issued the warning \"${MESSAGE_SERVER_STOP_WARNING}\" to players."
-			echo "Shutting down in ${CONFIG_SERVER_STOP_DELAY} seconds..."
+			    sleep ${CONFIG_SERVER_STOP_DELAY}
+			fi
 			
 			server_stop
+			worlds_to_disk
 		else
 		    echo "$JAR was not running."
 		fi
@@ -511,10 +513,15 @@ case "$1" in
 	restart)
 		if server_is_running
 		then
-			server_eval "say ${MESSAGE_SERVER_RESTART_WARNING}"
-
-			echo "Issued the warning \"${MESSAGE_SERVER_RESTART_WARNING}\" to players."
-			echo "Restarting in ${CONFIG_SERVER_RESTART_DELAY} seconds..."
+		    if [[ $2 != "now" ]]
+		    then
+			    server_eval "say ${MESSAGE_SERVER_RESTART_WARNING}"
+                
+			    echo "Issued the warning \"${MESSAGE_SERVER_RESTART_WARNING}\" to players."
+			    echo "Restarting in ${CONFIG_SERVER_RESTART_DELAY} seconds..."
+			    
+			    sleep ${CONFIG_SERVER_RESTART_DELAY}
+			fi
 			
 			server_restart
 		else
@@ -577,20 +584,7 @@ case "$1" in
 		server_eval_and_wait "list" "Connected players:"
 		;;
 	log-roll)
-		if server_is_running
-		then
-			server_eval "say ${MESSAGE_SERVER_LOG_ROLL_RESTART_WARNING}"
-			echo "Issued the warning \"${MESSAGE_SERVER_LOG_ROLL_RESTART_WARNING}\" to players."
-			echo "Restarting to roll logs in ${CONFIG_SERVER_LOG_ROLL_RESTART_DELAY} seconds..."
-
-			sleep $CONFIG_SERVER_LOG_ROLL_RESTART_DELAY
-
-			server_stop
-			log_roll
-			server_start
-		else
-			log_roll
-		fi
+		log_roll
 		;;
 	last)
 	    echo "Not yet supported."
@@ -638,24 +632,26 @@ case "$1" in
 		echo "Usage: /etc/init.d/minecraft command"
 		echo 
 		echo "start - Starts the server"
-		echo "stop - stops the server"
-		echo "restart - restarts the server"
+		echo "stop - stops the server gracefully, after warning players"
+		echo "stop now - stops the server gracefully, right now!"
+		echo "restart - restarts the server gracefully, after warning players"
+		echo "restart now - restarts the server gracefully, right now!"
 		echo "console - opens the screen process (Press Ctr+A then D to exit)"
-		echo "backup - backups the worlds defined in the script"
+		echo "backup - backs up worlds in \"world storage\""
 		echo "complete-backup - backups the entire server folder"
-		echo "update - fetches the latest version of minecraft.jar server and Bukkit"
 		echo "log-roll - Moves and gzips the logfile"
-		echo "to-disk - copies the worlds from the ramdisk to worldstorage"
+		echo "to-disk - copies any worlds in RAM to disk"
 		echo "connected - lists connected users"
 		echo "status - Shows server status"
-		echo "version - returs Bukkit version"
 		echo "links - creates nessesary symlinks"
-		echo "last - shows recently connected users"
 		echo "worlds - shows a list of available worlds"
 		echo "ramdisk WORLD - toggles ramdisk configuration for WORLD"
+		echo "update - Not yet supported"
+		echo "version - Not yet supported"
+		echo "last - Not yet supported"
 		;;
 	*)
-		echo "No such command see /etc/init.d/minecraft help"
+		echo "No such command see $0 help"
 		exit 1
 		;;
 esac
