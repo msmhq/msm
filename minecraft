@@ -629,7 +629,7 @@ case "$1" in
 		as_user "screen -r ${SCREEN_NAME}"
 		;;
 	help)
-		echo "Usage: /etc/init.d/minecraft command"
+		echo "Usage: $0 command"
 		echo 
 		echo "start - Starts the server"
 		echo "stop - stops the server gracefully, after warning players"
