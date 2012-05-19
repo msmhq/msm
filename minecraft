@@ -41,7 +41,7 @@ as_user() {
 	if [ $(whoami) == $SERVER_USER ] ; then
 		bash -c "$1"
 	else
-		su - $SERVER_USER -c "$1"
+		su - $SERVER_USER -s /bin/bash -c "$1"
 	fi
 }
 
@@ -53,7 +53,7 @@ as_user() {
 # returns: Time in seconds since 1970-01-01 00:00:00 UTC
 log_line_get_time() {
 	time_string=$(echo $1 | awk '{print $1 " " $2}')
-	date -d "$time_string" "+%s"
+	date -d "$time_string" "+%s" 2> /dev/null
 }
 
 # Watches the log
@@ -76,7 +76,7 @@ log_wait_for_line() {
 			echo $LINE
 			break
 		fi
-	done < <(tail --follow --lines=100 --sleep-interval=0.1 $SERVER_LOG)
+	done < <(as_user "tail --follow --lines=100 --sleep-interval=0.1 $SERVER_LOG")
 }
 
 
@@ -130,9 +130,9 @@ worlds_get() {
 			WORLDNAME[$a]=$NAME
 			if [ -e ${WORLD_STORAGE_PATH}/$NAME/ramdisk ]
 			then
-				WORLDRAM[$a]=0
+				WORLDRAM[$a]=true
 			else
-				WORLDRAM[$a]=1
+				WORLDRAM[$a]=false
 			fi
 			a=$a+1
 		fi
@@ -281,7 +281,6 @@ server_start() {
 		time=$(now)
 
 		printf "Starting server... "
-		cd $SERVER_PATH
 		as_user "cd $SERVER_PATH && screen -dmS $SCREEN_NAME $INVOCATION"
 		quite $(log_wait_for_line "$CONFIRMATIONS_START" "$time")
 		echo "Done."
