@@ -254,8 +254,8 @@ world_toggle_ramdisk_state() {
 	
 	if [ -e ${WORLD_STORAGE_PATH}/$1/ramdisk ]
 	then
-		rm ${WORLD_STORAGE_PATH}/$1/ramdisk
-		rm ${RAMDISK_PATH}/$1
+		as_user "rm ${WORLD_STORAGE_PATH}/$1/ramdisk"
+		as_user "rm -r ${RAMDISK_PATH}/$1"
 		echo "Removed the RAM flag from \"$1\", and deleted it from RAM."
 	else
 		as_user "touch ${WORLD_STORAGE_PATH}/$1/ramdisk"
