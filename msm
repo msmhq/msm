@@ -12,15 +12,20 @@
 # Description:    
 ### END INIT INFO
 
+
+# See http://www.debian.org/doc/debian-policy/ch-opersys.html#s-sysvinit for
+# more information on debain init.d scripts, which may help you understand
+# this script.
+
+
 source "msm.config"
 
 WHITELIST="white-list.txt"
 BANNED_IPS="banned-ips.txt"
 BANNED_PLAYERS="banned-players.txt"
 
-# See http://www.debian.org/doc/debian-policy/ch-opersys.html#s-sysvinit for
-# more information on debain init.d scripts, which may help you understand
-# this script.
+JAR_REMOTE_TARGET="target.txt"
+
 
 ### Utility Functions
 
@@ -37,19 +42,39 @@ manager_create_server() {
     local regex="[a-zA-Z0-9\-_]+"
     
     if [[ $1 =~ $regex ]]; then
-        if [[ -e ${SERVER_STORAGE_PATH}/$1 ]]; then
+        if [[ -e $SERVER_STORAGE_PATH/$1 ]]; then
             echo "A server with that name already exists."
-            exit 1
+            exit 2
         else
             printf "Creating server directory... "
-            as_user "mkdir -p ${SERVER_STORAGE_PATH}/$1"
+            as_user "mkdir -p $SERVER_STORAGE_PATH/$1"
             as_user "touch $SERVER_STORAGE_PATH/$1/$WHITELIST"
             as_user "touch $SERVER_STORAGE_PATH/$1/$BANNED_IPS"
             as_user "touch $SERVER_STORAGE_PATH/$1/$BANNED_PLAYERS"
             echo "Done."
         fi
     else
-        echo -e "Invalid name: may only contain letters, numbers, a dash or an underscore."
+        echo "Invalid name: may only contain letters, numbers, a dash or an underscore."
+        exit 1
+    fi
+}
+
+manager_jars_remote_create() {
+    local regex="[a-zA-Z0-9\-_]+"
+    
+    if [[ $1 =~ $regex ]]; then
+        if [[ -e $JAR_STORAGE_PATH/$1 ]]; then
+            echo "A remote with that name already exists."
+            exit 2
+        else
+            printf "Create a remote jar group... "
+            as_user "mkdir -p $JAR_STORAGE_PATH/$1"
+            as_user "echo \"$2\" > $JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET"
+            echo "Done."
+        fi
+    else
+        echo "Invalid name: may only contain letters, numbers, a dash or an underscore."
+        exit 1
     fi
 }
 
@@ -69,7 +94,6 @@ case "$1" in
     create)
         # Create a new server
         manager_create_server $2
-        
         ;;
     delete)
         # Delete an existing server, with confirmation
@@ -83,6 +107,7 @@ case "$1" in
             remote)
                 case "$3" in
                     create)
+                        manager_jars_remote_create $4 $5
                         ;;
                     delete)
                         ;;
