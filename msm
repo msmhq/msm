@@ -12,6 +12,8 @@
 # Description:    
 ### END INIT INFO
 
+source "msm.config"
+
 # See http://www.debian.org/doc/debian-policy/ch-opersys.html#s-sysvinit for
 # more information on debain init.d scripts, which may help you understand
 # this script.
