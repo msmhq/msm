@@ -109,7 +109,7 @@ case "$1" in
         echo -e "  restart \t\t\t\t\tRestarts all active servers"
         ;;
     *)
-        # TODO: Check firt if $1 is an existing server name
+        # TODO: Check first if $1 is an existing server name
         
         case "$2" in
             start)
