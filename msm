@@ -50,10 +50,13 @@ case "$1" in
                         ;;
                     getlatest)
                         ;;
+                esac
                 ;;
             "")
                 # Just the "jars" command
                 ;;
+        esac
+        ;;
     help)
         echo -e "Usage: $0 command:"
         echo -e
@@ -128,17 +131,12 @@ case "$1" in
                 ;;
             status)
                 ;;
-            whitelist)
-            wl)
+            whitelist|wl)
                 ;;
-            blacklist)
-            bl)
                 ;;
-            operator)
-            op)
+            operator|op)
                 ;;
-            gamemode)
-            gm)
+            gamemode|gm)
                 ;;
             kick)
                 ;;
@@ -154,6 +152,7 @@ case "$1" in
                 ;;
             cmdlog)
                 ;;
+        esac
         ;;
 esac
 
