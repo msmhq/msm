@@ -133,6 +133,7 @@ case "$1" in
                 ;;
             whitelist|wl)
                 ;;
+            blacklist|bl)
                 ;;
             operator|op)
                 ;;
