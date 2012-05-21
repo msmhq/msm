@@ -1,15 +1,15 @@
 #!/bin/bash
 
 ### BEGIN INIT INFO
-# Provides:   msm
+# Provides:	  msm
 # Required-Start: $local_fs $remote_fs
 # Required-Stop:  $local_fs $remote_fs
-# Should-Start:   $network
-# Should-Stop:    $network
+# Should-Start:	  $network
+# Should-Stop:	  $network
 # Default-Start:  2 3 4 5
-# Default-Stop:   0 1 6
-# Short-Description:    
-# Description:    
+# Default-Stop:	  0 1 6
+# Short-Description:	
+# Description:	  
 ### END INIT INFO
 
 
@@ -25,6 +25,7 @@ BANNED_IPS="banned-ips.txt"
 BANNED_PLAYERS="banned-players.txt"
 
 JAR_REMOTE_TARGET="target.txt"
+JAR_DOWNLOAD_DIR="downloads"
 
 
 ### Utility Functions
@@ -38,190 +39,304 @@ as_user() {
 	fi
 }
 
+as_user_stderr() {
+	as_user "$1" 2>&1 1>/dev/null
+}
+
+is_valid_name() {
+	local regex="^[a-zA-Z0-9\_\-]+$"
+	
+	if [[ $1 =~ $regex ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+get_latest_file() {
+	local best_time=0
+	local best_file=""
+	
+	for file in $1/*; do
+		# Remove the path, leaving just the file name
+		local name=$(basename $file)
+		
+		# Get the time in seconds since 1970 from file name
+		local seconds=$(date -d "${name:0:10}" "+%s" 2> /dev/null)
+		
+		# If that is newer than the current best, override variables
+		if [[ $seconds > $best_time ]]; then
+			best_time=$seconds
+			best_file=$file
+		fi
+	done
+	
+	echo $best_file
+}
+
+
+### Manager Functions
+
 manager_create_server() {
-    local regex="[a-zA-Z0-9\-_]+"
-    
-    if [[ $1 =~ $regex ]]; then
-        if [[ -e $SERVER_STORAGE_PATH/$1 ]]; then
-            echo "A server with that name already exists."
-            exit 2
-        else
-            printf "Creating server directory... "
-            as_user "mkdir -p $SERVER_STORAGE_PATH/$1"
-            as_user "touch $SERVER_STORAGE_PATH/$1/$WHITELIST"
-            as_user "touch $SERVER_STORAGE_PATH/$1/$BANNED_IPS"
-            as_user "touch $SERVER_STORAGE_PATH/$1/$BANNED_PLAYERS"
-            echo "Done."
-        fi
-    else
-        echo "Invalid name: may only contain letters, numbers, a dash or an underscore."
-        exit 1
-    fi
+	if is_valid_name $1; then
+		if [[ -e $SERVER_STORAGE_PATH/$1 ]]; then
+			echo "A server with that name already exists."
+			exit 2
+		else
+			printf "Creating server directory... "
+			as_user "mkdir -p $SERVER_STORAGE_PATH/$1"
+			as_user "touch $SERVER_STORAGE_PATH/$1/$WHITELIST"
+			as_user "touch $SERVER_STORAGE_PATH/$1/$BANNED_IPS"
+			as_user "touch $SERVER_STORAGE_PATH/$1/$BANNED_PLAYERS"
+			echo "Done."
+		fi
+	else
+		echo "Invalid name: may only contain letters, numbers, a dash or an underscore."
+		exit 1
+	fi
 }
 
 manager_jars_remote_create() {
-    local regex="[a-zA-Z0-9\-_]+"
-    
-    if [[ $1 =~ $regex ]]; then
-        if [[ -e $JAR_STORAGE_PATH/$1 ]]; then
-            echo "A remote with that name already exists."
-            exit 2
-        else
-            printf "Create a remote jar group... "
-            as_user "mkdir -p $JAR_STORAGE_PATH/$1"
-            as_user "echo \"$2\" > $JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET"
-            echo "Done."
-        fi
-    else
-        echo "Invalid name: may only contain letters, numbers, a dash or an underscore."
-        exit 1
-    fi
+	if is_valid_name $1; then
+		if [[ -e $JAR_STORAGE_PATH/$1 ]]; then
+			echo "A remote with that name already exists."
+			exit 2
+		else
+			printf "Create a remote jar group... "
+			
+			local error=$(as_user_stderr "mkdir -p $JAR_STORAGE_PATH/$1")
+			if [[ $error != "" ]]; then
+				echo "Failed."
+				echo "Reason: $error"
+				exit 1
+			fi
+			
+			error=$(as_user "echo \"$2\" > $JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET")
+			if [[ $error != "" ]]; then
+				echo "Failed."
+				echo "Reason: $error"
+				exit 1
+			fi
+			
+			echo "Done."
+		fi
+	else
+		echo "Invalid name: may only contain letters, numbers, a dash or an underscore."
+		exit 1
+	fi
+}
+
+manager_jars_remote_getlatest() {
+	if is_valid_name "$1"; then
+		if [[ -e $JAR_STORAGE_PATH/$1 ]]; then
+			if [[ -e $JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET ]]; then
+				printf "Downloading latest version... "
+				
+				# Try and make 
+				local error=$(as_user_stderr "mkdir -p $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR")
+				if [[ $error != "" ]]; then
+					echo "Failed."
+					echo "Reason: $error"
+					exit 1
+				fi
+				
+				as_user "wget --quiet --input-file=$JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET --directory-prefix=$JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR --no-check-certificate"
+				echo "Done."
+				
+				local num_files=$(as_user "ls -1 $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR | wc -l")
+				
+				if [[ $num_files == 1 ]]; then
+					# There was 1 file downloaded
+					
+					local file_name="$(ls -1 $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR)"
+					local new_name="$(date +%F)-$file_name"
+					local most_recent_jar=$(get_latest_file $JAR_STORAGE_PATH/$1)
+					
+					if [[ ! -e $most_recent_jar ]] || ! diff $most_recent_jar $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR/$file_name; then
+						# There is not a previous version to do a comparison against, or
+						# The previous version is different:
+						# Add it to the group
+						
+						[[ -e $most_recent_jar ]]
+						local was_previous=$?
+						
+						as_user "mv $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR/$file_name $JAR_STORAGE_PATH/$1/$new_name"
+						
+						if [[ $was_previous == 0 ]]; then
+							echo "Downloaded version was different to previous latest. Saved as \"$1/$new_name\"."
+						else
+							echo "Saved as \"$1/$new_name\"."
+						fi
+					else
+						echo "Existing version \"$1/$new_name\" was already up to date."
+					fi
+					
+				elif [[ $num_files == 0 ]]; then
+					# No file was downloaded
+					echo "Failed. No files were downloaded."
+				else
+					# Multiple files were
+					echo "Error. URL downloads multiple files."
+				fi
+				
+				# Clean up the temp download folder
+				as_user "rm -r $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR"
+			else
+				echo "Target URL not found."
+			fi
+		else
+			echo "No remote with that name."
+		fi
+	else
+		echo "No remote with that name."
+	fi
 }
 
 
 ### Script Options
 
 case "$1" in
-    start)
-        # Required start option, for debian init.d scripts
-        ;;
-    stop)
-        # Required stop option, for debian init.d scripts
-        ;;
-    restart)
-        # Required restart option, for debian init.d scripts
-        ;;
-    create)
-        # Create a new server
-        manager_create_server $2
-        ;;
-    delete)
-        # Delete an existing server, with confirmation
-        ;;
-    rename)
-        # Rename an existing server
-        ;;
-    jars)
-        # Jar commands
-        case "$2" in
-            remote)
-                case "$3" in
-                    create)
-                        manager_jars_remote_create $4 $5
-                        ;;
-                    delete)
-                        ;;
-                    rename)
-                        ;;
-                    change)
-                        ;;
-                    getlatest)
-                        ;;
-                esac
-                ;;
-            "")
-                # Just the "jars" command
-                ;;
-        esac
-        ;;
-    help)
-        echo -e "Usage: $0 command:"
-        echo -e
-        echo -e "--Setup Commands------------------------------------------------"
-        echo -e "  create <name> \t\t\t\tCreates a new Minecraft server"
-        echo -e "  delete <name> \t\t\t\tDeletes an existing Minecraft server"
-        echo -e "  rename <name> <new-name> \t\t\tRenames an existing Minecraft server"
-        echo -e
-        echo -e "--Server Mangement Commands-------------------------------------"
-        echo -e "  <server> start \t\t\t\tStarts a server"
-        echo -e "  <server> stop [now] \t\t\t\tStops a server after warning players, or right now"
-        echo -e "  <server> restart [now] \t\t\tRestarts a server after warning players, or right now"
-        echo -e "  <server> worlds \t\t\t\tLists the worlds a server has"
-        echo -e "  <server> worlds load \t\t\t\tCreates links to wolrds in storage for a server"
-        echo -e "  <server> worlds todisk \t\t\tSynchronises any \"in RAM\" worlds to disk a server has"
-        echo -e "  <server> worlds toram \t\t\tSynchronises any RAM enabled worlds to RAM a server has"
-        echo -e "  <server> worlds backup \t\t\tMakes a backup of all worlds a server has"
-        echo -e "  <server> worlds ram <world> \t\t\tToggles a world's \"in RAM\" status"
-        echo -e "  <server> backup \t\t\t\tMakes a backup of an entire server directory"
-        echo -e "  <server> logroll \t\t\t\tMove a server log to a gziped archive, to reduce lag"
-        echo -e "  <server> connected \t\t\t\tList a servers connected players"
-        echo -e "  <server> status \t\t\t\tShow the running/stopped status of a server"
-        echo -e
-        echo -e "--Server Pass Through Commands----------------------------------"
-        echo -e "  <server> wl on|off <player> \t\t\tEnabled/disable server whitelist check"
-        echo -e "  <server> wl add|remove <player> \t\tAdd/remove a player to/from a server's whitelist"
-        echo -e "  <server> wl \t\t\t\t\tList the players whitelisted for a server"
-        echo -e "  <server> bl player add|remove <player> \tBan/pardon a player from/for a server"
-        echo -e "  <server> bl ip add|remove <ip address> \tBan/pardon an IP address from/for a server"
-        echo -e "  <server> bl \t\t\t\t\tLists the banned players and IP address for a server"
-        echo -e "  <server> op add|remove <player> \t\tAdd/remove operator status for a player on a server"
-        echo -e "  <server> gm survival|creative <player> \tChange the game mode for a player on a server"
-        echo -e "  <server> kick <player> \t\t\tForcibly disconnect a player from a server"
-        echo -e "  <server> say <message> \t\t\tBroadcast a (pink) message to all players on a server"
-        echo -e "  <server> time set|add <number> \t\tSet/increment time on a server (0-24000)"
-        echo -e "  <server> toggledownfall \t\t\tToggles rain and snow on a server"
-        echo -e "  <server> save on|off \t\t\t\tEnable/disable writing world changes to file"
-        echo -e "  <server> save all \t\t\t\tForce the writing of all non-saved world changes to file"
-        echo -e "  <server> cmd <command> \t\t\tSend a command string to the server and return"
-        echo -e "  <server> cmdlog <command> \t\t\tSame as 'cmd' but shows log output afterwards (Ctrl+C to exit)"
-        echo -e
-        echo -e "--Jar Commands--------------------------------------------------"
-        echo -e "  jars \t\t\t\t\t\tList the stored jar files."
-        echo -e "  jars remote create <name> <download-url> \tCreate a new jar directory, with the \"always latest\" download URL"
-        echo -e "  jars remote delete <name> \t\t\tDelete a jar directory"
-        echo -e "  jars remote rename <name> <new-name> \t\tRename a jar directory"
-        echo -e "  jars remote change <name> <download-url> \tChange the remove download link for a jar directory"
-        echo -e "  jars remote getlatest <name> \t\t\tDownload the latest jar file"
-        echo -e
-        echo -e "--Init.d Commands-----------------------------------------------"
-        echo -e "  start \t\t\t\t\tStarts all active servers"
-        echo -e "  stop \t\t\t\t\t\tStops all running servers"
-        echo -e "  restart \t\t\t\t\tRestarts all active servers"
-        ;;
-    *)
-        # TODO: Check first if $1 is an existing server name
-        
-        case "$2" in
-            start)
-                ;;
-            stop)
-                ;;
-            restart)
-                ;;
-            worlds)
-                ;;
-            backup)
-                ;;
-            logroll)
-                ;;
-            connected)
-                ;;
-            status)
-                ;;
-            whitelist|wl)
-                ;;
-            blacklist|bl)
-                ;;
-            operator|op)
-                ;;
-            gamemode|gm)
-                ;;
-            kick)
-                ;;
-            say)
-                ;;
-            "time")
-                ;;
-            toggledownfall)
-                ;;
-            save)
-                ;;
-            cmd)
-                ;;
-            cmdlog)
-                ;;
-        esac
-        ;;
+	start)
+		# Required start option, for debian init.d scripts
+		;;
+	stop)
+		# Required stop option, for debian init.d scripts
+		;;
+	restart)
+		# Required restart option, for debian init.d scripts
+		;;
+	create)
+		# Create a new server
+		manager_create_server $2
+		;;
+	delete)
+		# Delete an existing server, with confirmation
+		;;
+	rename)
+		# Rename an existing server
+		;;
+	jars)
+		# Jar commands
+		case "$2" in
+			remote)
+				case "$3" in
+					create)
+						manager_jars_remote_create $4 $5
+						;;
+					delete)
+						;;
+					rename)
+						;;
+					change)
+						;;
+					getlatest)
+						manager_jars_remote_getlatest $4
+						;;
+				esac
+				;;
+			"")
+				# Just the "jars" command
+				;;
+		esac
+		;;
+	help)
+		echo -e "Usage: $0 command:"
+		echo -e
+		echo -e "--Setup Commands------------------------------------------------"
+		echo -e "  create <name> \t\t\t\tCreates a new Minecraft server"
+		echo -e "  delete <name> \t\t\t\tDeletes an existing Minecraft server"
+		echo -e "  rename <name> <new-name> \t\t\tRenames an existing Minecraft server"
+		echo -e
+		echo -e "--Server Mangement Commands-------------------------------------"
+		echo -e "  <server> start \t\t\t\tStarts a server"
+		echo -e "  <server> stop [now] \t\t\t\tStops a server after warning players, or right now"
+		echo -e "  <server> restart [now] \t\t\tRestarts a server after warning players, or right now"
+		echo -e "  <server> worlds \t\t\t\tLists the worlds a server has"
+		echo -e "  <server> worlds load \t\t\t\tCreates links to wolrds in storage for a server"
+		echo -e "  <server> worlds todisk \t\t\tSynchronises any \"in RAM\" worlds to disk a server has"
+		echo -e "  <server> worlds toram \t\t\tSynchronises any RAM enabled worlds to RAM a server has"
+		echo -e "  <server> worlds backup \t\t\tMakes a backup of all worlds a server has"
+		echo -e "  <server> worlds ram <world> \t\t\tToggles a world's \"in RAM\" status"
+		echo -e "  <server> backup \t\t\t\tMakes a backup of an entire server directory"
+		echo -e "  <server> logroll \t\t\t\tMove a server log to a gziped archive, to reduce lag"
+		echo -e "  <server> connected \t\t\t\tList a servers connected players"
+		echo -e "  <server> status \t\t\t\tShow the running/stopped status of a server"
+		echo -e
+		echo -e "--Server Pass Through Commands----------------------------------"
+		echo -e "  <server> wl on|off <player> \t\t\tEnabled/disable server whitelist check"
+		echo -e "  <server> wl add|remove <player> \t\tAdd/remove a player to/from a server's whitelist"
+		echo -e "  <server> wl \t\t\t\t\tList the players whitelisted for a server"
+		echo -e "  <server> bl player add|remove <player> \tBan/pardon a player from/for a server"
+		echo -e "  <server> bl ip add|remove <ip address> \tBan/pardon an IP address from/for a server"
+		echo -e "  <server> bl \t\t\t\t\tLists the banned players and IP address for a server"
+		echo -e "  <server> op add|remove <player> \t\tAdd/remove operator status for a player on a server"
+		echo -e "  <server> gm survival|creative <player> \tChange the game mode for a player on a server"
+		echo -e "  <server> kick <player> \t\t\tForcibly disconnect a player from a server"
+		echo -e "  <server> say <message> \t\t\tBroadcast a (pink) message to all players on a server"
+		echo -e "  <server> time set|add <number> \t\tSet/increment time on a server (0-24000)"
+		echo -e "  <server> toggledownfall \t\t\tToggles rain and snow on a server"
+		echo -e "  <server> save on|off \t\t\t\tEnable/disable writing world changes to file"
+		echo -e "  <server> save all \t\t\t\tForce the writing of all non-saved world changes to file"
+		echo -e "  <server> cmd <command> \t\t\tSend a command string to the server and return"
+		echo -e "  <server> cmdlog <command> \t\t\tSame as 'cmd' but shows log output afterwards (Ctrl+C to exit)"
+		echo -e
+		echo -e "--Jar Commands--------------------------------------------------"
+		echo -e "  jars \t\t\t\t\t\tList the stored jar files."
+		echo -e "  jars remote create <name> <download-url> \tCreate a new jar directory, with the \"always latest\" download URL"
+		echo -e "  jars remote delete <name> \t\t\tDelete a jar directory"
+		echo -e "  jars remote rename <name> <new-name> \t\tRename a jar directory"
+		echo -e "  jars remote change <name> <download-url> \tChange the remove download link for a jar directory"
+		echo -e "  jars remote getlatest <name> \t\t\tDownload the latest jar file"
+		echo -e
+		echo -e "--Init.d Commands-----------------------------------------------"
+		echo -e "  start \t\t\t\t\tStarts all active servers"
+		echo -e "  stop \t\t\t\t\t\tStops all running servers"
+		echo -e "  restart \t\t\t\t\tRestarts all active servers"
+		;;
+	*)
+		# TODO: Check first if $1 is an existing server name
+		
+		case "$2" in
+			start)
+				;;
+			stop)
+				;;
+			restart)
+				;;
+			worlds)
+				;;
+			backup)
+				;;
+			logroll)
+				;;
+			connected)
+				;;
+			status)
+				;;
+			whitelist|wl)
+				;;
+			blacklist|bl)
+				;;
+			operator|op)
+				;;
+			gamemode|gm)
+				;;
+			kick)
+				;;
+			say)
+				;;
+			"time")
+				;;
+			toggledownfall)
+				;;
+			save)
+				;;
+			cmd)
+				;;
+			cmdlog)
+				;;
+		esac
+		;;
 esac
 
 exit 0
