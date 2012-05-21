@@ -81,7 +81,7 @@ manager_create_server() {
 	if is_valid_name $1; then
 		if [[ -e $SERVER_STORAGE_PATH/$1 ]]; then
 			echo "A server with that name already exists."
-			exit 2
+			exit 1
 		else
 			printf "Creating server directory... "
 			as_user "mkdir -p $SERVER_STORAGE_PATH/$1"
@@ -91,7 +91,7 @@ manager_create_server() {
 			echo "Done."
 		fi
 	else
-		echo "Invalid name: may only contain letters, numbers, a dash or an underscore."
+		echo "Invalid name: A server name may only contain letters, numbers, a dash or an underscore."
 		exit 1
 	fi
 }
@@ -109,7 +109,32 @@ manager_delete_server() {
 			echo "Server was NOT deleted."
 		fi
 	else
-		echo "No server with that name."
+		echo "There is no server with the name \"$1\"."
+		exit 1
+	fi
+}
+
+manager_rename_server() {
+	if is_valid_name $1 && [[ -e $SERVER_STORAGE_PATH/$1 ]]; then
+		# If the server name is valid,
+		# and there is no other server with the name $1
+		
+		# TODO: Check that the server is not running first, exit if it is
+		
+		if is_valid_name $2; then
+			if [[ -e $SERVER_STORAGE_PATH/$2 ]]; then
+				echo "Could not be renamed, there is already a server with the name \"$2\"."
+				exit 1
+			else
+				as_user "mv $SERVER_STORAGE_PATH/$1 $SERVER_STORAGE_PATH/$2"
+				echo "Renamed server \"$1\" to \"$2\"."
+			fi
+		else
+			echo "Invalid name: The new server name may only contain letters, numbers, a dash or an underscore."
+		fi
+	else
+		echo "There is no server with the name \"$1\"."
+		exit 1
 	fi
 }
 
@@ -142,7 +167,7 @@ manager_jars_group_create() {
 			
 		fi
 	else
-		echo "Invalid name: may only contain letters, numbers, a dash or an underscore."
+		echo "Invalid name: A jar group name may only contain letters, numbers, a dash or an underscore."
 		exit 1
 	fi
 }
@@ -205,7 +230,7 @@ manager_jars_group_getlatest() {
 			echo "Target URL not found."
 		fi
 	else
-		echo "No jar group with that name."
+		echo "There is no jar group with the name \"$1\"."
 	fi
 }
 
@@ -221,7 +246,7 @@ manager_jars_group_delete() {
 			echo "Jar group was NOT deleted."
 		fi
 	else
-		echo "No jar group with that name."
+		echo "There is no jar group with the name \"$1\"."
 	fi
 }
 
@@ -257,7 +282,13 @@ case "$1" in
 		fi
 		;;
 	rename)
-		# Rename an existing server
+		if [ -z $2 ] || [ -z $3 ]; then
+			# If a server name is not provided
+			echo "Invalid command."
+		else
+			# Rename an existing server
+			manager_rename_server $2 $3
+		fi
 		;;
 	jars)
 		# Jar commands
