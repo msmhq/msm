@@ -40,7 +40,7 @@ as_user() {
 }
 
 as_user_stderr() {
-	as_user "$1" 2>&1 1>/dev/null
+	as_user "$1" > /dev/null 2>&1
 }
 
 echoerr() {
@@ -54,13 +54,13 @@ is_valid_name() {
 	if [[ "$1" =~ $valid ]]; then
 		if [[ "$1" =~ $invalid ]]; then
 			echoerr "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\" or \"jargroup\"."
-			exit 1
+			return 1
 		else
-			exit 0
+			return 0
 		fi
 	else
 		echoerr "Invalid name \"$1\": A name may only contain letters, numbers, dashes and unscores."
-		exit 1
+		return 1
 	fi
 }
 
@@ -72,8 +72,10 @@ get_latest_file() {
 		# Remove the path, leaving just the file name
 		local name=$(basename "$file")
 		
+		local date_time=$(echo $name | awk -F '-' '{print $1 "-" $2 "-" $3 " " $4 ":" $5 ":" $6}')
+		
 		# Get the time in seconds since 1970 from file name
-		local seconds=$(date -d "${name:0:10}" "+%s" 2> /dev/null)
+		local seconds=$(date -d "$date_time" "+%s" 2> /dev/null)
 		
 		# If that is newer than the current best, override variables
 		if [[ $seconds > $best_time ]]; then
@@ -99,7 +101,7 @@ server_create() {
 	if is_valid_name "$1"; then
 		if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
 			echo "A server with that name already exists."
-			exit 1
+			return 1
 		else
 			printf "Creating server directory... "
 			as_user "mkdir -p '$SERVER_STORAGE_PATH/$1'"
@@ -109,171 +111,192 @@ server_create() {
 			echo "Done."
 		fi
 	else
-		exit 1
+		return 1
 	fi
 }
 
 server_delete() {
-	if is_valid_name "$1" && [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
-		printf "Are you sure you want to delete this server and its worlds (note: backups are preserved) [y/N]: "
+	if is_valid_name "$1"; then
+		if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
+			printf "Are you sure you want to delete this server and its worlds (note: backups are preserved) [y/N]: "
 
-		read answer
-		if [[ "$answer" =~ ^y|Y|yes$ ]]; then
-			# TODO: stop the server if running first
-			as_user "rm -r '$SERVER_STORAGE_PATH/$1'"
-			echo "Server deleted."
+			read answer
+			if [[ "$answer" =~ ^y|Y|yes$ ]]; then
+				# TODO: stop the server if running first
+				as_user "rm -rf '$SERVER_STORAGE_PATH/$1'"
+				echo "Server deleted."
+			else
+				echo "Server was NOT deleted."
+			fi
 		else
-			echo "Server was NOT deleted."
+			echo "There is no server with the name \"$1\"."
+			return 1
 		fi
 	else
-		if [[ ! -e "$SERVER_STORAGE_PATH/$1" ]]; then
-			echo "There is no server with the name \"$1\"."
-		fi
-		exit 1
+		return 1
 	fi
 }
 
 server_rename() {
-	if is_valid_name "$1" && [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
-		# If the server name is valid,
-		# and there is no other server with the name $1
+	if is_valid_name "$1"; then
+		if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
+			# If the server name is valid,
+			# and there is no other server with the name $1
 		
-		# TODO: Check that the server is not running first, exit if it is
+			# TODO: Check that the server is not running first, return if it is
 		
-		if is_valid_name "$2"; then
-			if [[ -e "$SERVER_STORAGE_PATH/$2" ]]; then
-				echo "Could not be renamed, there is already a server with the name \"$2\"."
-				exit 1
+			if is_valid_name "$2"; then
+				if [[ -e "$SERVER_STORAGE_PATH/$2" ]]; then
+					echo "Could not be renamed, there is already a server with the name \"$2\"."
+					return 1
+				else
+					as_user "mv '$SERVER_STORAGE_PATH/$1' '$SERVER_STORAGE_PATH/$2'"
+					echo "Renamed server \"$1\" to \"$2\"."
+				fi
 			else
-				as_user "mv '$SERVER_STORAGE_PATH/$1' '$SERVER_STORAGE_PATH/$2'"
-				echo "Renamed server \"$1\" to \"$2\"."
+				return 1
 			fi
 		else
-			echo "Invalid name: The new server name may only contain letters, numbers, a dash or an underscore."
+			echo "There is no server with the name \"$1\"."
+			return 1
 		fi
 	else
-		if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
-			echo "There is no server with the name \"$1\"."
-		fi
-		exit 1
+		return 1
 	fi
 }
 
 
 ### Jar Group Functions
 
+jargroup_list() {
+	for group in $(ls -1 "$JAR_STORAGE_PATH"); do
+		echo "${group}:"
+		for jar in $(ls -1r $JAR_STORAGE_PATH/$group); do
+			if [[ "$jar" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}- ]]; then
+				echo "    $jar"
+			fi
+		done
+	done
+}
+
 jargroup_create() {
 	if is_valid_name "$1"; then
-		if [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
-			echo "A jar group with that name already exists."
-			exit 2
-		else
+		if [[ ! -e "$JAR_STORAGE_PATH/$1" ]]; then
 			printf "Creating jar group... "
 			
 			local error=$(as_user_stderr "mkdir -p '$JAR_STORAGE_PATH/$1'")
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
 				echo "Reason: $error"
-				exit 1
+				return 1
 			fi
 			
 			error=$(as_user "echo \"$2\" > '$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET'")
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
 				echo "Reason: $error"
-				exit 1
+				return 1
 			fi
 			
 			echo "Done."
 			
 			# Download the latest version now
 			jargroup_getlatest "$1"
-			
+		else
+			echo "A jar group with that name already exists."
+			return 1
 		fi
 	else
-		exit 1
+		return 1
 	fi
 }
 
 jargroup_getlatest() {
-	if is_valid_name "$1" && [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
-		if [[ -e "$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET" ]]; then
-			printf "Downloading latest version... "
+	if is_valid_name "$1"; then
+		if [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
+			if [[ -e "$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET" ]]; then
+				printf "Downloading latest version... "
 			
-			# Try and make 
-			local error=$(as_user_stderr "mkdir -p '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'")
-			if [[ $error != "" ]]; then
-				echo "Failed."
-				echo "Reason: $error"
-				exit 1
-			fi
-			
-			as_user "wget --quiet --input-file='$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET' --directory-prefix='$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' --no-check-certificate"
-			echo "Done."
-			
-			local num_files=$(as_user "ls -1 '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' | wc -l")
-			
-			if [[ $num_files == 1 ]]; then
-				# There was 1 file downloaded
-				
-				local file_name=$(ls -1 "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR")
-				local new_name="$(date +%F)-$file_name"
-				local most_recent_jar=$(get_latest_file "$JAR_STORAGE_PATH/$1")
-				
-				if [[ ! -e "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name"; then
-					# There is not a previous version to do a comparison against, or
-					# The previous version is different:
-					# Add it to the group
-					
-					[[ -e "$most_recent_jar" ]]
-					local was_previous=$?
-					
-					as_user "mv '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name' '$JAR_STORAGE_PATH/$1/$new_name'"
-					
-					if [[ $was_previous == 0 ]]; then
-						echo "Downloaded version was different to previous latest. Saved as \"$1/$new_name\"."
-					else
-						echo "Saved as \"$JAR_STORAGE_PATH/$1/$new_name\"."
-					fi
-				else
-					echo "Existing version \"$JAR_STORAGE_PATH/$1/$new_name\" was already up to date."
+				# Try and make 
+				local error=$(as_user_stderr "mkdir -p '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'")
+				if [[ "$error" != "" ]]; then
+					echo "Failed."
+					echo "Reason: $error"
+					return 1
 				fi
-				
-			elif [[ $num_files == 0 ]]; then
-				# No file was downloaded
-				echo "Failed. No files were downloaded."
-			else
-				# Multiple files were
-				echo "Error. URL downloads multiple files."
-			fi
 			
-			# Clean up the temp download folder
-			as_user "rm -r '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'"
+				as_user "wget --quiet --input-file='$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET' --directory-prefix='$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' --no-check-certificate"
+				echo "Done."
+			
+				local num_files=$(as_user "ls -1 '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' | wc -l")
+			
+				if [[ $num_files == 1 ]]; then
+					# There was 1 file downloaded
+				
+					local file_name=$(ls -1 "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR")
+					local new_name="$(date +%F-%H-%M-%S)-$file_name"
+					local most_recent_jar=$(get_latest_file "$JAR_STORAGE_PATH/$1")
+				
+					if [[ ! -e "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name"; then
+						# There is not a previous version to do a comparison against, or
+						# The previous version is different:
+						# Add it to the group
+					
+						[[ -e "$most_recent_jar" ]]
+						local was_previous=$?
+					
+						as_user "mv '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name' '$JAR_STORAGE_PATH/$1/$new_name'"
+					
+						if [[ $was_previous == 0 ]]; then
+							echo "Downloaded version was different to previous latest. Saved as \"$1/$new_name\"."
+						else
+							echo "Saved as \"$JAR_STORAGE_PATH/$1/$new_name\"."
+						fi
+					else
+						echo "Existing version \"$JAR_STORAGE_PATH/$1/$new_name\" was already up to date."
+					fi
+				
+				elif [[ $num_files == 0 ]]; then
+					# No file was downloaded
+					echo "Failed. No files were downloaded."
+				else
+					# Multiple files were
+					echo "Error. URL downloads multiple files."
+				fi
+			
+				# Clean up the temp download folder
+				as_user "rm -fr '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'"
+			else
+				echo "Target URL not found, use $0 jargroup seturl <download-url>"
+				return 1
+			fi
 		else
-			echo "Target URL not found."
+			echo "There is no jar group with the name \"$1\"."
+			return 1
 		fi
 	else
-		if [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
-			echo "There is no jar group with the name \"$1\"."
-		fi
+		return 1
 	fi
 }
 
 jargroup_delete() {
-	if is_valid_name "$1" && [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
-		printf "Are you sure you want to delete this jar group [y/N]: "
+	if is_valid_name "$1"; then
+		if [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
+			printf "Are you sure you want to delete this jar group [y/N]: "
 		
-		read answer
-		if [[ "$answer" =~ ^y|Y|yes$ ]]; then
-			as_user "rm -r $JAR_STORAGE_PATH/$1"
-			echo "Jar group deleted."
+			read answer
+			if [[ "$answer" =~ ^y|Y|yes$ ]]; then
+				as_user "rm -rf $JAR_STORAGE_PATH/$1"
+				echo "Jar group deleted."
+			else
+				echo "Jar group was NOT deleted."
+			fi
 		else
-			echo "Jar group was NOT deleted."
+			echo "There is no jar group with the name \"$1\"."
+			return 1
 		fi
 	else
-		if [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
-			echo "There is no jar group with the name \"$1\"."
-		fi
+		return 1
 	fi
 }
 
@@ -330,20 +353,38 @@ case "$1" in
 	jargroup)
 		case "$2" in
 			list)
+				jargroup_list
 				;;
 			create)
-				jargroup_create "$4" "$5"
+				if [ -z "$3" ] || [ -z "$4" ]; then
+					echo "Invlaid command."
+				else
+					jargroup_create "$3" "$4"
+				fi
 				;;
 			delete)
-				jargroup_delete "$4"
+				if [ -z "$3" ]; then
+					echo "Invalid command."
+				else
+					jargroup_delete "$3"
+				fi
+					
 				;;
 			rename)
 				;;
 			changetarget)
-				jargroup_settarget "$4" "$5"
+				if [ -z "$3" ] || [ -z "$4" ]; then
+					echo "Invalid command."
+				else
+					jargroup_settarget "$3" "$4"
+				fi
 				;;
 			getlatest)
-				jargroup_getlatest "$4"
+				if [ -z "$3" ]; then
+					echo "Invalid command."
+				else
+					jargroup_getlatest "$3"
+				fi
 				;;
 			*)
 				echo "Invalid command."
