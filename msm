@@ -24,7 +24,7 @@ WHITELIST="white-list.txt"
 BANNED_IPS="banned-ips.txt"
 BANNED_PLAYERS="banned-players.txt"
 
-JAR_REMOTE_TARGET="target.txt"
+JAR_GROUP_TARGET="target.txt"
 JAR_DOWNLOAD_DIR="downloads"
 
 
@@ -96,13 +96,13 @@ manager_create_server() {
 	fi
 }
 
-manager_jars_remote_create() {
+manager_jars_group_create() {
 	if is_valid_name $1; then
 		if [[ -e $JAR_STORAGE_PATH/$1 ]]; then
-			echo "A remote with that name already exists."
+			echo "A jar group with that name already exists."
 			exit 2
 		else
-			printf "Create a remote jar group... "
+			printf "Creating jar group... "
 			
 			local error=$(as_user_stderr "mkdir -p $JAR_STORAGE_PATH/$1")
 			if [[ $error != "" ]]; then
@@ -111,7 +111,7 @@ manager_jars_remote_create() {
 				exit 1
 			fi
 			
-			error=$(as_user "echo \"$2\" > $JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET")
+			error=$(as_user "echo \"$2\" > $JAR_STORAGE_PATH/$1/$JAR_GROUP_TARGET")
 			if [[ $error != "" ]]; then
 				echo "Failed."
 				echo "Reason: $error"
@@ -121,7 +121,7 @@ manager_jars_remote_create() {
 			echo "Done."
 			
 			# Download the latest version now
-			manager_jars_remote_getlatest $1
+			manager_jars_group_getlatest $1
 			
 		fi
 	else
@@ -130,9 +130,9 @@ manager_jars_remote_create() {
 	fi
 }
 
-manager_jars_remote_getlatest() {
+manager_jars_group_getlatest() {
 	if is_valid_name "$1" && [[ -e $JAR_STORAGE_PATH/$1 ]]; then
-		if [[ -e $JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET ]]; then
+		if [[ -e $JAR_STORAGE_PATH/$1/$JAR_GROUP_TARGET ]]; then
 			printf "Downloading latest version... "
 			
 			# Try and make 
@@ -143,7 +143,7 @@ manager_jars_remote_getlatest() {
 				exit 1
 			fi
 			
-			as_user "wget --quiet --input-file=$JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET --directory-prefix=$JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR --no-check-certificate"
+			as_user "wget --quiet --input-file=$JAR_STORAGE_PATH/$1/$JAR_GROUP_TARGET --directory-prefix=$JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR --no-check-certificate"
 			echo "Done."
 			
 			local num_files=$(as_user "ls -1 $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR | wc -l")
@@ -188,11 +188,11 @@ manager_jars_remote_getlatest() {
 			echo "Target URL not found."
 		fi
 	else
-		echo "No remote with that name."
+		echo "No jar group with that name."
 	fi
 }
 
-manager_jars_remote_delete() {
+manager_jars_group_delete() {
 	if is_valid_name "$1" && [[ -e $JAR_STORAGE_PATH/$1 ]]; then
 		printf "Are you sure you want to delete this jar group [y/N]: "
 		
@@ -204,7 +204,7 @@ manager_jars_remote_delete() {
 			echo "Jar group was NOT deleted."
 		fi
 	else
-		echo "No remote with that name."
+		echo "No jar group with that name."
 	fi
 }
 
@@ -234,20 +234,20 @@ case "$1" in
 	jars)
 		# Jar commands
 		case "$2" in
-			remote)
+			group)
 				case "$3" in
 					create)
-						manager_jars_remote_create $4 $5
+						manager_jars_group_create $4 $5
 						;;
 					delete)
-						manager_jars_remote_delete $4
+						manager_jars_group_delete $4
 						;;
 					rename)
 						;;
 					change)
 						;;
 					getlatest)
-						manager_jars_remote_getlatest $4
+						manager_jars_group_getlatest $4
 						;;
 				esac
 				;;
@@ -282,10 +282,10 @@ case "$1" in
 		echo -e "--Server Pass Through Commands----------------------------------"
 		echo -e "  <server> wl on|off <player> \t\t\tEnabled/disable server whitelist check"
 		echo -e "  <server> wl add|remove <player> \t\tAdd/remove a player to/from a server's whitelist"
-		echo -e "  <server> wl \t\t\t\t\tList the players whitelisted for a server"
+		echo -e "  <server> wl list \t\t\t\tList the players whitelisted for a server"
 		echo -e "  <server> bl player add|remove <player> \tBan/pardon a player from/for a server"
 		echo -e "  <server> bl ip add|remove <ip address> \tBan/pardon an IP address from/for a server"
-		echo -e "  <server> bl \t\t\t\t\tLists the banned players and IP address for a server"
+		echo -e "  <server> bl list \t\t\t\tLists the banned players and IP address for a server"
 		echo -e "  <server> op add|remove <player> \t\tAdd/remove operator status for a player on a server"
 		echo -e "  <server> gm survival|creative <player> \tChange the game mode for a player on a server"
 		echo -e "  <server> kick <player> \t\t\tForcibly disconnect a player from a server"
@@ -298,17 +298,20 @@ case "$1" in
 		echo -e "  <server> cmdlog <command> \t\t\tSame as 'cmd' but shows log output afterwards (Ctrl+C to exit)"
 		echo -e
 		echo -e "--Jar Commands--------------------------------------------------"
-		echo -e "  jars \t\t\t\t\t\tList the stored jar files."
-		echo -e "  jars remote create <name> <download-url> \tCreate a new jar directory, with the \"always latest\" download URL"
-		echo -e "  jars remote delete <name> \t\t\tDelete a jar directory"
-		echo -e "  jars remote rename <name> <new-name> \t\tRename a jar directory"
-		echo -e "  jars remote change <name> <download-url> \tChange the remove download link for a jar directory"
-		echo -e "  jars remote getlatest <name> \t\t\tDownload the latest jar file"
+		echo -e "  jar list\t\t\t\t\tList the stored jar files."
+		echo -e "  jar group create <name> <download-url> \tCreate a new jar directory, with the \"always latest\" download URL"
+		echo -e "  jar group delete <name> \t\t\tDelete a jar directory"
+		echo -e "  jar group rename <name> <new-name> \t\tRename a jar directory"
+		echo -e "  jar group change <name> <download-url> \tChange the remove download link for a jar directory"
+		echo -e "  jar group getlatest <name> \t\t\tDownload the latest jar file"
 		echo -e
-		echo -e "--Init.d Commands-----------------------------------------------"
+		echo -e "--Global Commands-----------------------------------------------"
 		echo -e "  start \t\t\t\t\tStarts all active servers"
 		echo -e "  stop \t\t\t\t\t\tStops all running servers"
 		echo -e "  restart \t\t\t\t\tRestarts all active servers"
+		;;
+	"")
+		echo "No such command see: $0 help"
 		;;
 	*)
 		# TODO: Check first if $1 is an existing server name
