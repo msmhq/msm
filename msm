@@ -119,6 +119,10 @@ manager_jars_remote_create() {
 			fi
 			
 			echo "Done."
+			
+			# Download the latest version now
+			manager_jars_remote_getlatest $1
+			
 		fi
 	else
 		echo "Invalid name: may only contain letters, numbers, a dash or an underscore."
@@ -165,10 +169,10 @@ manager_jars_remote_getlatest() {
 						if [[ $was_previous == 0 ]]; then
 							echo "Downloaded version was different to previous latest. Saved as \"$1/$new_name\"."
 						else
-							echo "Saved as \"$1/$new_name\"."
+							echo "Saved as \"$JAR_STORAGE_PATH/$1/$new_name\"."
 						fi
 					else
-						echo "Existing version \"$1/$new_name\" was already up to date."
+						echo "Existing version \"$JAR_STORAGE_PATH/$1/$new_name\" was already up to date."
 					fi
 					
 				elif [[ $num_files == 0 ]]; then
