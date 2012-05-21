@@ -131,65 +131,77 @@ manager_jars_remote_create() {
 }
 
 manager_jars_remote_getlatest() {
-	if is_valid_name "$1"; then
-		if [[ -e $JAR_STORAGE_PATH/$1 ]]; then
-			if [[ -e $JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET ]]; then
-				printf "Downloading latest version... "
-				
-				# Try and make 
-				local error=$(as_user_stderr "mkdir -p $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR")
-				if [[ $error != "" ]]; then
-					echo "Failed."
-					echo "Reason: $error"
-					exit 1
-				fi
-				
-				as_user "wget --quiet --input-file=$JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET --directory-prefix=$JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR --no-check-certificate"
-				echo "Done."
-				
-				local num_files=$(as_user "ls -1 $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR | wc -l")
-				
-				if [[ $num_files == 1 ]]; then
-					# There was 1 file downloaded
-					
-					local file_name="$(ls -1 $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR)"
-					local new_name="$(date +%F)-$file_name"
-					local most_recent_jar=$(get_latest_file $JAR_STORAGE_PATH/$1)
-					
-					if [[ ! -e $most_recent_jar ]] || ! diff $most_recent_jar $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR/$file_name; then
-						# There is not a previous version to do a comparison against, or
-						# The previous version is different:
-						# Add it to the group
-						
-						[[ -e $most_recent_jar ]]
-						local was_previous=$?
-						
-						as_user "mv $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR/$file_name $JAR_STORAGE_PATH/$1/$new_name"
-						
-						if [[ $was_previous == 0 ]]; then
-							echo "Downloaded version was different to previous latest. Saved as \"$1/$new_name\"."
-						else
-							echo "Saved as \"$JAR_STORAGE_PATH/$1/$new_name\"."
-						fi
-					else
-						echo "Existing version \"$JAR_STORAGE_PATH/$1/$new_name\" was already up to date."
-					fi
-					
-				elif [[ $num_files == 0 ]]; then
-					# No file was downloaded
-					echo "Failed. No files were downloaded."
-				else
-					# Multiple files were
-					echo "Error. URL downloads multiple files."
-				fi
-				
-				# Clean up the temp download folder
-				as_user "rm -r $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR"
-			else
-				echo "Target URL not found."
+	if is_valid_name "$1" && [[ -e $JAR_STORAGE_PATH/$1 ]]; then
+		if [[ -e $JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET ]]; then
+			printf "Downloading latest version... "
+			
+			# Try and make 
+			local error=$(as_user_stderr "mkdir -p $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR")
+			if [[ $error != "" ]]; then
+				echo "Failed."
+				echo "Reason: $error"
+				exit 1
 			fi
+			
+			as_user "wget --quiet --input-file=$JAR_STORAGE_PATH/$1/$JAR_REMOTE_TARGET --directory-prefix=$JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR --no-check-certificate"
+			echo "Done."
+			
+			local num_files=$(as_user "ls -1 $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR | wc -l")
+			
+			if [[ $num_files == 1 ]]; then
+				# There was 1 file downloaded
+				
+				local file_name="$(ls -1 $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR)"
+				local new_name="$(date +%F)-$file_name"
+				local most_recent_jar=$(get_latest_file $JAR_STORAGE_PATH/$1)
+				
+				if [[ ! -e $most_recent_jar ]] || ! diff $most_recent_jar $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR/$file_name; then
+					# There is not a previous version to do a comparison against, or
+					# The previous version is different:
+					# Add it to the group
+					
+					[[ -e $most_recent_jar ]]
+					local was_previous=$?
+					
+					as_user "mv $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR/$file_name $JAR_STORAGE_PATH/$1/$new_name"
+					
+					if [[ $was_previous == 0 ]]; then
+						echo "Downloaded version was different to previous latest. Saved as \"$1/$new_name\"."
+					else
+						echo "Saved as \"$JAR_STORAGE_PATH/$1/$new_name\"."
+					fi
+				else
+					echo "Existing version \"$JAR_STORAGE_PATH/$1/$new_name\" was already up to date."
+				fi
+				
+			elif [[ $num_files == 0 ]]; then
+				# No file was downloaded
+				echo "Failed. No files were downloaded."
+			else
+				# Multiple files were
+				echo "Error. URL downloads multiple files."
+			fi
+			
+			# Clean up the temp download folder
+			as_user "rm -r $JAR_STORAGE_PATH/$1/$JAR_DOWNLOAD_DIR"
 		else
-			echo "No remote with that name."
+			echo "Target URL not found."
+		fi
+	else
+		echo "No remote with that name."
+	fi
+}
+
+manager_jars_remote_delete() {
+	if is_valid_name "$1" && [[ -e $JAR_STORAGE_PATH/$1 ]]; then
+		printf "Are you sure you want to delete this jar group [y/N]: "
+		
+		read answer
+		if [[ $answer =~ ^y|Y|yes$ ]]; then
+			as_user "rm -r $JAR_STORAGE_PATH/$1"
+			echo "Jar group was deleted."
+		else
+			echo "Jar group was NOT deleted."
 		fi
 	else
 		echo "No remote with that name."
@@ -228,6 +240,7 @@ case "$1" in
 						manager_jars_remote_create $4 $5
 						;;
 					delete)
+						manager_jars_remote_delete $4
 						;;
 					rename)
 						;;
