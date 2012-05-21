@@ -223,7 +223,11 @@ case "$1" in
 		;;
 	create)
 		# Create a new server
-		manager_create_server $2
+		if [ -z $2 ]; then
+			echo "Invalid command."
+		else
+			manager_create_server $2
+		fi
 		;;
 	delete)
 		# Delete an existing server, with confirmation
@@ -316,46 +320,50 @@ case "$1" in
 	*)
 		# TODO: Check first if $1 is an existing server name
 		
-		case "$2" in
-			start)
-				;;
-			stop)
-				;;
-			restart)
-				;;
-			worlds)
-				;;
-			backup)
-				;;
-			logroll)
-				;;
-			connected)
-				;;
-			status)
-				;;
-			whitelist|wl)
-				;;
-			blacklist|bl)
-				;;
-			operator|op)
-				;;
-			gamemode|gm)
-				;;
-			kick)
-				;;
-			say)
-				;;
-			"time")
-				;;
-			toggledownfall)
-				;;
-			save)
-				;;
-			cmd)
-				;;
-			cmdlog)
-				;;
-		esac
+		if is_valid_name "$1" && [[ -e $SERVER_STORAGE_PATH/$1 ]]; then
+			case "$2" in
+				start)
+					;;
+				stop)
+					;;
+				restart)
+					;;
+				worlds)
+					;;
+				backup)
+					;;
+				logroll)
+					;;
+				connected)
+					;;
+				status)
+					;;
+				whitelist|wl)
+					;;
+				blacklist|bl)
+					;;
+				operator|op)
+					;;
+				gamemode|gm)
+					;;
+				kick)
+					;;
+				say)
+					;;
+				"time")
+					;;
+				toggledownfall)
+					;;
+				save)
+					;;
+				cmd)
+					;;
+				cmdlog)
+					;;
+			esac
+		else
+			echo "No server with that name."
+		fi
 		;;
 esac
 
