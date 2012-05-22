@@ -18,19 +18,27 @@
 # this script.
 
 
-source "msm.config"
+### Source the configuration file
+source "/etc/msm.conf"
 
-WHITELIST="white-list.txt"
-BANNED_IPS="banned-ips.txt"
-BANNED_PLAYERS="banned-players.txt"
+### Config variables the user should need/want to change
 
-JARGROUP_TARGET="target.txt"
-JARGROUP_DOWNLOAD_DIR="downloads"
+# Minecraft's whitelist file
+declare -r WHITELIST="white-list.txt"
+# Minecraft's banned ips file
+declare -r BANNED_IPS="banned-ips.txt"
+# Minecraft's banned players file
+declare -r BANNED_PLAYERS="banned-players.txt"
+
+# Jar group file which contains the download target URL
+declare -r JARGROUP_TARGET="target.txt"
+# Jar group directory name to download new jars to, is deleted afterwards
+declare -r JARGROUP_DOWNLOAD_DIR="downloads"
 
 
 ### Utility Functions
 
-# Esecutes the command "$1" as SERVER_USER
+# Executes the command "$1" as SERVER_USER
 as_user() {
 	if [ $(whoami) == $SERVER_USER ] ; then
 		bash -c "$1"
@@ -39,14 +47,20 @@ as_user() {
 	fi
 }
 
+# Executes the command "$1" as SERVER_USER but returns stderr instead
 as_user_stderr() {
 	as_user "$1" > /dev/null 2>&1
 }
 
+# Echo to stderr
 echoerr() {
 	echo "$@" 1>&2
 }
 
+# Determines whether "$1" is a valid name for a server or jar group directory
+# It must only contain upper or lower case letters, digits, dashes or
+# underscores.
+# It must also not be one of a list of reserved names.
 is_valid_name() {
 	local valid="^[a-zA-Z0-9\_\-]+$"
 	local invalid="^server|jargroup|start|stop|restart$"
@@ -64,6 +78,8 @@ is_valid_name() {
 	fi
 }
 
+# Gets the latest jar from a jar group, based upon the date and time encoded
+# in the file name.
 get_latest_file() {
 	local best_time=0
 	local best_file=""
@@ -90,6 +106,7 @@ get_latest_file() {
 
 ### Server Functions
 
+# Echos a list of servers in the SERVER_STORAGE_PATH
 server_list() {
 	echo "Servers:"
 	for server in "$SERVER_STORAGE_PATH/*"; do
@@ -97,6 +114,8 @@ server_list() {
 	done
 }
 
+# Creates a new server
+# $1: The server name to create
 server_create() {
 	if is_valid_name "$1"; then
 		if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
@@ -115,6 +134,8 @@ server_create() {
 	fi
 }
 
+# Deletes an existing server
+# $2: The server name to delete
 server_delete() {
 	if is_valid_name "$1"; then
 		if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
@@ -137,6 +158,9 @@ server_delete() {
 	fi
 }
 
+# Renames an existing server
+# $1: The server name to change
+# $2: The new name for the server
 server_rename() {
 	if is_valid_name "$1"; then
 		if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
@@ -168,6 +192,7 @@ server_rename() {
 
 ### Jar Group Functions
 
+# Lists the jar files grouped by jar groups.
 jargroup_list() {
 	for group in $(ls -1 "$JAR_STORAGE_PATH"); do
 		echo "${group}:"
@@ -179,6 +204,8 @@ jargroup_list() {
 	done
 }
 
+# Creates a new jargroup
+# $1: The name for the jargroup
 jargroup_create() {
 	if is_valid_name "$1"; then
 		if [[ ! -e "$JAR_STORAGE_PATH/$1" ]]; then
@@ -211,6 +238,11 @@ jargroup_create() {
 	fi
 }
 
+# Downloads the latest version for a jargroup, using the target URL for that
+# group. Saves the download with the date and time encoded in the start of the
+# file name, in the jar group directory in question. Removes the file if there
+# is no difference between it and the current version.
+# $1: The jargroup name to download the latest version for
 jargroup_getlatest() {
 	if is_valid_name "$1"; then
 		if [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
@@ -279,6 +311,8 @@ jargroup_getlatest() {
 	fi
 }
 
+# Deletes an existing jargroup
+# $1: The name of the existing jargroup
 jargroup_delete() {
 	if is_valid_name "$1"; then
 		if [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
@@ -316,6 +350,7 @@ case "$1" in
 	server)
 		case "$2" in
 			list)
+				# Lists the existing servers
 				server_list
 				;;
 			create)
@@ -346,6 +381,7 @@ case "$1" in
 				fi
 				;;
 			*)
+				# "server" is not a valid command
 				echo "Invalid command."
 				;;
 		esac
@@ -353,6 +389,7 @@ case "$1" in
 	jargroup)
 		case "$2" in
 			list)
+				# Lists the jars grouped by jargroup
 				jargroup_list
 				;;
 			create)
@@ -387,11 +424,13 @@ case "$1" in
 				fi
 				;;
 			*)
+				# "jargroup" is not a valid command
 				echo "Invalid command."
 				;;
 		esac
 		;;
 	help)
+		# Outputs a list of all commands
 		echo -e "Usage: $0 command:"
 		echo -e
 		echo -e "--Setup Commands------------------------------------------------"
@@ -404,16 +443,16 @@ case "$1" in
 		echo -e "  <server> start \t\t\t\tStarts a server"
 		echo -e "  <server> stop [now] \t\t\t\tStops a server after warning players, or right now"
 		echo -e "  <server> restart [now] \t\t\tRestarts a server after warning players, or right now"
-		echo -e "  <server> worlds \t\t\t\tLists the worlds a server has"
-		echo -e "  <server> worlds load \t\t\t\tCreates links to wolrds in storage for a server"
-		echo -e "  <server> worlds todisk \t\t\tSynchronises any \"in RAM\" worlds to disk a server has"
-		echo -e "  <server> worlds toram \t\t\tSynchronises any RAM enabled worlds to RAM a server has"
-		echo -e "  <server> worlds backup \t\t\tMakes a backup of all worlds a server has"
-		echo -e "  <server> worlds ram <world> \t\t\tToggles a world's \"in RAM\" status"
-		echo -e "  <server> backup \t\t\t\tMakes a backup of an entire server directory"
-		echo -e "  <server> logroll \t\t\t\tMove a server log to a gziped archive, to reduce lag"
-		echo -e "  <server> connected \t\t\t\tList a servers connected players"
 		echo -e "  <server> status \t\t\t\tShow the running/stopped status of a server"
+		echo -e "  <server> connected \t\t\t\tList a servers connected players"
+		echo -e "  <server> worlds list \t\t\t\tLists the worlds a server has"
+		echo -e "  <server> worlds load \t\t\t\tCreates links to wolrds in storage for a server"
+		echo -e "  <server> worlds ram <world> \t\t\tToggles a world's \"in RAM\" status"
+		echo -e "  <server> worlds toram \t\t\tSynchronises any RAM enabled worlds to RAM a server has"
+		echo -e "  <server> worlds todisk \t\t\tSynchronises any \"in RAM\" worlds to disk a server has"
+		echo -e "  <server> worlds backup \t\t\tMakes a backup of all worlds a server has"
+		echo -e "  <server> logroll \t\t\t\tMove a server log to a gziped archive, to reduce lag"
+		echo -e "  <server> backup \t\t\t\tMakes a backup of an entire server directory"
 		echo -e
 		echo -e "--Server Pass Through Commands----------------------------------"
 		echo -e "  <server> wl on|off <player> \t\t\tEnabled/disable server whitelist check"
@@ -443,15 +482,13 @@ case "$1" in
 		echo -e
 		echo -e "--Global Commands-----------------------------------------------"
 		echo -e "  start \t\t\t\t\tStarts all active servers"
-		echo -e "  stop \t\t\t\t\t\tStops all running servers"
-		echo -e "  restart \t\t\t\t\tRestarts all active servers"
+		echo -e "  stop [now]\t\t\t\t\tStops all running servers"
+		echo -e "  restart [now]\t\t\t\t\tRestarts all active servers"
 		;;
 	"")
 		echo "No such command see: $0 help"
 		;;
-	*)
-		# TODO: Check first if $1 is an existing server name
-		
+	*)	
 		if is_valid_name "$1" && [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
 			case "$2" in
 				start)
