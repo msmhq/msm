@@ -525,7 +525,7 @@ case "$1" in
 		echo "No such command see: $0 help"
 		;;
 	*)	
-		if is_valid_name "$1" && [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
+		if [[ "$1" == "all" ]] || [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
 			case "$2" in
 				start)
 					;;
