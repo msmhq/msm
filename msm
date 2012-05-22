@@ -63,11 +63,11 @@ echoerr() {
 # It must also not be one of a list of reserved names.
 is_valid_name() {
 	local valid="^[a-zA-Z0-9\_\-]+$"
-	local invalid="^server|jargroup|start|stop|restart$"
+	local invalid="^server|jargroup|start|stop|restart|all$"
 	
 	if [[ "$1" =~ $valid ]]; then
 		if [[ "$1" =~ $invalid ]]; then
-			echoerr "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\" or \"jargroup\"."
+			echoerr "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"jargroup\" or \"all\"."
 			return 1
 		else
 			return 0
