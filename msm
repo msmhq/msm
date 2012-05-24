@@ -207,28 +207,26 @@ server_ensure_links() {
 			if ${world_inram[$i]}; then
 				# If this world is marked as loaded into RAM
 
-				if [ "${link_target}" != "${world_ramdisk_path[$i]}" ]
-				then
+				if [ "${link_target}" != "${world_ramdisk_path[$i]}" ]; then
 					# If the symbolic link does not point to the RAM version of the world
 
 					# Remove the symbolic link if it exists
-					as_user "rm -f \"${world_link[$i]}\""
+					as_user ${server_user_name[$1]} "rm -f \"${world_link[$i]}\""
 
 					# Create a new symbolic link pointing to the RAM version of the world
-					as_user "ln -s \"${world_ramdisk_path[$i]}\" \"${world_link[$i]}\""
+					as_user ${server_user_name[$1]} "ln -s \"${world_ramdisk_path[$i]}\" \"${world_link[$i]}\""
 				fi
 			else
 				# Otherwise the world is not loaded into RAM, and is just on disk
 
-				if [ "${link_target}" != "${world_path[$i]}" ]
-				then
+				if [ "${link_target}" != "${world_path[$i]}" ]; then
 					# If the symbolic link does not point to the disk version of the world
 
 					# Remove the symbolic link if it exists
-					as_user "rm -f \"${world_link[$i]}\""
+					as_user ${server_user_name[$1]} "rm -f \"${world_link[$i]}\""
 
 					# Create a new symbolic link pointing to the disk version of the world
-					as_user "ln -s \"${world_path[$i]}\" \"${world_link[$i]}\""
+					as_user ${server_user_name[$1]} "ln -s \"${world_path[$i]}\" \"${world_link[$i]}\""
 				fi
 			fi
 		else
@@ -703,6 +701,18 @@ server_restart() {
 	server_start $1
 }
 
+# List the worlds available for a server
+# $1: The ID of the server
+server_worlds_list() {
+	for ((i=${server_world_offset[$1]}; i<${server_num_worlds[$1]}; i++)); do
+		if ${world_inram[$i]}; then
+			echo "[RAM] ${world_name[$i]}"
+		else
+			echo "[DSK] ${world_name[$i]}"
+		fi
+	done
+}
+
 
 ### Main Functions
 
@@ -814,8 +824,8 @@ init() {
 			for world in ${server_worlds[$i]}; do
 				world_server_id[$j]="$i"
 				world_name[$j]="$world"
-				world_path[$j]="${server_world_storage[$i]}/$world_name[$j]"
-				world_link[$j]="${server_path[$i]}/$world_name[$j]"
+				world_path[$j]="${server_world_storage[$i]}/${world_name[$j]}"
+				world_link[$j]="${server_path[$i]}/${world_name[$j]}"
 				world_flag_inram[$j]="${world_path[$j]}/$WORLD_FLAG_INRAM"
 				
 				if $RAMDISK_STORAGE_PATH; then
@@ -828,9 +838,14 @@ init() {
 					world_inram[$j]="false"
 				fi
 				
-				# echo
+				### Printout
 				# echo "World server: ${server_name[${world_server_id[$j]}]}"
+				# echo "World ID: $j"
 				# echo "World name: ${world_name[$j]}"
+				# echo "World path: ${world_path[$j]}"
+				# echo "World link: ${world_link[$j]}"
+				# echo "World flag inram: ${world_flag_inram[$j]}"
+				# echo "World ramdisk path: ${world_ramdisk_path[$j]}"
 				# echo "World inram: ${world_inram[$j]}"
 			
 				j=$(($j+1))
@@ -838,8 +853,6 @@ init() {
 			
 			# Record the number of worlds this server has
 			server_num_worlds[$i]=$(( $j - ${server_world_offset[$i]} ))
-			
-			echo ${server_num_worlds[$i]}
 		fi
 
 		### Printout
@@ -1122,15 +1135,33 @@ main() {
 							
 						server_restart $id	
 						;;
-					worlds)
-						;;
-					backup)
-						;;
-					logroll)
+					status)
 						;;
 					connected)
 						;;
-					status)
+					worlds)
+						case "$3" in
+							list)
+								server_worlds_list $id
+								;;
+							load)
+								;;
+							ram)
+								;;
+							toram)
+								;;
+							todisk)
+								;;
+							backup)
+								;;
+							*)
+								echo "Invalid command."
+								;;
+						esac
+						;;
+					logroll)
+						;;
+					backup)
 						;;
 					whitelist|wl)
 						;;
