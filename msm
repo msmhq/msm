@@ -142,14 +142,14 @@ log_line_get_time() {
 # $1: the ID of the world to move
 world_to_ram() {
 	if $RAMDISK_STORAGE_PATH; then
-		as_user ${server_user_name[${world_server_id[$1]}]} "mkdir -p ${world_ramdisk_path[$1]} && rsync -rt --exclude '$WORLD_FLAG_INRAM' ${world_path[$1]}/ ${world_ramdisk_path[$1]}"
+		as_user ${server_user_name[${world_server_id[$1]}]} "mkdir -p ${world_ramdisk_path[$1]} && rsync -rt --exclude '$WORLD_FLAG_INRAM' \"${world_path[$1]}/\" \"${world_ramdisk_path[$1]}\""
 	fi
 }
 
 # Moves a world in RAM to disk
 # $1: the ID of the world to move
 world_to_disk() {
-	as_user ${server_user_name[${world_server_id[$1]}]} "rsync -rt --exclude '$WORLD_FLAG_INRAM' ${world_ramdisk_path[$1]}/ ${world_path[$1]}"
+	as_user ${server_user_name[${world_server_id[$1]}]} "rsync -rt --exclude '$WORLD_FLAG_INRAM' \"${world_ramdisk_path[$1]}/\" \"${world_path[$1]}\""
 }
 
 
@@ -270,8 +270,10 @@ server_worlds_to_disk() {
 		# For each of the servers worlds:
 		while [[ $i < $max ]]; do
 			if [ -e ${world_ramdisk_path[$i]} ]; then
-				world_to_ram $i		
+				world_to_disk $i		
 			fi
+			
+			i=$(( $i + 1 ))
 		done
 		echo "Done."
 	fi
