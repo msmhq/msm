@@ -844,6 +844,24 @@ server_log_roll() {
 	echo "Done."
 }
 
+# Backups a server's directory
+# $1: The ID of the server
+server_backup() {
+	echo -n "Backing up the entire server directory... "
+	
+	zip_flags="-rq"
+	# Add the "y" flag if symbolic links should not be followed
+	if [ "${server_complete_backup_follow_symlinks[$1]}" != "true" ]; then
+		zip_flags="${zip_flags}y"
+	fi
+	
+	# Zip up the server directory
+	file_name="${server_backup_path[$1]}/$(date "+%F-%H-%M-%S").zip"
+	as_user ${server_user_name[$1]} "mkdir -p \"${server_backup_path[$1]}\" && cd \"${server_path[$1]}\" && zip ${zip_flags} \"${file_name}\" ."
+	
+	echo "Done."
+}
+
 
 ### Main Functions
 
@@ -891,6 +909,7 @@ init() {
 		server_confirm_save_off[$i]="$DEFAULT_CONFIRM_SAVE_OFF"
 		server_confirm_save_all[$i]="$DEFAULT_CONFIRM_SAVE_ALL"
 		server_confirm_start[$i]="$DEFAULT_CONFIRM_START"
+		server_complete_backup_follow_symlinks[$i]="$DEFAULT_COMPLETE_BACKUP_FOLLOW_SYMLINKS"
 		
 		
 		# Load config overrides from server config file if present
@@ -931,6 +950,7 @@ init() {
 					CONFIRM_SAVE_OFF) server_confirm_save_off[$i]="$value";;
 					CONFIRM_SAVE_ALL) server_confrim_save_all[$i]="$value";;
 					CONFIRM_START) server_confrim_start[$i]="$value";;
+					COMPLETE_BACKUP_FOLLOW_SYMLINKS) server_complete_backup_follow_symlinks[$i]="$value";;
 				esac
 			done < "${server_conf[$i]}"
 		fi
@@ -1317,6 +1337,18 @@ main() {
 						server_log_roll $id
 						;;
 					backup)
+						if server_is_running $id; then
+							server_eval $id "say ${server_complete_backup_started[$id]}"
+							server_save_off $id
+							server_save_all $id
+						fi
+						
+						server_backup $id
+						
+						if server_is_running $id; then
+							server_save_on $id
+							server_eval $id "say ${server_complete_backup_finished[$id]}"
+						fi
 						;;
 					whitelist|wl)
 						;;
