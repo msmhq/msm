@@ -341,6 +341,25 @@ server_wait_for_stop() {
 	done
 }
 
+# Sets a server's active/inactive state
+# $1: The ID of the server
+# $2: A string containing "active" or "inactive"
+server_set_active() {
+	case "$2" in
+		active)
+			as_user ${server_user_name[$1]} "touch ${server_flag_active[$1]}"
+			server_active[$1]="true"
+			;;
+		inactive)
+			as_user ${server_user_name[$1]} "rm -f ${server_flag_active[$1]}"
+			server_active[$1]="false"
+			;;
+		*)
+			return 1
+			;;
+	esac
+}
+
 
 ### Jar Group Functions
 
@@ -616,6 +635,7 @@ server_start() {
 		
 		printf "Starting server... "
 		
+		server_set_active $1 "active"
 		as_user ${server_user_name[$1]} "cd ${server_path[$1]} && screen -dmS ${server_screen_name[$1]} ${server_invocation[$1]}"
 		server_log_wait_for_line $1 "${server_confirm_start[$1]}" "$time_now"
 		
@@ -646,6 +666,7 @@ server_stop() {
 		
 		printf "Stopping the server... "
 		
+		server_set_active $1 "inactive"
 		server_eval $1 "stop"
 		server_wait_for_stop $1
 		
@@ -666,8 +687,9 @@ init() {
 		server_name[$i]="$server"
 		server_path[$i]="$SERVER_STORAGE_PATH/$server"
 		server_conf[$i]="${server_path[$i]}/$DEFAULT_SERVER_CONF"
+		server_flag_active[$i]="${server_path[$i]}/$SERVER_FLAG_ACTIVE"
 		
-		if [[ -e "$server/$SERVER_FLAG_ACTIVE" ]]; then
+		if [[ -e "${server_flag_active[$i]}" ]]; then
 			server_active[$i]="true"
 		else
 			server_active[$i]="false"
@@ -763,6 +785,7 @@ init() {
 				world_name[$j]="$world"
 				world_path[$j]="${server_world_storage[$i]}/$world_name[$j]"
 				world_link[$j]="${server_path[$i]}/$world_name[$j]"
+				world_flag_inram[$j]="${world_path[$j]}/$WORLD_FLAG_INRAM"
 				
 				if $RAMDISK_STORAGE_PATH; then
 					world_ramdisk_path[$j]="${RAMDISK_STORAGE_PATH}/${server_name[$i]}/${world_name[$j]}"
