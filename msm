@@ -734,7 +734,7 @@ init() {
 			   	# if not empty, set the property using declare
 			   	if [ ! -z "$line" ]; then
 				 	name="$(echo $line | awk -F '=' '{print $1}')"
-					value="$(echo $line | awk -F '"' '{print $2}')"
+					value="$(echo $line | awk -F '\"' '{print $2}')"
 				fi
 				
 				case "$name" in
