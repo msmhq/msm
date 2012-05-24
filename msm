@@ -137,6 +137,12 @@ world_to_ram() {
 	fi
 }
 
+# Moves a world in RAM to disk
+# $1: the ID of the world to move
+world_to_disk() {
+	as_user ${server_user_name[${world_server_id[$1]}]} "rsync -rt --exclude '$WORLD_FLAG_INRAM' ${world_ramdisk_path[$1]}/ ${world_path[$1]}"
+}
+
 
 ### Server Utility Functions
 
@@ -162,7 +168,7 @@ server_get_id() {
 server_is_running() {
 	local id=$(server_get_id "$1")
 	
-	if ps ax | grep -v grep | grep "${server_screen_name[$i]} ${server_invocation[$i]}" > /dev/null
+	if ps ax | grep -v grep | grep "${server_screen_name[$1]} ${server_invocation[$1]}" > /dev/null
 	then
 		return 0
 	else
@@ -246,6 +252,24 @@ server_worlds_to_ram() {
 	fi
 }
 
+# Moves a servers "in RAM" worlds back to disk
+# $1: The ID of the server
+server_worlds_to_disk() {
+	if $RAMDISK_STORAGE_PATH; then
+		echo -n "Synchronising worlds to disk... "
+		local i=${server_world_offset[$1]}
+		local max=$(( $i + ${server_num_worlds[$1]} ))
+		
+		# For each of the servers worlds:
+		while [[ $i < $max ]]; do
+			if [ -e ${world_ramdisk_path[$i]} ]; then
+				world_to_ram $i		
+			fi
+		done
+		echo "Done."
+	fi
+}
+
 # Watches the a server's log
 # $1: The ID for the server
 # $2: The line in the log to wait for
@@ -274,6 +298,47 @@ server_log_get_line() {
 # when found.
 server_log_wait_for_line() {
 	server_log_get_line $1 $2 $3 > /dev/null
+}
+
+# Sends as string to a server for execution
+# $1: The ID of the server
+# $2: The line of text to enter into the server console
+server_eval() {
+	as_user ${server_user_name[$1]} "screen -p 0 -S ${server_screen_name[$1]} -X eval 'stuff \"$2\"\015'"
+}
+
+# The same as server_eval, but also waits for a log entry before returning
+# $1: The ID of the server
+# $2: A line of text to enter into the server console
+# $3: The line of text in the log to wait for
+# stdout: The full entry found in the logs
+server_eval_and_get_line() {
+	time_now=$(now)
+	server_eval $1 "$2"
+	server_log_get_line $1 "$3" "$time_now"
+}
+
+# The same as server_eval_and_get_line, but does not print anything to stdout
+server_eval_and_wait() {
+	server_eval_and_get_line $1 "$2" "$3" > /dev/null
+}
+
+# Gets the process ID for a server if running, otherwise it outputs nothing
+# $1: The ID of the server
+server_pid() {
+	ps ax | grep -v grep | grep "${server_screen_name[$1]} ${server_invocation[$1]}" | awk '{print $1}'
+}
+
+# Waits for a server to stop by polling 10 times a second
+# This approach is fairyl intensive, so only use when you are expecting the
+# server to stop soon
+# $1: The ID of the server to wait for
+server_wait_for_stop() {
+	local pid=$(server_pid $1)
+
+	while ps -p $pid > /dev/null; do
+		sleep 0.1
+	done
 }
 
 
@@ -555,6 +620,38 @@ server_start() {
 		server_log_wait_for_line $1 "${server_confirm_start[$1]}" "$time_now"
 		
 		echo "Done."
+	fi
+}
+
+# Sends the "save-all" command to a server
+# $1: The ID of the server
+server_save_all() {
+	if server_is_running $1; then
+		# Send the "save-all" command and wait for it to finish
+		printf "Forcing save... "
+		
+		server_eval_and_wait $1 "save-all" "${server_confirm_save_all[$1]}"
+		
+		echo "Done."
+	else
+		echo "Server \"${server_name[$1]}\" was not running."
+	fi
+}
+
+# Stops a single server
+# $1: The ID of the server to stop
+server_stop() {
+    if server_is_running $1; then
+		server_save_all $1
+		
+		printf "Stopping the server... "
+		
+		server_eval $1 "stop"
+		server_wait_for_stop $1
+		
+		echo "Done."
+	else
+		echo "Server \"${server_name[$1]}\" was not running."
 	fi
 }
 
@@ -891,11 +988,39 @@ main() {
 			;;
 		*)	
 			if [[ "$1" == "all" ]] || [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
+				
+				local id=$(server_get_id "$1")
+				
 				case "$2" in
 					start)
-						server_start $(server_get_id "$1")
+						server_start $id
 						;;
 					stop)
+						if server_is_running $id; then
+						    if [[ $3 != "now" ]]; then
+							    server_eval $id "say ${server_stop_message[$id]}"
+
+							    echo "Issued the warning \"${server_stop_message[$id]}\" to players."
+								
+								echo -n "Shutting down... "
+								
+								for ((i=${server_stop_delay[$id]}; i>0; i--)); do
+									tput sc # Save cursor position
+									echo -n "in $i seconds."
+									sleep 1
+									
+									tput rc # Restore cursor to position of last `sc'
+									tput el # Clear to end of line
+								done
+								
+								echo -e "Now."
+							fi
+							
+							server_stop $id
+							server_worlds_to_disk $id
+						else
+						    echo "Server \"${server_name[$id]}\" was not running."
+						fi
 						;;
 					restart)
 						;;
