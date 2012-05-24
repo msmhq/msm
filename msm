@@ -1134,6 +1134,11 @@ main() {
 						server_restart $id	
 						;;
 					status)
+						if server_is_running $1; then
+							echo "Server \"${server_name[$id]}\" is running."
+						else
+							echo "Server \"${server_name[$id]}\" is stopped."
+						fi
 						;;
 					connected)
 						;;
