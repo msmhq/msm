@@ -820,6 +820,30 @@ server_worlds_backup() {
 	done
 }
 
+# Moves a servers log into another file, leaving the original log file empty
+# $1: The ID of the server
+server_log_roll() {
+	# Moves and Gzips the logfile, a big log file slows down the
+	# server A LOT (what was notch thinking?)
+
+	printf "Rolling server logs... "
+	
+	if [ -e "${server_log[$1]}" ]; then
+		file_name="${server_name[$1]}-$(date +%F-%H-%M-%S).log"
+		as_user ${server_user_name[$1]} "mkdir -p \"${server_log_archive_path[$1]}\" && cp \"${server_log[$1]}\" \"${server_log_archive_path[$1]}/${file_name}\" && gzip \"${server_log_archive_path[$1]}/${file_name}\""
+		
+		if [ -e "${server_log_archive_path[$1]}/${file_name}.gz" ]; then
+			as_user ${server_user_name[$1]} "cp \"/dev/null\" ${server_log[$1]}"
+			as_user ${server_user_name[$1]} "echo \"Previous logs can be found at \\\"${server_log_archive_path[$i]}\\\"\" > ${server_log[$1]}"
+		else
+			echoerr "Failed."
+			return 1
+		fi
+	fi
+	
+	echo "Done."
+}
+
 
 ### Main Functions
 
@@ -833,6 +857,7 @@ init() {
 		server_conf[$i]="${server_path[$i]}/$DEFAULT_SERVER_CONF"
 		server_flag_active[$i]="${server_path[$i]}/$SERVER_FLAG_ACTIVE"
 		server_backup_path[$i]="$BACKUP_ARCHIVE_PATH/${server_name[$i]}"
+		server_log_archive_path[$i]="$LOG_ARCHIVE_PATH/${server_name[$i]}"
 		
 		if [[ -e "${server_flag_active[$i]}" ]]; then
 			server_active[$i]="true"
@@ -1289,6 +1314,7 @@ main() {
 						esac
 						;;
 					logroll)
+						server_log_roll $id
 						;;
 					backup)
 						;;
