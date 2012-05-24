@@ -1032,7 +1032,7 @@ main() {
 			echo -e "  <server> status \t\t\t\tShow the running/stopped status of a server"
 			echo -e "  <server> connected \t\t\t\tList a servers connected players"
 			echo -e "  <server> worlds list \t\t\t\tLists the worlds a server has"
-			echo -e "  <server> worlds load \t\t\t\tCreates links to wolrds in storage for a server"
+			echo -e "  <server> worlds load \t\t\t\tCreates links to worlds in storage for a server"
 			echo -e "  <server> worlds ram <world> \t\t\tToggles a world's \"in RAM\" status"
 			echo -e "  <server> worlds toram \t\t\tSynchronises any RAM enabled worlds to RAM a server has"
 			echo -e "  <server> worlds todisk \t\t\tSynchronises any \"in RAM\" worlds to disk a server has"
