@@ -189,6 +189,7 @@ server_is_running() {
 # of the Minecraft worlds located in the world storage directory.
 # $1: The id of the server for which links should be ensured
 server_ensure_links() {
+	echo -n "Maintaining world symbolic links... "
 	local i=${server_world_offset[$1]}
 	local max=$(( $i + ${server_num_worlds[$1]} ))
 	
@@ -229,15 +230,12 @@ server_ensure_links() {
 					as_user ${server_user_name[$1]} "ln -s \"${world_path[$i]}\" \"${world_link[$i]}\""
 				fi
 			fi
-		else
-			# There was no symbolic link, and there was a directory, meaning a world
-			# directory has been placed in SERVER_PATH, this is not allowed:
-			echoerr "Could not process ${world_name[$i]}. Please move all worlds to ${server_world_storage[$1]}."
-			return 1
 		fi
 		
 		i=$(( $i + 1 ))
 	done
+	
+	echo "Done."
 }
 
 # Moves a servers worlds into RAM
@@ -1145,6 +1143,7 @@ main() {
 								server_worlds_list $id
 								;;
 							load)
+								server_ensure_links $id
 								;;
 							ram)
 								;;
