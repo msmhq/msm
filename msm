@@ -700,10 +700,43 @@ server_start() {
 # $1: The ID of the server
 server_save_all() {
 	if server_is_running $1; then
-		# Send the "save-all" command and wait for it to finish
-		printf "Forcing save... "
+		echo -n "Forcing save... "
 		
+		# Send the "save-all" command and wait for it to finish
 		server_eval_and_wait $1 "save-all" "${server_confirm_save_all[$1]}"
+		
+		echo "Done."
+	else
+		echo "Server \"${server_name[$1]}\" was not running."
+	fi
+}
+
+# Sends the "save-off" command to a server
+# $1: The ID of the server
+server_save_off() {
+	if server_is_running $1; then
+		echo -n "Disabling level saving... "
+		
+		# Send the "save-off" command and wait for it to finish
+		server_eval_and_wait $1 "save-off" "${server_confirm_save_off[$1]}"
+		
+		echo "Done."
+		
+		# Writes any in-memory data manged by the kernel to disk
+		sync
+	else
+		echo "Server \"${server_name[$1]}\" was not running."
+	fi
+}
+
+# Sends the "save-on" command to a server
+# $1: The ID of the server
+server_save_on() {
+	if server_is_running $1; then
+		echo -n "Enabling level saving... "
+		
+		# Send the "save-on" command and wait for it to finish
+		server_eval_and_wait $1 "save-on" "${server_confirm_save_on[$1]}"
 		
 		echo "Done."
 	else
@@ -1209,9 +1242,11 @@ main() {
 									fi
 								fi
 								;;
-							toram)
-								;;
 							todisk)
+								server_save_off $id
+								server_save_all $id
+								server_worlds_to_disk $id
+								server_save_on $id
 								;;
 							backup)
 								;;
