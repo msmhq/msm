@@ -175,6 +175,17 @@ world_toggle_ramdisk_state() {
 	echo "Changes will only take effect after server is restarted."	
 }
 
+# Backs up a world
+# $1: The ID of the world
+world_backup() {
+	echo -n "Backing up world \"${world_name[$1]}\"... "
+	
+	file_name="$(date "+%F-%H-%M-%S").zip"
+	as_user ${server_user_name[${world_server_id[$1]}]} "mkdir -p \"${world_backup_path[$1]}\" && cd \"${world_path[$1]}\" && zip -rq \"${world_backup_path[$1]}/${file_name}\" ."
+
+	echo "Done."
+}
+
 
 ### Server Utility Functions
 
@@ -781,12 +792,31 @@ server_restart() {
 # List the worlds available for a server
 # $1: The ID of the server
 server_worlds_list() {
-	for ((i=${server_world_offset[$1]}; i<${server_num_worlds[$1]}; i++)); do
+	local i=${server_world_offset[$1]}
+	local max=$(( $i + ${server_num_worlds[$1]} ))
+	
+	# For each of the servers worlds:
+	while [[ $i < $max ]]; do
 		if ${world_inram[$i]}; then
 			echo "[RAM] ${world_name[$i]}"
 		else
 			echo "[DSK] ${world_name[$i]}"
 		fi
+		
+		i=$(( $i + 1 ))
+	done
+}
+
+# Backs up the worlds for a server
+# $1: The ID of the server
+server_worlds_backup() {
+	local i=${server_world_offset[$1]}
+	local max=$(( $i + ${server_num_worlds[$1]} ))
+	
+	# For each of the servers worlds:
+	while [[ $i < $max ]]; do
+		world_backup $i
+		i=$(( $i + 1 ))
 	done
 }
 
@@ -802,6 +832,7 @@ init() {
 		server_path[$i]="$SERVER_STORAGE_PATH/$server"
 		server_conf[$i]="${server_path[$i]}/$DEFAULT_SERVER_CONF"
 		server_flag_active[$i]="${server_path[$i]}/$SERVER_FLAG_ACTIVE"
+		server_backup_path[$i]="$BACKUP_ARCHIVE_PATH/${server_name[$i]}"
 		
 		if [[ -e "${server_flag_active[$i]}" ]]; then
 			server_active[$i]="true"
@@ -904,6 +935,7 @@ init() {
 				world_path[$j]="${server_world_storage[$i]}/${world_name[$j]}"
 				world_link[$j]="${server_path[$i]}/${world_name[$j]}"
 				world_flag_inram[$j]="${world_path[$j]}/$WORLD_FLAG_INRAM"
+				world_backup_path[$j]="$WORLD_ARCHIVE_PATH/${server_name[$i]}/${world_name[$j]}"
 				
 				if [ ! -z $RAMDISK_STORAGE_PATH ]; then
 					world_ramdisk_path[$j]="${RAMDISK_STORAGE_PATH}/${server_name[$i]}/${world_name[$j]}"
@@ -1249,6 +1281,7 @@ main() {
 								server_save_on $id
 								;;
 							backup)
+								server_worlds_backup $id
 								;;
 							*)
 								echo "Invalid command."
