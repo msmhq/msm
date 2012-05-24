@@ -141,7 +141,7 @@ log_line_get_time() {
 # Moves a world to RAM
 # $1: the ID of the world to move
 world_to_ram() {
-	if $RAMDISK_STORAGE_PATH; then
+	if [ ! -z $RAMDISK_STORAGE_PATH ]; then
 		as_user ${server_user_name[${world_server_id[$1]}]} "mkdir -p ${world_ramdisk_path[$1]} && rsync -rt --exclude '$WORLD_FLAG_INRAM' \"${world_path[$1]}/\" \"${world_ramdisk_path[$1]}\""
 	fi
 }
@@ -152,17 +152,61 @@ world_to_disk() {
 	as_user ${server_user_name[${world_server_id[$1]}]} "rsync -rt --exclude '$WORLD_FLAG_INRAM' \"${world_ramdisk_path[$1]}/\" \"${world_path[$1]}\""
 }
 
+# Toggles a worlds ramdisk state
+# $1: The ID of the world
+world_toggle_ramdisk_state() {
+	if [ -e ${world_flag_inram[$1]} ]; then
+		echo -n "Removing RAM flag from world \"${world_name[$1]}\"... "
+		as_user ${server_user_name[${world_server_id[$1]}]} "rm -f \"${world_flag_inram[$1]}\""
+		echo "Done."
+		
+		echo -n "Removing world \"${world_name[$1]}\" from RAM... "
+		as_user ${server_user_name[${world_server_id[$1]}]} "rm -r \"${world_ramdisk_path[$1]}\""
+		echo "Done."
+	else
+		echo -n "Adding RAM flag to world \"${world_name[$1]}\"... "
+		as_user ${server_user_name[${world_server_id[$1]}]} "touch \"${world_flag_inram[$1]}\""
+		echo "Done."
+		
+		echo -n "Copying world to RAM... "
+		world_to_ram $1
+		echo "Done."
+	fi
+	echo "Changes will only take effect after server is restarted."	
+}
+
 
 ### Server Utility Functions
 
 # Returns the ID for a server.
 # An ID is given to a server when loaded into memory, and can be used to lookup
 # config information for that server
+# $1: The name of the server
 server_get_id() {
 	local i=0
 	while [[ $i < $num_servers ]]; do
 		if [[ "${server_name[$i]}" == "$1" ]]; then
 			echo "$i"
+			return 0
+		fi
+		
+		i=$(( $i + 1 ))
+	done
+	
+	return 1
+}
+
+# Returns the ID of a server's world.
+# $1: The ID of the server
+# $2: The name of the world
+server_world_get_id() {
+	local i=${server_world_offset[$1]}
+	local max=$(( $i + ${server_num_worlds[$1]} ))
+	
+	# For each of the servers worlds:
+	while [[ $i < $max ]]; do
+		if [[ "${world_name[$i]}" == "$2" ]]; then
+			echo $i
 			return 0
 		fi
 		
@@ -242,7 +286,7 @@ server_ensure_links() {
 # $1: The ID of the server
 server_worlds_to_ram() {
 	# Only proceed if there is a ramdisk path set in config
-	if $RAMDISK_STORAGE_PATH; then
+	if [ ! -z $RAMDISK_STORAGE_PATH ]; then
 		echo -n "Synchronising flagged worlds on disk to RAM... "
 		local i=${server_world_offset[$1]}
 		local max=$(( $i + ${server_num_worlds[$1]} ))
@@ -262,7 +306,7 @@ server_worlds_to_ram() {
 # Moves a servers "in RAM" worlds back to disk
 # $1: The ID of the server
 server_worlds_to_disk() {
-	if $RAMDISK_STORAGE_PATH; then
+	if [ ! -z $RAMDISK_STORAGE_PATH ]; then
 		echo -n "Synchronising worlds in RAM to disk... "
 		local i=${server_world_offset[$1]}
 		local max=$(( $i + ${server_num_worlds[$1]} ))
@@ -828,7 +872,7 @@ init() {
 				world_link[$j]="${server_path[$i]}/${world_name[$j]}"
 				world_flag_inram[$j]="${world_path[$j]}/$WORLD_FLAG_INRAM"
 				
-				if $RAMDISK_STORAGE_PATH; then
+				if [ ! -z $RAMDISK_STORAGE_PATH ]; then
 					world_ramdisk_path[$j]="${RAMDISK_STORAGE_PATH}/${server_name[$i]}/${world_name[$j]}"
 				fi
 			
@@ -1153,6 +1197,17 @@ main() {
 								server_ensure_links $id
 								;;
 							ram)
+								if [ -z "$4" ]; then
+									echo "Invalid command."
+								else
+									world_id=$(server_world_get_id $id "$4")
+									
+									if [ ! -z $world_id ]; then
+										world_toggle_ramdisk_state $world_id
+									else
+										echo "Server \"${server_name[$id]}\" has no world with that name."
+									fi
+								fi
 								;;
 							toram)
 								;;
