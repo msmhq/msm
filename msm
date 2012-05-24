@@ -41,6 +41,15 @@ declare -r WORLD_FLAG_INRAM="inram"
 declare -r SERVER_FLAG_ACTIVE="active"
 
 
+### Script State Variables
+
+# "true" whilst the script is counting down a delay to stop the server
+declare STOP_COUNTDOWN
+
+# "true" whilst the script is counting down a delay to restart the server
+declare RESTART_COUNTDOWN
+
+
 ### Utility Functions
 
 # Executes the command "$2" as user "$1"
@@ -670,6 +679,8 @@ server_stop() {
 		
 		server_set_active $1 "inactive"
 		server_eval $1 "stop"
+		STOP_COUNTDOWN[$1]="false"
+		RESTART_COUNTDOWN[$1]="false"
 		server_wait_for_stop $1
 		
 		echo "Done."
@@ -726,7 +737,9 @@ init() {
 		server_stop_delay[$i]="$DEFAULT_STOP_DELAY"
 		server_restart_delay[$i]="$DEFAULT_RESTART_DELAY"
 		server_stop_message[$i]="$DEFAULT_STOP_MESSAGE"
+		server_stop_abort[$i]="$DEFAULT_STOP_ABORT"
 		server_restart_message[$i]="$DEFAULT_RESTART_MESSAGE"
+		server_restart_abort[$i]="$DEFAULT_RESTART_ABORT"
 		server_world_backup_started[$i]="$DEFAULT_WORLD_BACKUP_STARTED"
 		server_world_backup_finished[$i]="$DEFAULT_WORLD_BACKUP_FINISHED"
 		server_complete_backup_started[$i]="$DEFAULT_COMPLETE_BACKUP_STARTED"
@@ -764,7 +777,9 @@ init() {
 					STOP_DELAY) server_stop_delay[$i]="$value";;
 					RESTART_DELAY) server_restart_delay[$i]="$value";;
 					STOP_MESSAGE) server_stop_message[$i]="$value";;
+					STOP_ABORT) server_stop_abort[$i]="$value";;
 					RESTART_MESSAGE) server_restart_message[$i]="$value";;
+					RESTART_ABORT) server_restart_abort[$i]="$value";;
 					WORLD_BACKUP_STARTED) server_world_backup_started[$i]="$value";;
 					WORLD_BACKUP_FINISHED) server_world_backup_finished[$i]="$value";;
 					COMPLETE_BACKUP_STARTED) server_complete_backup_started[$i]="$value";;
@@ -865,9 +880,30 @@ init() {
 	num_worlds=$j
 }
 
+# Called if the script is interrupted before exiting naturally
+interrupt() {
+	for ((i=0; $i<$num_servers; i++)); do
+		if [[ "${STOP_COUNTDOWN[$i]}" ]] && server_is_running $i; then
+			server_eval $i "say ${server_stop_abort[$i]}"
+			echo
+			echo "Broadcast the message \"${server_stop_abort[$id]}\" to players."
+		fi
+		if [[ "${RESTART_COUNTDOWN[$i]}" ]] && server_is_running $i; then
+			server_eval $i "say ${server_restart_abort[$i]}"
+			echo
+			echo "Broadcast the message \"${server_restart_abort[$id]}\" to players."
+		fi
+	done
+	exit
+}
+
+# The main function which starts the script
 main() {
 	# Initialise variables that represent system state
 	init
+	
+	# Trap interrupts to the script by calling the interrupt function
+	trap interrupt EXIT
 	
 	case "$1" in
 		start)
@@ -1037,6 +1073,9 @@ main() {
 					stop)
 						if server_is_running $id; then
 						    if [[ $3 != "now" ]]; then
+								# Change the state of the script
+								STOP_COUNTDOWN[$id]="true"
+								
 							    server_eval $id "say ${server_stop_message[$id]}"
 							    echo "Issued the warning \"${server_stop_message[$id]}\" to players."
 								
@@ -1061,6 +1100,9 @@ main() {
 						;;
 					restart)
 						if server_is_running $id && [[ $3 != "now" ]]; then
+							# Change the state of the script
+							RESTART_COUNTDOWN[$id]="true"
+							
 							server_eval $id "say ${server_restart_message[$id]}"
 							echo "Issued the warning \"${server_restart_message[$id]}\" to players."
 							
