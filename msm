@@ -698,7 +698,7 @@ init() {
 		# Setup defaults
 		# Note: screen_name will at this stage have the {SERVER_NAME} tag in it
 		# which needs to be replaced.
-		# Invocation will may also the {RAM} and {JAR} tags.
+		# Invocation may also the {RAM} and {JAR} tags.
 		
 		server_user_name[$i]="$DEFAULT_SERVER_USER"
 		server_screen_name[$i]="${DEFAULT_SCREEN_NAME//\{SERVER_NAME\}/${server_name[$i]}}" # Replace tags now, they cannot change
