@@ -555,8 +555,6 @@ server_start() {
 		server_log_wait_for_line $1 "${server_confirm_start[$1]}" "$time_now"
 		
 		echo "Done."
-		
-		echo "${server_user_name[$1]} ${server_path[$1]} ${server_screen_name[$1]} ${server_invocation[$1]}"
 	fi
 }
 
