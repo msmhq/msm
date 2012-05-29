@@ -1565,6 +1565,33 @@ main() {
 						fi
 						;;
 					whitelist|wl)
+						case "$3" in
+							on)
+								if server_is_running $id; then
+									server_eval $id "whitelist on"
+									echo "Whitelist enabled"
+								else
+									echo "Server was not running."
+								fi
+								;;
+							off)
+								if server_is_running $id; then
+									server_eval $id "whitelist off"
+									echo "Whitelist disabled"
+								else
+									echo "Server was not running."
+								fi
+								;;
+							add)
+								;;
+							remove)
+								;;
+							list)
+								;;
+							*)
+								echo "Invalid command."
+								;;
+						esac
 						;;
 					blacklist|bl)
 						;;
