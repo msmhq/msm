@@ -2,6 +2,8 @@
 
 A single init script which makes running multiple Minecraft/Bukkit servers easier for us admins.
 
+[Visit the Wiki][wiki] for detailed guides.
+
 ## Features
 
 * One script handles multiple servers, run two or more servers on one machine.
@@ -14,8 +16,6 @@ A single init script which makes running multiple Minecraft/Bukkit servers easie
 * Per server configuration of invocation, in-game messages and timings.
 * Apply server commands to one, multiple, or all servers in one go (useful for whitelisting a player on all servers.)
 
-[we-snapshot]: http://wiki.sk89q.com/wiki/WorldEdit/Snapshots
-
 ## Upcomming features
 
 * **Restore:** Roll-back to an old world or whole server backup automatically.
@@ -25,4 +25,6 @@ A single init script which makes running multiple Minecraft/Bukkit servers easie
 
 This code grew out of an old version of [Ahtenus' Minecraft Init Script][ahtenus-minecraft-init].
 
+[we-snapshot]: http://wiki.sk89q.com/wiki/WorldEdit/Snapshots
 [ahtenus-minecraft-init]: https://github.com/Ahtenus/minecraft-init
+[wiki]: https://github.com/marcuswhybrow/minecraft-server-manager/wiki
