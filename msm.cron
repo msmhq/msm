@@ -10,13 +10,13 @@
 
 
 # Backs up all worlds for all servers at 2 minutes past 5 in the moring
-02    05  *   *   *   minecraft   /etc/init.d/mcm * worlds backup
+02    05  *   *   *   minecraft   /etc/init.d/mcm all worlds backup
 
 # Rolls the logs for all servers at 55 minutes past 4 in the morning
-55    04  *   *   *   minecraft   /etc/init.d/mcm * logroll
+55    04  *   *   *   minecraft   /etc/init.d/mcm all logroll
 
 # Moves all "in RAM" worlds to disk every half hour for all servers
-*/30  *   *   *   *   minecraft   /etc/init.d/mcm * worlds todisk
+*/30  *   *   *   *   minecraft   /etc/init.d/mcm all worlds todisk
 
 # Start any crashed servers again each hour
 @hourly               minecraft   /etc/init.d/mcm start
