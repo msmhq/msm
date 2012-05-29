@@ -941,6 +941,139 @@ server_connected() {
 }
 
 
+### Manager Functions
+
+# Stops all running servers after a servers specified delay
+# $1: String containing "stop" or "restart". Represents whether the stop is 
+#     with a mind to stop the server, or just to restart it. And effects
+#     the message issued to players on a server.
+manager_stop_all_servers() {
+	# An array of true/false for each server
+	local was_running
+	# False if no servers were running at all
+	local any_running="false"
+	
+	# For all running servers issue the stop warning
+	local max_countdown=0
+	
+	for ((server=0; server<${num_servers}; server++)); do
+		if server_is_running $server; then
+			any_running="true"
+			was_running[$server]="true"
+			STOP_COUNTDOWN[$server]="true"
+			if [[ ${server_stop_delay[$i]} > $max_countdown ]]; then
+				max_countdown=${server_stop_delay[$server]}
+			fi
+			
+			# Send a warning message to the server
+			case "$1" in
+				stop) server_eval $server "say ${server_stop_message[$server]}";;
+				restart) server_eval $server "say ${server_restart_message[$server]}";;
+			esac
+			
+			# Send message to stdout
+			echo "Server \"${server_name[$server]}\" was running, now stopping:"
+			
+			case "$1" in
+				stop) echo "    Issued the warning \"${server_stop_message[$server]}\" to players.";;
+				restart) echo "    Issued the warning \"${server_restart_message[$server]}\" to players.";;
+			esac
+			
+			case ${server_stop_delay[$server]} in
+				0) echo "    Stopping without delay.";;
+				1) echo "    Stopping after 1 second.";;
+				*) echo "    Stopping after ${server_stop_delay[$server]} seconds.";;
+			esac
+		else
+			echo "Server \"${server_name[$server]}\" was NOT running."
+			was_running[$server]="false"
+		fi
+	done
+	
+	if "$any_running"; then
+		# Wait for the maximum possible delay, stopping servers
+		# at the correct times
+		echo -n "All servers will have been issued the stop command... "
+		for ((tick=${max_countdown}; tick>=0; tick--)); do
+			tput sc # Save cursor position
+		
+			if (( $tick <= 1 )); then
+				echo -n "in $tick second."
+			else
+				echo -n "in $tick seconds."
+			fi
+		
+			# Each second check all server, to see if its their time to
+			# stop. If so issue the stop command, and don't hang.
+			for ((server=0; server<${num_servers}; server++)); do
+				if server_is_running $server; then
+					stop_tick=$(( ${max_countdown} - ${server_stop_delay[$server]} ))
+					if [[ $stop_tick == $tick ]]; then
+						server_eval $server "stop"
+						STOP_COUNTDOWN[$server]="false"
+					fi
+				fi
+			done
+		
+			if [[ $tick > 0 ]]; then
+				sleep 1
+			fi
+
+			tput rc # Restore cursor to position of last `sc'
+			tput el # Clear to end of line
+		done
+	
+		# Start a new line
+		echo "Now."
+	
+		# Finally check all servers have stopped
+		for ((server=0; server<${num_servers}; server++)); do
+			if "${was_running[$server]}"; then
+				echo -n "Ensuring server \"${server_name[$server]}\" has stopped... "
+				server_wait_for_stop $server
+				echo "Done."
+			fi
+		done
+	else
+		echo "No servers were running."
+	fi
+}
+
+# Stops all running servers without delay
+manager_stop_all_servers_now() {
+	# An array of true/false for each server
+	local was_running
+	# False if no servers were running at all
+	local any_running="false"
+	
+	# Stop all servers at the same time
+	for ((server=0; server<${num_servers}; server++)); do
+		if server_is_running $server; then
+			was_running[$server]="true"
+			any_running="true"
+			echo "Server \"${server_name[$server]}\" was running, now stopping."
+			server_eval $server "stop"
+		else
+			echo "Server \"${server_name[$server]}\" was NOT running."
+			was_running[$server]="false"
+		fi
+	done
+	
+	if $any_running; then
+		# Ensure all the servers have stopped
+		for ((server=0; server<${num_servers}; server++)); do
+			if ${was_running[$server]}; then
+				echo -n "Ensuring server \"${server_name[$server]}\" has stopped... "
+				server_wait_for_stop $server
+				echo "Done."
+			fi
+		done
+	else
+		echo "No servers were running."
+	fi
+}
+
+
 ### Main Functions
 
 init() {
@@ -1160,146 +1293,42 @@ main() {
 	case "$1" in
 		start)
 			# Required start option, for debian init.d scripts
-			for ((i=0; i<${num_servers}; i++)); do
+			for ((server=0; server<${num_servers}; server++)); do
 				# Only starts active servers
-				if ${server_active[$i]}; then
-					if server_is_running $1; then
-						echo "[ACTIVE] \"${server_name[$i]}\" Already started."
+				if ${server_active[$server]}; then
+					if server_is_running $server; then
+						echo "[ACTIVE] Server \"${server_name[$server]}\" already started."
 					else
-						echo "[ACTIVE] \"${server_name[$i]}\" Starting:"
-						server_start $i
+						echo "[ACTIVE] Server \"${server_name[$server]}\" starting:"
+						server_start $server
 					fi
 				else
-					if server_is_running $1; then
-						echo "[INACTIVE] \"${server_name[$i]}\" Already started. It should not be running! Use \"$0 ${server_name[$i]} stop\" to stop this server."
+					if server_is_running $server; then
+						echo "[INACTIVE] Server \"${server_name[$server]}\" already started. It should not be running! Use \"$0 ${server_name[$server]} stop\" to stop this server."
 					else
-						echo "[INACTIVE] \"${server_name[$i]}\" Leaving stopped, as this server is inactive."
+						echo "[INACTIVE] Server \"${server_name[$server]}\" leaving stopped, as this server is inactive."
 					fi
 				fi
 			done
 			;;
 		stop)
-			# An array of true/false for each server
-			local was_running
-			# False if no servers were running at all
-			local any_running="false"
-			
 			if [ "$2" != "now" ]; then
 				# If the the now flag is not specified
-				
-				# For all running servers issue the stop warning
-				local max_countdown=0
-				
-				for ((server=0; server<${num_servers}; server++)); do
-					if server_is_running $server; then
-						any_running="true"
-						was_running[$server]="true"
-						STOP_COUNTDOWN[$server]="true"
-						if [[ ${server_stop_delay[$i]} > $max_countdown ]]; then
-							max_countdown=${server_stop_delay[$server]}
-						fi
-						
-						# Send a warning message to the server
-						server_eval $server "say ${server_stop_message[$server]}"
-						
-						# Send message to stdout
-						echo "Server \"${server_name[$server]}\" was running, now stopping:"
-						echo "    Issued the warning \"${server_stop_message[$server]}\" to players."
-						case ${server_stop_delay[$server]} in
-							0) echo "    Stopping without delay.";;
-							1) echo "    Stopping after 1 second.";;
-							*) echo "    Stopping after ${server_stop_delay[$server]} seconds.";;
-						esac
-					else
-						echo "Server \"${server_name[$server]}\" was NOT running."
-						was_running[$server]="false"
-					fi
-				done
-				
-				if "$any_running"; then
-					# Wait for the maximum possible delay, stopping servers
-					# at the correct times
-					echo -n "All servers will have been issued the stop command... "
-					for ((tick=${max_countdown}; tick>=0; tick--)); do
-						tput sc # Save cursor position
-					
-						if (( $tick <= 1 )); then
-							echo -n "in $tick second."
-						else
-							echo -n "in $tick seconds."
-						fi
-					
-						# Each second check all server, to see if its their time to
-						# stop. If so issue the stop command, and don't hang.
-						for ((server=0; server<${num_servers}; server++)); do
-							if server_is_running $server; then
-								stop_tick=$(( ${max_countdown} - ${server_stop_delay[$server]} ))
-								if [[ $stop_tick == $tick ]]; then
-									server_eval $server "stop"
-									STOP_COUNTDOWN[$server]="false"
-								fi
-							fi
-						done
-					
-						if [[ $tick > 0 ]]; then
-							sleep 1
-						fi
-
-						tput rc # Restore cursor to position of last `sc'
-						tput el # Clear to end of line
-					done
-				
-					# Start a new line
-					echo "Now."
-				
-					# Finally check all servers have stopped
-					for ((server=0; server<${num_servers}; server++)); do
-						if "${was_running[$server]}"; then
-							echo -n "Ensuring server \"${server_name[$server]}\" has stopped... "
-							server_wait_for_stop $server
-							echo "Done."
-						fi
-					done
-				else
-					echo "No servers were running."
-				fi
+				manager_stop_all_servers "stop"
 			else
 				# If the now flag is specified
-				
-				# Stop all servers at the same time
-				for ((server=0; server<${num_servers}; server++)); do
-					if server_is_running $server; then
-						was_running[$server]="true"
-						any_running="true"
-						echo "Server \"${server_name[$server]}\" was running, now stopping."
-						server_eval $server "stop"
-					else
-						echo "Server \"${server_name[$server]}\" was NOT running."
-						was_running[$server]="false"
-					fi
-				done
-				
-				if $any_running; then
-					# Ensure all the servers have stopped
-					for ((server=0; server<${num_servers}; server++)); do
-						if ${was_running[$server]}; then
-							echo -n "Ensuring server \"${server_name[$server]}\" has stopped... "
-							server_wait_for_stop $server
-							echo "Done."
-						fi
-					done
-				else
-					echo "No servers were running."
-				fi
+				manager_stop_all_servers_now
 			fi
 			;;
 		restart)
 			# Required restart option, for debian init.d scripts
-			echo "Stopping servers:"
-			stop
 			
-			echo "starting servers"
-			start
+			# Stop any running servers, now if specified
+			echo "Stopping servers:"
+			main "stop" "$2"
+			
+			echo "Starting servers:"
+			main "start"
 			;;
 		server)
 			case "$2" in
