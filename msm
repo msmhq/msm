@@ -1120,6 +1120,7 @@ init() {
 		server_confirm_save_off[$i]="$DEFAULT_CONFIRM_SAVE_OFF"
 		server_confirm_save_all[$i]="$DEFAULT_CONFIRM_SAVE_ALL"
 		server_confirm_start[$i]="$DEFAULT_CONFIRM_START"
+		server_confirm_whitelist_list[$i]="$DEFAULT_CONFIRM_WHITELIST_LIST"
 		server_complete_backup_follow_symlinks[$i]="$DEFAULT_COMPLETE_BACKUP_FOLLOW_SYMLINKS"
 		
 		
@@ -1161,6 +1162,7 @@ init() {
 					CONFIRM_SAVE_OFF) server_confirm_save_off[$i]="$value";;
 					CONFIRM_SAVE_ALL) server_confrim_save_all[$i]="$value";;
 					CONFIRM_START) server_confrim_start[$i]="$value";;
+					CONFIRM_WHITELIST_LIST) server_confirm_whitelist_list[$i]="$value";;
 					COMPLETE_BACKUP_FOLLOW_SYMLINKS) server_complete_backup_follow_symlinks[$i]="$value";;
 				esac
 			done < "${server_conf[$i]}"
@@ -1244,6 +1246,7 @@ init() {
 		# echo "Confirm save-off: ${server_confirm_save_off[$i]}"
 		# echo "Confirm save-all: ${server_confirm_save_all[$i]}"
 		# echo "Confirm start: ${server_confirm_start[$i]}"
+		# echo "Confirm whitelist list: ${server_confirm_whitelist_list[$i]}"
 		# echo -n "Worlds: "
 		# for world in ${server_worlds[$i]}; do
 		# 	echo -n "$world, "
@@ -1571,7 +1574,7 @@ main() {
 									server_eval $id "whitelist on"
 									echo "Whitelist enabled"
 								else
-									echo "Server was not running."
+									echo "Server \"${server_name[$id]}\" is not running."
 								fi
 								;;
 							off)
@@ -1579,7 +1582,7 @@ main() {
 									server_eval $id "whitelist off"
 									echo "Whitelist disabled"
 								else
-									echo "Server was not running."
+									echo "Server \"${server_name[$id]}\" is not running."
 								fi
 								;;
 							add)
@@ -1587,6 +1590,21 @@ main() {
 							remove)
 								;;
 							list)
+								if server_is_running $1; then
+									local line=$(server_eval_and_get_line $id "whitelist list" "${server_confirm_whitelist_list[$id]}")
+
+									# Cuts the start off the line, and the last three (invisible)
+									# characters from the end.
+									local players=${line:49:(-3)}
+
+									if [ -z "$players" ]; then
+										echo "No players are whitelisted."
+									else
+										echo "$players"
+									fi
+								else
+									echo "Server \"${server_name[$id]}\" is not running."
+								fi
 								;;
 							*)
 								echo "Invalid command."
