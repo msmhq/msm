@@ -1598,6 +1598,16 @@ main() {
 								fi
 								;;
 							remove)
+								if [ -z "$4" ]; then
+									echo "Invalid command."
+								else
+									if server_is_running $id; then
+										server_eval $id "whitelist remove $4"
+										echo "Removed \"$4\" from the whitelist."
+									else
+										echo "Server \"${server_name[$id]}\" is not running."
+									fi
+								fi
 								;;
 							list)
 								if server_is_running $id; then
