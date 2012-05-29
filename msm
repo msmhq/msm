@@ -1586,11 +1586,21 @@ main() {
 								fi
 								;;
 							add)
+								if [ -z "$4" ]; then
+									echo "Invalid command."
+								else
+									if server_is_running $id; then
+										server_eval $id "whitelist add $4"
+										echo "Added \"$4\" to the whitelist."
+									else
+										echo "Server \"${server_name[$id]}\" is not running."
+									fi
+								fi
 								;;
 							remove)
 								;;
 							list)
-								if server_is_running $1; then
+								if server_is_running $id; then
 									local line=$(server_eval_and_get_line $id "whitelist list" "${server_confirm_whitelist_list[$id]}")
 
 									# Cuts the start off the line, and the last three (invisible)
