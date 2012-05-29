@@ -40,6 +40,9 @@ declare -r WORLD_FLAG_INRAM="inram"
 # The flag which indicates the server is active
 declare -r SERVER_FLAG_ACTIVE="active"
 
+# The start of a regex to find a log line
+declare -r LOG_REGEX="^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\]"
+
 
 ### Script State Variables
 
@@ -332,26 +335,28 @@ server_worlds_to_disk() {
 	fi
 }
 
-# Watches the a server's log
+# Watches a server's log for a specific line
 # $1: The ID for the server
-# $2: The line in the log to wait for
-# $3: A UNIX timestamp (seconds since 1970) which the $2 line must be after
+# $2: A UNIX timestamp (seconds since 1970) which the $3 line must be after
+# $3->: The line or lines in the log to wait for
 # returns: When the line is found
 server_log_get_line() {
     # Make sure there is a server log to check
     as_user ${server_user_name[$1]} "touch ${server_log[$1]}"
 
-	regex="^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\] ${2}"
-
-	while read line
-	do
+	while read line; do
 		line_time=$(log_line_get_time "$line")
 
-		# If the entry is old enough and matches the regular expression
-		if [[ $line_time -ge $3 && $line =~ $regex ]]
-		then
-			echo $line
-			break
+		# If the entry is old enough
+		if [[ $line_time -ge $2 ]]; then
+			for search_line in "${@:3}"; do
+				local regex="${LOG_REGEX} ${search_line}"
+				# and matches the regular expression
+				if [[ "$line" =~ $regex ]]; then
+					echo $line
+					return 0
+				fi
+			done
 		fi
 	done < <(as_user ${server_user_name[$1]} "tail --follow --lines=100 --sleep-interval=0.1 ${server_log[$1]}")
 }
@@ -359,7 +364,7 @@ server_log_get_line() {
 # The same as server_log_get_line, but does not print the line to stdout
 # when found.
 server_log_wait_for_line() {
-	server_log_get_line $1 $2 $3 > /dev/null
+	server_log_get_line "$@" > /dev/null
 }
 
 # Sends as string to a server for execution
@@ -372,17 +377,17 @@ server_eval() {
 # The same as server_eval, but also waits for a log entry before returning
 # $1: The ID of the server
 # $2: A line of text to enter into the server console
-# $3: The line of text in the log to wait for
+# $3->: The line or lines of text in the log to wait for
 # stdout: The full entry found in the logs
 server_eval_and_get_line() {
 	time_now=$(now)
 	server_eval $1 "$2"
-	server_log_get_line $1 "$3" "$time_now"
+	server_log_get_line $1 "$time_now" "${@:3}"
 }
 
 # The same as server_eval_and_get_line, but does not print anything to stdout
 server_eval_and_wait() {
-	server_eval_and_get_line $1 "$2" "$3" > /dev/null
+	server_eval_and_get_line "$@" > /dev/null
 }
 
 # Gets the process ID for a server if running, otherwise it outputs nothing
@@ -701,7 +706,7 @@ server_start() {
 		printf "Starting server... "
 		
 		as_user ${server_user_name[$1]} "cd ${server_path[$1]} && screen -dmS ${server_screen_name[$1]} ${server_invocation[$1]}"
-		server_log_wait_for_line $1 "${server_confirm_start[$1]}" "$time_now"
+		server_log_wait_for_line $1 "$time_now" "${server_confirm_start[$1]}"
 		
 		echo "Done."
 	fi
@@ -1121,6 +1126,8 @@ init() {
 		server_confirm_save_all[$i]="$DEFAULT_CONFIRM_SAVE_ALL"
 		server_confirm_start[$i]="$DEFAULT_CONFIRM_START"
 		server_confirm_whitelist_list[$i]="$DEFAULT_CONFIRM_WHITELIST_LIST"
+		server_confirm_kick[$i]="$DEFAULT_CONFIRM_KICK"
+		server_confirm_kick_fail[$i]="$DEFAULT_CONFIRM_KICK_FAIL"
 		server_complete_backup_follow_symlinks[$i]="$DEFAULT_COMPLETE_BACKUP_FOLLOW_SYMLINKS"
 		
 		
@@ -1163,6 +1170,8 @@ init() {
 					CONFIRM_SAVE_ALL) server_confrim_save_all[$i]="$value";;
 					CONFIRM_START) server_confrim_start[$i]="$value";;
 					CONFIRM_WHITELIST_LIST) server_confirm_whitelist_list[$i]="$value";;
+					CONFIRM_KICK) server_confirm_kick[$i]="$value";;
+					CONFIRM_KICK_FAIL) server_confirm_kick_fail[$i]="$value";;
 					COMPLETE_BACKUP_FOLLOW_SYMLINKS) server_complete_backup_follow_symlinks[$i]="$value";;
 				esac
 			done < "${server_conf[$i]}"
@@ -1204,16 +1213,6 @@ init() {
 				else
 					world_inram[$j]="false"
 				fi
-				
-				### Printout
-				# echo "World server: ${server_name[${world_server_id[$j]}]}"
-				# echo "World ID: $j"
-				# echo "World name: ${world_name[$j]}"
-				# echo "World path: ${world_path[$j]}"
-				# echo "World link: ${world_link[$j]}"
-				# echo "World flag inram: ${world_flag_inram[$j]}"
-				# echo "World ramdisk path: ${world_ramdisk_path[$j]}"
-				# echo "World inram: ${world_inram[$j]}"
 			
 				j=$(($j+1))
 			done
@@ -1221,38 +1220,6 @@ init() {
 			# Record the number of worlds this server has
 			server_num_worlds[$i]=$(( $j - ${server_world_offset[$i]} ))
 		fi
-
-		### Printout
-		# echo "Name: ${server_name[$i]}"
-		# echo "Path: ${server_path[$i]}"
-		# echo "Conf: ${server_conf[$i]}"
-		# echo "Active: ${server_active[$i]}"
-		# echo "User name: ${server_user_name[$i]}"
-		# echo "Screen name: ${server_screen_name[$i]}"
-		# echo "World storage: ${server_world_storage[$i]}"
-		# echo "Log: ${server_log[$i]}"
-		# echo "Jar: ${server_jar[$i]}"
-		# echo "Ram: ${server_ram[$i]}"
-		# echo "Invocation: ${server_invocation[$i]}"
-		# echo "Stop delay: ${server_stop_delay[$i]}"
-		# echo "Restart delay: ${server_restart_delay[$i]}"
-		# echo "Stop message: ${server_stop_message[$i]}"
-		# echo "Restart message: ${server_restart_message[$i]}"
-		# echo "World backup started: ${server_world_backup_started[$i]}"
-		# echo "World backup finished: ${server_world_backup_finished[$i]}"
-		# echo "World backup started: ${server_complete_backup_started[$i]}"
-		# echo "World backup finished: ${server_complete_backup_finished[$i]}"
-		# echo "Confirm save-on: ${server_confirm_save_on[$i]}"
-		# echo "Confirm save-off: ${server_confirm_save_off[$i]}"
-		# echo "Confirm save-all: ${server_confirm_save_all[$i]}"
-		# echo "Confirm start: ${server_confirm_start[$i]}"
-		# echo "Confirm whitelist list: ${server_confirm_whitelist_list[$i]}"
-		# echo -n "Worlds: "
-		# for world in ${server_worlds[$i]}; do
-		# 	echo -n "$world, "
-		# done
-		# echo
-		# echo
 		
 		i=$(($i+1))
 	done
@@ -1638,10 +1605,28 @@ main() {
 					gamemode|gm)
 						;;
 					kick)
+						if [ -z "$3" ]; then
+							echo "Invalid command."
+						else
+							if server_is_running $id; then
+								local line=$(server_eval_and_get_line $id "kick $3" "${server_confirm_kick[$id]}" "${server_confirm_kick_fail[$id]}")
+								
+								local regex="${LOG_REGEX} ${server_confirm_kick[$id]}"
+								if [[ "$line" =~ $regex ]]; then
+									echo "Kicked \"$3\" from game."
+								fi
+								local regex="${LOG_REGEX} ${server_confirm_kick_fail[$id]}"
+								if [[ "$line" =~ $regex ]]; then
+									echo "The player \"$3\" is not connected."
+								fi
+							else
+								echo "Server \"${server_name[$id]}\" is not running."
+							fi
+						fi
 						;;
 					say)
 						;;
-					"time")
+					time)
 						;;
 					toggledownfall)
 						;;
