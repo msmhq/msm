@@ -458,14 +458,14 @@ jargroup_create() {
 		if [[ ! -e "$JAR_STORAGE_PATH/$1" ]]; then
 			printf "Creating jar group... "
 			
-			local error=$(as_user_stderr "mkdir -p '$JAR_STORAGE_PATH/$1'")
+			local error=$(as_user_stderr "$USERNAME" "mkdir -p '$JAR_STORAGE_PATH/$1'")
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
 				echo "Reason: $error"
 				return 1
 			fi
 			
-			error=$(as_user "echo \"$2\" > '$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET'")
+			error=$(as_user "$USERNAME" "echo \"$2\" > '$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET'")
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
 				echo "Reason: $error"
@@ -497,17 +497,17 @@ jargroup_getlatest() {
 				printf "Downloading latest version... "
 			
 				# Try and make 
-				local error=$(as_user_stderr "mkdir -p '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'")
+				local error=$(as_user_stderr "$USERNAME" "mkdir -p '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'")
 				if [[ "$error" != "" ]]; then
 					echo "Failed."
 					echo "Reason: $error"
 					return 1
 				fi
 			
-				as_user "wget --quiet --input-file='$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET' --directory-prefix='$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' --no-check-certificate"
+				as_user "$USERNAME" "wget --quiet --input-file='$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET' --directory-prefix='$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' --no-check-certificate"
 				echo "Done."
 			
-				local num_files=$(as_user "ls -1 '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' | wc -l")
+				local num_files=$(as_user "$USERNAME" "ls -1 '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' | wc -l")
 			
 				if [[ $num_files == 1 ]]; then
 					# There was 1 file downloaded
@@ -524,7 +524,7 @@ jargroup_getlatest() {
 						[[ -e "$most_recent_jar" ]]
 						local was_previous=$?
 					
-						as_user "mv '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name' '$JAR_STORAGE_PATH/$1/$new_name'"
+						as_user "$USERNAME" "mv '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name' '$JAR_STORAGE_PATH/$1/$new_name'"
 					
 						if [[ $was_previous == 0 ]]; then
 							echo "Downloaded version was different to previous latest. Saved as \"$1/$new_name\"."
@@ -544,7 +544,7 @@ jargroup_getlatest() {
 				fi
 			
 				# Clean up the temp download folder
-				as_user "rm -fr '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'"
+				as_user "$USERNAME" "rm -fr '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'"
 			else
 				echo "Target URL not found, use $0 jargroup seturl <download-url>"
 				return 1
@@ -567,7 +567,7 @@ jargroup_delete() {
 		
 			read answer
 			if [[ "$answer" =~ ^y|Y|yes$ ]]; then
-				as_user "rm -rf $JAR_STORAGE_PATH/$1"
+				as_user "$USERNAME" "rm -rf $JAR_STORAGE_PATH/$1"
 				echo "Jar group deleted."
 			else
 				echo "Jar group was NOT deleted."
@@ -596,7 +596,7 @@ jargroup_rename() {
 					return 1
 				else
 					# TODO: Update any symbolic links which point to a jar in this directory
-					as_user "mv '$JAR_STORAGE_PATH/$1' '$JAR_STORAGE_PATH/$2'"
+					as_user "$USERNAME" "mv '$JAR_STORAGE_PATH/$1' '$JAR_STORAGE_PATH/$2'"
 					echo "Renamed jar group \"$1\" to \"$2\"."
 				fi
 			else
@@ -631,10 +631,10 @@ server_create() {
 			return 1
 		else
 			printf "Creating server directory... "
-			as_user "mkdir -p '$SERVER_STORAGE_PATH/$1'"
-			as_user "touch '$SERVER_STORAGE_PATH/$1/$WHITELIST'"
-			as_user "touch '$SERVER_STORAGE_PATH/$1/$BANNED_IPS'"
-			as_user "touch '$SERVER_STORAGE_PATH/$1/$BANNED_PLAYERS'"
+			as_user "$USERNAME" "mkdir -p '$SERVER_STORAGE_PATH/$1'"
+			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$WHITELIST'"
+			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$BANNED_IPS'"
+			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$BANNED_PLAYERS'"
 			echo "Done."
 		fi
 	else
@@ -652,7 +652,7 @@ server_delete() {
 			read answer
 			if [[ "$answer" =~ ^y|Y|yes$ ]]; then
 				# TODO: stop the server if running first
-				as_user "rm -rf '$SERVER_STORAGE_PATH/$1'"
+				as_user "$USERNAME" "rm -rf '$SERVER_STORAGE_PATH/$1'"
 				echo "Server deleted."
 			else
 				echo "Server was NOT deleted."
@@ -683,7 +683,7 @@ server_rename() {
 					echo "Could not be renamed, there is already a server with the name \"$2\"."
 					return 1
 				else
-					as_user "mv '$SERVER_STORAGE_PATH/$1' '$SERVER_STORAGE_PATH/$2'"
+					as_user "$USERNAME" "mv '$SERVER_STORAGE_PATH/$1' '$SERVER_STORAGE_PATH/$2'"
 					echo "Renamed server \"$1\" to \"$2\"."
 				fi
 			else
@@ -711,7 +711,7 @@ server_start() {
 		
 		printf "Starting server... "
 		
-		as_user ${server_user_name[$1]} "cd ${server_path[$1]} && screen -dmS ${server_screen_name[$1]} ${server_invocation[$1]}"
+		as_user "$USERNAME" ${server_user_name[$1]} "cd ${server_path[$1]} && screen -dmS ${server_screen_name[$1]} ${server_invocation[$1]}"
 		server_log_wait_for_line $1 "$time_now" "${server_confirm_start[$1]}"
 		
 		echo "Done."
