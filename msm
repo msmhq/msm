@@ -1651,7 +1651,7 @@ main() {
 								local line=$(server_eval_and_get_line $id "kick $3" "${server_confirm_kick[$id]}" "${server_confirm_kick_fail[$id]}")
 								
 								local regex="${LOG_REGEX} ${server_confirm_kick[$id]}"
-								if [[ "$line" =~ $regex ]]; then
+								if [[ $line =~ $regex ]]; then
 									echo "Kicked \"$3\" from game."
 								fi
 								local regex="${LOG_REGEX} ${server_confirm_kick_fail[$id]}"
