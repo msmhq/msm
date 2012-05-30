@@ -711,7 +711,7 @@ server_start() {
 		
 		printf "Starting server... "
 		
-		as_user "$USERNAME" ${server_user_name[$1]} "cd ${server_path[$1]} && screen -dmS ${server_screen_name[$1]} ${server_invocation[$1]}"
+		as_user ${server_user_name[$1]} "cd ${server_path[$1]} && screen -dmS ${server_screen_name[$1]} ${server_invocation[$1]}"
 		server_log_wait_for_line $1 "$time_now" "${server_confirm_start[$1]}"
 		
 		echo "Done."
@@ -1619,6 +1619,27 @@ main() {
 					blacklist|bl)
 						;;
 					operator|op)
+						case "$3" in
+							add)
+								if server_is_running $id; then
+									server_eval $id "op $4"
+									echo "The player \"$4\" is now an operator for the server."
+								else
+									echo "Server \"${server_name[$id]}\" is not running."
+								fi
+								;;
+							remove)
+								if server_is_running $id; then
+									server_eval $id "deop $4"
+									echo "The player \"$4\" is no longer an operator for the server."
+								else
+									echo "Server \"${server_name[$id]}\" is not running."
+								fi
+								;;
+							*)
+								echo "Invalid command"
+								;;
+						esac
 						;;
 					gamemode|gm)
 						;;
