@@ -730,7 +730,7 @@ server_save_all() {
 		
 		echo "Done."
 	else
-		echo "Server \"${server_name[$1]}\" was not running."
+		echo "Server \"${server_name[$1]}\" is not running."
 	fi
 }
 
@@ -748,7 +748,7 @@ server_save_off() {
 		# Writes any in-memory data manged by the kernel to disk
 		sync
 	else
-		echo "Server \"${server_name[$1]}\" was not running."
+		echo "Server \"${server_name[$1]}\" is not running."
 	fi
 }
 
@@ -763,7 +763,7 @@ server_save_on() {
 		
 		echo "Done."
 	else
-		echo "Server \"${server_name[$1]}\" was not running."
+		echo "Server \"${server_name[$1]}\" is not running."
 	fi
 }
 
@@ -792,7 +792,7 @@ server_stop() {
 		
 		server_stop_now $1
    	else
-		echo "Server \"${server_name[$1]}\" was not running."
+		echo "Server \"${server_name[$1]}\" is not running."
 	fi
 }
 
@@ -814,7 +814,7 @@ server_stop_now() {
 		# Synchronise all worlds in RAM to disk
 		server_worlds_to_disk $1
 	else
-		echo "Server \"${server_name[$1]}\" was not running."
+		echo "Server \"${server_name[$1]}\" is not running."
 	fi
 }
 
@@ -948,7 +948,7 @@ server_connected() {
 			echo "$players"
 		fi
 	else
-		echo "Server \"${server_name[$id]}\" is stopped. No users are connected."
+		echo "Server \"${server_name[$id]}\" is not running. No users are connected."
 	fi
 }
 
@@ -1953,6 +1953,20 @@ main() {
 						fi
 						;;
 					save)
+						case "$3" in
+							on)
+								server_save_on $id
+								;;
+							off)
+								server_save_off $id
+								;;
+							all)
+								server_save_all $id
+								;;
+							*)
+								echo "Invalid command."
+								;;
+						esac
 						;;
 					cmd)
 						if [ -z "$3" ]; then
