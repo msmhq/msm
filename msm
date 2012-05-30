@@ -1132,6 +1132,8 @@ init() {
 		server_confirm_time_set_fail[$i]="$DEFAULT_CONFIRM_TIME_SET_FAIL"
 		server_confirm_time_add[$i]="$DEFAULT_CONFIRM_TIME_ADD"
 		server_confirm_time_add_fail[$i]="$DEFAULT_CONFIRM_TIME_ADD_FAIL"
+		server_confirm_toggledownfall[$i]="$DEFAULT_CONFIRM_TOGGLEDOWNFALL"
+		server_confirm_toggledownfall_fail[$i]="$DEFAULT_CONFIRM_TOGGLEDOWNFALL_FAIL"
 		server_complete_backup_follow_symlinks[$i]="$DEFAULT_COMPLETE_BACKUP_FOLLOW_SYMLINKS"
 		
 		
@@ -1180,6 +1182,8 @@ init() {
 					CONFIRM_TIME_SET_FAIL) server_confirm_time_set_fail[$i]="$value";;
 					CONFIRM_TIME_ADD) server_confirm_time_add[$i]="$value";;
 					CONFIRM_TIME_ADD_FAIL) server_confirm_time_add_fail[$i]="$value";;
+					CONFIRM_TOGGLEDOWNFALL) server_confirm_toggledownfall[$i]="$value";;
+					CONFIRM_TOGGLEDOWNFALL_FAIL) server_confirm_toggledownfall_fail[$i]="$value";;
 					COMPLETE_BACKUP_FOLLOW_SYMLINKS) server_complete_backup_follow_symlinks[$i]="$value";;
 				esac
 			done < "${server_conf[$i]}"
@@ -1691,7 +1695,21 @@ main() {
 								;;
 						esac
 						;;
-					toggledownfall)
+					toggledownfall|tdf)
+						if server_is_running $id; then
+							local line=$(server_eval_and_get_line $id "toggledownfall $3" "${server_confirm_toggledownfall[$id]}" "${server_confirm_toggledownfall_fail[$id]}")
+							
+							local regex="${LOG_REGEX} ${server_confirm_toggledownfall[$id]}"
+							if [[ "$line" =~ $regex ]]; then
+								echo ${line:36:(-3)}
+							fi
+							local regex="${LOG_REGEX} ${server_confirm_toggledownfall_fail[$id]}"
+							if [[ "$line" =~ $regex ]]; then
+								echo ${line:34:(-3)}
+							fi
+						else
+							echo "Server \"${server_name[$id]}\" is not running."
+						fi
 						;;
 					save)
 						;;
