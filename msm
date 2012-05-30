@@ -105,15 +105,14 @@ is_valid_name() {
 
 # Gets the latest jar from a jar group, based upon the date and time encoded
 # in the file name.
+# $1: The directory to search
 get_latest_file() {
 	local best_time=0
 	local best_file=""
 	
-	for file in "$1/*"; do
+	while IFS= read -r -d $'\0' file; do
 		# Remove the path, leaving just the file name
-		local name=$(basename "$file")
-		
-		local date_time=$(echo $name | awk -F '-' '{print $1 "-" $2 "-" $3 " " $4 ":" $5 ":" $6}')
+		local date_time=$(basename "$file" | awk -F '-' '{print $1 "-" $2 "-" $3 " " $4 ":" $5 ":" $6}')
 		
 		# Get the time in seconds since 1970 from file name
 		local seconds=$(date -d "$date_time" "+%s" 2> /dev/null)
@@ -123,7 +122,7 @@ get_latest_file() {
 			best_time=$seconds
 			best_file=$file
 		fi
-	done
+	done < <(find "$1" -maxdepth 1 -type f -print0)
 	
 	echo $best_file
 }
@@ -515,6 +514,7 @@ jargroup_getlatest() {
 					local file_name=$(ls -1 "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR")
 					local new_name="$(date +%F-%H-%M-%S)-$file_name"
 					local most_recent_jar=$(get_latest_file "$JAR_STORAGE_PATH/$1")
+					
 				
 					if [[ ! -e "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name"; then
 						# There is not a previous version to do a comparison against, or
