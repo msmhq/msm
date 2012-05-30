@@ -18,8 +18,9 @@
 # this script.
 
 
-### Source the configuration file
-source "/etc/msm.conf"
+### The configuration file
+CONFIG="/etc/msm.conf"
+
 
 ### Config variables the user should need/want to change
 
@@ -1088,6 +1089,59 @@ manager_stop_all_servers_now() {
 ### Main Functions
 
 init() {
+
+	# These defaults can be overriden in the file specified by $CONFIG
+	
+	USERNAME="minecraft"
+	SERVER_STORAGE_PATH="/opt/msm/servers"
+	JAR_STORAGE_PATH="/opt/msm/jars"
+	RAMDISK_STORAGE_PATH="/dev/shm/msm"
+	WORLD_ARCHIVE_PATH="/opt/msm/archives/worlds"
+	LOG_ARCHIVE_PATH="/opt/msm/archives/logs"
+	BACKUP_ARCHIVE_PATH="/opt/msm/archives/backups"
+	DEFAULT_SERVER_CONF="server.conf"
+	DEFAULT_SERVER_USER="minecraft"
+	DEFAULT_SCREEN_NAME="msm-{SERVER_NAME}"
+	DEFAULT_WORLD_STORAGE_PATH="worldstorage"
+	DEFAULT_COMPLETE_BACKUP_FOLLOW_SYMLINKS="false"
+	DEFAULT_LOG="server.log"
+	DEFAULT_PROPERTIES="server.properties"
+	DEFAULT_WHITELIST="white-list.txt"
+	DEFAULT_BANNED_PLAYERS="banned-players.txt"
+	DEFAULT_BANNDER_IPS="banned-ips.txt"
+	DEFAULT_OPS="ops.txt"
+	DEFAULT_JAR="server.jar"
+	DEFAULT_RAM="1024"
+	DEFAULT_INVOCATION="java -Xms{RAM}M -Xmx{RAM}M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:+AggressiveOpts -jar {JAR} nogui"
+	DEFAULT_STOP_DELAY=10
+	DEFAULT_RESTART_DELAY=10
+	DEFAULT_STOP_MESSAGE="SERVER SHUTTING DOWN IN {DELAY} SECONDS!"
+	DEFAULT_STOP_ABORT="Server shut down aborted."
+	DEFAULT_RESTART_MESSAGE="SERVER REBOOT IN {DELAY} SECONDS!"
+	DEFAULT_RESTART_ABORT="Server reboot aborted."
+	DEFAULT_WORLD_BACKUP_STARTED="Backing up world."
+	DEFAULT_WORLD_BACKUP_FINISHED="Backup complete."
+	DEFAULT_COMPLETE_BACKUP_STARTED="Backing up entire server."
+	DEFAULT_COMPLETE_BACKUP_FINISHED="Backup complete."
+	DEFAULT_CONFIRM_SAVE_ON="CONSOLE: Enabling level saving.."
+	DEFAULT_CONFIRM_SAVE_OFF="CONSOLE: Disabling level saving.."
+	DEFAULT_CONFIRM_SAVE_ALL="CONSOLE: Save complete."
+	DEFAULT_CONFIRM_START="Done"
+	DEFAULT_CONFIRM_KICK="CONSOLE: Kicking "
+	DEFAULT_CONFIRM_KICK_FAIL="Can't find user "
+	DEFAULT_CONFIRM_TIME_SET="CONSOLE: Set time to"
+	DEFAULT_CONFIRM_TIME_SET_FAIL="Unable to convert time value"
+	DEFAULT_CONFIRM_TIME_ADD="CONSOLE: Added .+ to time"
+	DEFAULT_CONFIRM_TIME_ADD_FAIL="Unable to convert time value"
+	DEFAULT_CONFIRM_TOGGLEDOWNFALL="CONSOLE: Toggling downfall on|off for world"
+	DEFAULT_CONFIRM_TOGGLEDOWNFALL_FAIL=".\[31m;1mNo world exists with the name"
+	DEFAULT_CONFIRM_GAMEMODE="CONSOLE: Setting .+ to game mode (1|0)"
+	DEFAULT_CONFIRM_GAMEMODE_FAIL_NO_USER="Can't find user .+"
+	DEFAULT_CONFIRM_GAMEMODE_FAIL_NO_CHANGE=".+ already has game mode (1|0)"
+	
+	# Sourcing $CONFIG will override the previous defaults, with new values
+	source $CONFIG
+
 	local i=0
 	local j=0
 	
@@ -1114,6 +1168,11 @@ init() {
 		server_screen_name[$i]="${DEFAULT_SCREEN_NAME//\{SERVER_NAME\}/${server_name[$i]}}" # Replace tags now, they cannot change
 		server_world_storage[$i]="${server_path[$i]}/$DEFAULT_WORLD_STORAGE_PATH"
 		server_log[$i]="${server_path[$i]}/$DEFAULT_LOG"
+		server_properties[$i]="${server_path[$i]}/$DEFAULT_PROPERTIES"
+		server_whitelist[$i]="${server_path[$i]}/$DEFAULT_WHITELIST"
+		server_banned_players[$i]="${server_path[$i]}/$DEFAULT_BANNED_PLAYERS"
+		server_bannded_ips[$i]="${server_path[$i]}/$DEFAULT_BANNED_IPS"
+		server_ops[$i]="${server_path[$i]}/$DEFAULT_OPS"
 		server_jar[$i]="${server_path[$i]}/$DEFAULT_JAR"
 		server_ram[$i]="$DEFAULT_RAM"
 		server_invocation[$i]="$DEFAULT_INVOCATION" # Don't replace tags yet, they may change
@@ -1131,7 +1190,6 @@ init() {
 		server_confirm_save_off[$i]="$DEFAULT_CONFIRM_SAVE_OFF"
 		server_confirm_save_all[$i]="$DEFAULT_CONFIRM_SAVE_ALL"
 		server_confirm_start[$i]="$DEFAULT_CONFIRM_START"
-		server_confirm_whitelist_list[$i]="$DEFAULT_CONFIRM_WHITELIST_LIST"
 		server_confirm_kick[$i]="$DEFAULT_CONFIRM_KICK"
 		server_confirm_kick_fail[$i]="$DEFAULT_CONFIRM_KICK_FAIL"
 		server_confirm_time_set[$i]="$DEFAULT_CONFIRM_TIME_SET"
@@ -1166,10 +1224,18 @@ init() {
 					SERVER_USER) server_user_name[$i]="$value";;
 					SCREEN_NAME) server_screen_name[$i]="$value";;
 					WORLD_STORAGE_DIR) server_world_storage[$i]="${server_path[$i]}/$value";;
+					
 					LOG) server_log[$i]="${server_path[$i]}/$value";;
+					PROPERTIES) server_properties[$i]="$value";;
+					WHITELIST) server_whitelist[$i]="$value";;
+					BANNED_PLAYERS) server_banned_players[$i]="$value";;
+					BANNED_IPS) server_banned_ips[$i]="$value";;
+					
+					OPS) server_ops[$i]="$value";;
 					JAR) server_jar[$i]="${server_path[$i]}/$value";;
 					RAM) server_ram[$i]="$value";;
 					INVOCATION) server_invocation[$i]="$value";;
+					
 					STOP_DELAY) server_stop_delay[$i]="$value";;
 					RESTART_DELAY) server_restart_delay[$i]="$value";;
 					STOP_MESSAGE) server_stop_message[$i]="$value";;
@@ -1178,6 +1244,7 @@ init() {
 					RESTART_ABORT) server_restart_abort[$i]="$value";;
 					WORLD_BACKUP_STARTED) server_world_backup_started[$i]="$value";;
 					WORLD_BACKUP_FINISHED) server_world_backup_finished[$i]="$value";;
+					
 					COMPLETE_BACKUP_STARTED) server_complete_backup_started[$i]="$value";;
 					COMPLETE_BACKUP_FINISHED) server_complete_backup_finished[$i]="$value";;
 					CONFIRM_SAVE_ON) server_confirm_save_on[$i]="$value";;
@@ -1602,11 +1669,7 @@ main() {
 								;;
 							list)
 								if server_is_running $id; then
-									local line=$(server_eval_and_get_line $id "whitelist list" "${server_confirm_whitelist_list[$id]}")
-
-									# Cuts the start off the line, and the last three (invisible)
-									# characters from the end.
-									local players=${line:49:(-3)}
+									local players=$(cat ${server_whitelist[$id]})
 
 									if [ -z "$players" ]; then
 										echo "No players are whitelisted."
