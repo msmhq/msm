@@ -1699,6 +1699,9 @@ main() {
 						;;
 					cmdlog)
 						;;
+					*)
+						echo "Invalid command."
+						;;
 				esac
 			else
 				echo "No server with that name."
