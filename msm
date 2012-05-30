@@ -1625,6 +1625,17 @@ main() {
 						fi
 						;;
 					say)
+						if [ -z "$3" ]; then
+							echo "Invalid command."
+						else
+							if server_is_running $id; then
+								echo $3
+								server_eval $id "say $3"
+								echo "Message sent to players."
+							else
+								echo "Server \"${server_name[$id]}\" is not running."
+							fi
+						fi
 						;;
 					time)
 						;;
