@@ -1744,6 +1744,13 @@ main() {
 							fi
 						fi
 						;;
+					console)
+						if server_is_running $id; then
+							as_user ${server_user_name[$1]} "screen -r ${server_screen_name[$1]}"
+						else
+							echo "Server \"${server_name[$id]}\" is not running."
+						fi
+						;;
 					*)
 						echo "Invalid command."
 						;;
