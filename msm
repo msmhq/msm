@@ -59,10 +59,16 @@ declare RESTART_COUNTDOWN
 # $1: The user to execute the command as
 # $2: The command to execute
 as_user() {
-	if [ $(whoami) == $1 ]; then
+	local user="$(whoami)"
+	if [ "$user" == "$1" ]; then
 		bash -c "$2"
 	else
-		su - $1 -s /bin/bash -c "$2"
+		if [ "$user" == "root" ]; then
+			su - $1 -s /bin/bash -c "$2"
+		else
+			echoerr "This command must be executed as the user \"$1\" or \"root\"."
+			exit 1
+		fi
 	fi
 }
 
