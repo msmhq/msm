@@ -1128,6 +1128,10 @@ init() {
 		server_confirm_whitelist_list[$i]="$DEFAULT_CONFIRM_WHITELIST_LIST"
 		server_confirm_kick[$i]="$DEFAULT_CONFIRM_KICK"
 		server_confirm_kick_fail[$i]="$DEFAULT_CONFIRM_KICK_FAIL"
+		server_confirm_time_set[$i]="$DEFAULT_CONFIRM_TIME_SET"
+		server_confirm_time_set_fail[$i]="$DEFAULT_CONFIRM_TIME_SET_FAIL"
+		server_confirm_time_add[$i]="$DEFAULT_CONFIRM_TIME_ADD"
+		server_confirm_time_add_fail[$i]="$DEFAULT_CONFIRM_TIME_ADD_FAIL"
 		server_complete_backup_follow_symlinks[$i]="$DEFAULT_COMPLETE_BACKUP_FOLLOW_SYMLINKS"
 		
 		
@@ -1172,6 +1176,10 @@ init() {
 					CONFIRM_WHITELIST_LIST) server_confirm_whitelist_list[$i]="$value";;
 					CONFIRM_KICK) server_confirm_kick[$i]="$value";;
 					CONFIRM_KICK_FAIL) server_confirm_kick_fail[$i]="$value";;
+					CONFIRM_TIME_SET) server_confirm_time_set[$i]="$value";;
+					CONFIRM_TIME_SET_FAIL) server_confirm_time_set_fail[$i]="$value";;
+					CONFIRM_TIME_ADD) server_confirm_time_add[$i]="$value";;
+					CONFIRM_TIME_ADD_FAIL) server_confirm_time_add_fail[$i]="$value";;
 					COMPLETE_BACKUP_FOLLOW_SYMLINKS) server_complete_backup_follow_symlinks[$i]="$value";;
 				esac
 			done < "${server_conf[$i]}"
@@ -1637,6 +1645,51 @@ main() {
 						fi
 						;;
 					time)
+						case "$3" in
+							set)
+								if [ -z "$4" ]; then
+									echo "Invalid command."
+								else
+									if server_is_running $id; then
+										local line=$(server_eval_and_get_line $id "time set $4" "${server_confirm_time_set[$id]}" "${server_confirm_time_set_fail[$id]}")
+										
+										local regex="${LOG_REGEX} ${server_confirm_time_set[$id]}"
+										if [[ "$line" =~ $regex ]]; then
+											echo "Set time to \"$4\"."
+										fi
+										local regex="${LOG_REGEX} ${server_confirm_time_set_fail[$id]}"
+										if [[ "$line" =~ $regex ]]; then
+											echo "Unable to convert \"$4\" to a time."
+										fi
+									else
+										echo "Server \"${server_name[$id]}\" is not running."
+									fi
+								fi
+								;;
+							add)
+								if [ -z "$4" ]; then
+									echo "Invalid command."
+								else
+									if server_is_running $id; then
+										local line=$(server_eval_and_get_line $id "time add $4" "${server_confirm_time_add[$id]}" "${server_confirm_time_add_fail[$id]}")
+										
+										local regex="${LOG_REGEX} ${server_confirm_time_add[$id]}"
+										if [[ "$line" =~ $regex ]]; then
+											echo "Added \"$4\" to time."
+										fi
+										local regex="${LOG_REGEX} ${server_confirm_time_add_fail[$id]}"
+										if [[ "$line" =~ $regex ]]; then
+											echo "Unable to convert \"$4\" to a time."
+										fi
+									else
+										echo "Server \"${server_name[$id]}\" is not running."
+									fi
+								fi
+								;;
+							*)
+								echo "Invalid command."
+								;;
+						esac
 						;;
 					toggledownfall)
 						;;
