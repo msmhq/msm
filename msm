@@ -1686,6 +1686,116 @@ main() {
 						esac
 						;;
 					blacklist|bl)
+						case "$3" in
+							player)
+								if [ -z "$5" ]; then
+									echo "Invalid command."
+								else
+									case "$4" in
+										add)
+											for player in ${*:5}; do
+											 	server_eval $id "ban $player"
+											done
+											if [[ $# > 5 ]]; then
+												echo -n "Blacklisted the following players: "
+												echo -n "$5"
+												for player in ${*:6}; do
+												 	echo -n ", $player"
+												done
+												echo "."
+											else
+												echo "Blacklisted \"$5\"."
+											fi
+											;;
+										remove)
+											for player in ${*:5}; do
+											 	server_eval $id "pardon $player"
+											done
+											if [[ $# > 5 ]]; then
+												echo -n "Removed the following players from the blacklist: "
+												echo -n "$5"
+												for player in ${*:6}; do
+												 	echo -n ", $player"
+												done
+												echo "."
+											else
+												echo "Removed \"$5\" from the blacklist."
+											fi
+											;;
+										*)
+											echo "Invalid command."
+											;;
+									esac
+								fi
+								;;
+							ip)
+								case "$4" in
+									add)
+										for address in ${*:5}; do
+										 	server_eval $id "ban-ip $address"
+										done
+										if [[ $# > 5 ]]; then
+											echo -n "Blacklisted the following ip addresses: "
+											echo -n "$5"
+											for player in ${*:6}; do
+											 	echo -n ", $address"
+											done
+											echo "."
+										else
+											echo "Blacklisted \"$5\"."
+										fi
+										;;
+									remove)
+										for address in ${*:5}; do
+										 	server_eval $id "pardon-ip $address"
+										done
+										if [[ $# > 5 ]]; then
+											echo -n "Removed the following ip addresses from the blacklist: "
+											echo -n "$5"
+											for player in ${*:6}; do
+											 	echo -n ", $address"
+											done
+											echo "."
+										else
+											echo "Removed \"$5\" from the ip blacklist."
+										fi
+										;;
+									*)
+										echo "Invalid command."
+										;;
+								esac
+								;;
+							list)
+								if server_is_running $id; then
+									local players=$(cat ${server_banned_players[$id]})
+									
+									local ips=$(cat ${server_banned_ips[$id]})
+
+									if [[ -z "$players" && -z "$ips" ]]; then
+										echo "The blacklist is empty."
+									else
+										if [[ ! -z "$players" ]]; then
+											echo "Players:"
+											for name in $players; do
+												echo "    $name"
+											done
+										fi
+										
+										if [[ ! -z "$ips" ]]; then
+											echo "IP Addresses:"
+											for address in $ips; do
+												echo "    $address"
+											done
+										fi
+									fi
+								else
+									echo "Server \"${server_name[$id]}\" is not running."
+								fi
+								;;
+							*)
+								echo "Invalid command."
+								;;
+						esac
 						;;
 					operator|op)
 						case "$3" in
