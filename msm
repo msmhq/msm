@@ -1720,8 +1720,29 @@ main() {
 					save)
 						;;
 					cmd)
+						if [ -z "$3" ]; then
+							echo "Invalid command."
+						else
+							if server_is_running $id; then
+								server_eval $id "${*:3}"
+								echo "Command sent."
+							else
+								echo "Server \"${server_name[$id]}\" is not running."
+							fi
+						fi
 						;;
 					cmdlog)
+						if [ -z "$3" ]; then
+							echo "Invalid command."
+						else
+							if server_is_running $id; then
+								server_eval $id "${*:3}"
+								echo "Now watching logs (press Ctrl+C to exit):"
+								as_user ${server_user_name[$id]} "tail --follow --lines=0 --sleep-interval=0.1 ${server_log[$id]}"
+							else
+								echo "Server \"${server_name[$id]}\" is not running."
+							fi
+						fi
 						;;
 					*)
 						echo "Invalid command."
