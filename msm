@@ -503,7 +503,7 @@ jargroup_getlatest() {
 					return 1
 				fi
 			
-				as_user "$USERNAME" "wget --quiet --input-file='$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET' --directory-prefix='$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' --no-check-certificate"
+				as_user "$USERNAME" "wget --quiet --trust-server-names --no-check-certificate --input-file='$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET' --directory-prefix='$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'"
 				echo "Done."
 			
 				local num_files=$(as_user "$USERNAME" "ls -1 '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' | wc -l")
@@ -516,7 +516,7 @@ jargroup_getlatest() {
 					local most_recent_jar=$(get_latest_file "$JAR_STORAGE_PATH/$1")
 					
 				
-					if [[ ! -e "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name"; then
+					if [[ ! -e "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name" > /dev/null; then
 						# There is not a previous version to do a comparison against, or
 						# The previous version is different:
 						# Add it to the group
@@ -526,8 +526,8 @@ jargroup_getlatest() {
 					
 						as_user "$USERNAME" "mv '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name' '$JAR_STORAGE_PATH/$1/$new_name'"
 					
-						if [[ $was_previous == 0 ]]; then
-							echo "Downloaded version was different to previous latest. Saved as \"$1/$new_name\"."
+						if [[ ! -z $most_recent_jar ]]; then
+							echo "Downloaded version was different to previous latest. Saved as \"$JAR_STORAGE_PATH/$1/$new_name\"."
 						else
 							echo "Saved as \"$JAR_STORAGE_PATH/$1/$new_name\"."
 						fi
