@@ -1140,6 +1140,9 @@ init() {
 		server_confirm_time_add_fail[$i]="$DEFAULT_CONFIRM_TIME_ADD_FAIL"
 		server_confirm_toggledownfall[$i]="$DEFAULT_CONFIRM_TOGGLEDOWNFALL"
 		server_confirm_toggledownfall_fail[$i]="$DEFAULT_CONFIRM_TOGGLEDOWNFALL_FAIL"
+		server_confirm_gamemode[$i]="$DEFAULT_CONFIRM_GAMEMODE"
+		server_confirm_gamemode_fail_no_user[$i]="$DEFAULT_CONFIRM_GAMEMODE_FAIL_NO_USER"
+		server_confirm_gamemode_fail_no_change[$i]="$DEFAULT_CONFIRM_GAMEMODE_FAIL_NO_CHANGE"
 		server_complete_backup_follow_symlinks[$i]="$DEFAULT_COMPLETE_BACKUP_FOLLOW_SYMLINKS"
 		
 		
@@ -1190,6 +1193,9 @@ init() {
 					CONFIRM_TIME_ADD_FAIL) server_confirm_time_add_fail[$i]="$value";;
 					CONFIRM_TOGGLEDOWNFALL) server_confirm_toggledownfall[$i]="$value";;
 					CONFIRM_TOGGLEDOWNFALL_FAIL) server_confirm_toggledownfall_fail[$i]="$value";;
+					CONFIRM_GAMEMODE) server_confirm_gamemode[$i]="$value";;
+					CONFIRM_GAMEMODE_FAIL_NO_USER) server_confirm_gamemode_fail_no_user[$i]="$value";;
+					CONFIRM_GAMEMODE_FAIL_NO_CHANGE) server_confirm_gamemode_fail_no_change[$i]="$value";;
 					COMPLETE_BACKUP_FOLLOW_SYMLINKS) server_complete_backup_follow_symlinks[$i]="$value";;
 				esac
 			done < "${server_conf[$i]}"
@@ -1642,6 +1648,41 @@ main() {
 						esac
 						;;
 					gamemode|gm)
+						case "$3" in
+							survival|creative|0|1)
+								if [ -z "$4" ]; then
+									echo "Invalid command."
+								else
+									if server_is_running $id; then
+										case "$3" in
+											creative|1) local mode=1;;
+											survival|0) local mode=0;;
+											*) echoerr "Invalid mode"; exit 1;;
+										esac
+										
+										local line=$(server_eval_and_get_line $id "gamemode $4 $mode" "${server_confirm_gamemode[$id]}" "${server_confirm_gamemode_fail_no_user[$id]}" "${server_confirm_gamemode_fail_no_change[$id]}")
+
+										local regex="${LOG_REGEX} ${server_confirm_gamemode[$id]}"
+										if [[ $line =~ $regex ]]; then
+											echo "Changed game mode of \"$4\" to \"$3\"."
+										fi
+										local regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_user[$id]}"
+										if [[ $line =~ $regex ]]; then
+											echo "The player \"$4\" was not found to be logged on."
+										fi
+										local regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_change[$id]}"
+										if [[ $line =~ $regex ]]; then
+											echo "The player \"$4\" was already in \"$3\" mode."
+										fi
+									else
+										echo "Server \"${server_name[$id]}\" is not running."
+									fi
+								fi
+								;;
+							*)
+								echo "Invalid command."
+								;;
+						esac
 						;;
 					kick)
 						if [ -z "$3" ]; then
