@@ -1262,7 +1262,7 @@ init() {
 				case "$name" in
 					SERVER_USER) server_user_name[$i]="$value";;
 					SCREEN_NAME) server_screen_name[$i]="$value";;
-					WORLD_STORAGE_DIR) server_world_storage[$i]="${server_path[$i]}/$value";;
+					WORLD_STORAGE_PATH) server_world_storage[$i]="${server_path[$i]}/$value";;
 					
 					LOG) server_log[$i]="${server_path[$i]}/$value";;
 					PROPERTIES) server_properties[$i]="$value";;
