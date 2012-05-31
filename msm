@@ -1735,16 +1735,12 @@ main() {
 								fi
 								;;
 							list)
-								if server_is_running $id; then
-									local players=$(cat ${server_whitelist[$id]})
+								local players=$(cat ${server_whitelist[$id]})
 
-									if [ -z "$players" ]; then
-										echo "No players are whitelisted."
-									else
-										echo "$players"
-									fi
+								if [ -z "$players" ]; then
+									echo "No players are whitelisted."
 								else
-									echo "Server \"${server_name[$id]}\" is not running."
+									echo "$players"
 								fi
 								;;
 							*)
@@ -1833,30 +1829,26 @@ main() {
 								esac
 								;;
 							list)
-								if server_is_running $id; then
-									local players=$(cat ${server_banned_players[$id]})
-									
-									local ips=$(cat ${server_banned_ips[$id]})
+								local players=$(cat ${server_banned_players[$id]})
+								
+								local ips=$(cat ${server_banned_ips[$id]})
 
-									if [[ -z "$players" && -z "$ips" ]]; then
-										echo "The blacklist is empty."
-									else
-										if [[ ! -z "$players" ]]; then
-											echo "Players:"
-											for name in $players; do
-												echo "    $name"
-											done
-										fi
-										
-										if [[ ! -z "$ips" ]]; then
-											echo "IP Addresses:"
-											for address in $ips; do
-												echo "    $address"
-											done
-										fi
-									fi
+								if [[ -z "$players" && -z "$ips" ]]; then
+									echo "The blacklist is empty."
 								else
-									echo "Server \"${server_name[$id]}\" is not running."
+									if [[ ! -z "$players" ]]; then
+										echo "Players:"
+										for name in $players; do
+											echo "    $name"
+										done
+									fi
+									
+									if [[ ! -z "$ips" ]]; then
+										echo "IP Addresses:"
+										for address in $ips; do
+											echo "    $address"
+										done
+									fi
 								fi
 								;;
 							*)
