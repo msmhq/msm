@@ -221,6 +221,11 @@ _msm() {
 									options="survival creative"
 								fi
 								;;
+							time)
+								if [[ $COMP_CWORD == 3 ]]; then
+									options="set add"
+								fi
+								;;
 						esac
 								
 					fi
