@@ -944,7 +944,7 @@ server_backup() {
 # $2: The name of the jar group
 # $3: Optionally, a specific jar to use.
 server_set_jar() {
-	if [ -e "$JAR_STORAGE_PATH/$3" ]; then
+	if [ -e "$JAR_STORAGE_PATH/$2" ]; then
 		
 		if [ -z "$3" ]; then
 			# If a specific jar file is not mentioned
