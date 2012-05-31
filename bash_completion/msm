@@ -90,6 +90,26 @@ _msm() {
 									options="$(find "$JAR_STORAGE_PATH/${COMP_WORDS[3]}" -type f -name "*.jar" -exec basename {} \;)"
 								fi
 								;;
+							whitelist|wl)
+								if [[ $COMP_CWORD == 3 ]]; then
+									options="on off add remove list"
+								else
+									case "${COMP_WORDS[3]}" in
+										remove)
+											whitelist_path="${server_path}/$DEFAULT_WHITELIST"
+											
+											# Override with server specific value if present
+											server_conf="${server_path}/$DEFAULT_SERVER_CONF"
+											if [ -e "$server_conf" ]; then
+												whitelist_path=$(grep "^WHITELIST=\".*\"" $server_conf | awk -F '"' '{print $2}')
+											fi
+											
+											if [ -f "$whitelist_path" ]; then
+												options=$(cat "$whitelist_path")
+											fi
+											;;
+									esac
+								fi
 						esac
 								
 					fi
