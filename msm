@@ -1614,7 +1614,7 @@ main() {
 						fi
 						;;
 					connected)
-						server_connected $1
+						server_connected $id
 						;;
 					worlds)
 						case "$3" in
