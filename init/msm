@@ -1544,7 +1544,7 @@ main() {
 			echo -e "  <server> jar <jargroup> [<file>] \t\tSets a server's jar file"
 			echo -e
 			echo -e "--Server Pass Through Commands----------------------------------"
-			echo -e "  <server> wl on|off <player> \t\t\tEnabled/disable server whitelist check"
+			echo -e "  <server> wl on|off \t\t\t\tEnables/disables server whitelist checking"
 			echo -e "  <server> wl add|remove <player> \t\tAdd/remove a player to/from a server's whitelist"
 			echo -e "  <server> wl list \t\t\t\tList the players whitelisted for a server"
 			echo -e "  <server> bl player add|remove <player> \tBan/pardon a player from/for a server"
