@@ -19,7 +19,7 @@ A single init script which makes running multiple Minecraft/Bukkit servers easie
 ## Upcomming features
 
 * **Restore:** Roll-back to an old world or whole server backup automatically.
-* **QuickBackup:** If you store your backups non-locally (maybe on a NAS), QuickBackup optionally creates a backup locally for speed, and then moves it after your players are building again!
+* **QuickBackup:** If you store your backups non-locally (maybe on a NAS), QuickBackup optionally creates a backup locally for speed, and then moves it after your players are building again! My initial testing shows a 54 second network backup confaltes to 23 seconds of ingame time.
 
 ## Acknowledgements
 
