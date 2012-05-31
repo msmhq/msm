@@ -68,7 +68,7 @@ as_user() {
 
 # Executes the command "$1" as SERVER_USER but returns stderr instead
 as_user_stderr() {
-	as_user "$1" > /dev/null 2>&1
+	as_user "$@"  > /dev/null 2>&1
 }
 
 # Echo to stderr
