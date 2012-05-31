@@ -905,7 +905,7 @@ server_log_roll() {
 		
 		if [ -e "${server_log_archive_path[$1]}/${file_name}.gz" ]; then
 			as_user ${server_user_name[$1]} "cp \"/dev/null\" ${server_log[$1]}"
-			as_user ${server_user_name[$1]} "echo \"Previous logs can be found at \\\"${server_log_archive_path[$i]}\\\"\" > ${server_log[$1]}"
+			as_user ${server_user_name[$1]} "echo \"Previous logs can be found at \\\"${server_log_archive_path[$1]}\\\"\" > ${server_log[$1]}"
 		else
 			echoerr "Failed."
 			return 1
