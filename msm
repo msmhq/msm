@@ -1545,6 +1545,7 @@ main() {
 			echo -e "  <server> worlds backup \t\t\tMakes a backup of all worlds a server has"
 			echo -e "  <server> logroll \t\t\t\tMove a server log to a gziped archive, to reduce lag"
 			echo -e "  <server> backup \t\t\t\tMakes a backup of an entire server directory"
+			echo -e "  <server> jar <jargroup> [<file>] \t\tSets a server's jar file"
 			echo -e
 			echo -e "--Server Pass Through Commands----------------------------------"
 			echo -e "  <server> wl on|off <player> \t\t\tEnabled/disable server whitelist check"
