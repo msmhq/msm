@@ -1690,7 +1690,7 @@ main() {
 						if [ -z "$3" ]; then
 							echo "Invalid command."
 						else
-							server_set_jar $id "$3"
+							server_set_jar $id "$3" "$4"
 						fi
 						;;
 					whitelist|wl)
