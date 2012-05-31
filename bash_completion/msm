@@ -1,5 +1,67 @@
+### Utility Functions
+
+CONFIG="/etc/msm.conf"
+
+# Loads variables
+__init() {
+	source "$CONFIG"
+}
+
+# Loads server variables
+# $1: The name of a server
+__init_server() {
+	SERVER_PATH="$SERVER_STORAGE_PATH/$1"
+	SERVER_CONF="$SERVER_STORAGE_PATH/$1/$DEFAULT_SERVER_CONF"
+
+	SERVER_USER="$DEFAULT_SERVER_USER"
+	SCREEN_NAME="${DEFAULT_SCREEN_NAME//\{SERVER_NAME\}/${1}}"
+	WORLD_STORAGE_PATH="$SERVER_PATH/$DEFAULT_WORLD_STORAGE_PATH"
+
+	WHITELIST="$SERVER_PATH/$DEFAULT_WHITELIST"
+	BANNED_PLAYERS="$SERVER_PATH/$DEFAULT_BANNED_PLAYERS"
+	BANNED_IPS="$SERVER_PATH/$DEFAULT_BANNED_IPS"
+	OPS="$SERVER_PATH/$DEFAULT_OPS"
+
+	JAR="$DEFAULT_JAR"
+	RAM="$DEFAULT_RAM"
+	INVOCATION="$DEFAULT_INVOCATION"
+
+	if [[ -f "$SERVER_CONF" ]]; then
+		local name value
+	
+		while read line; do 
+		 	# ignore comment lines
+			echo "$line" | grep "^#" >/dev/null 2>&1 && continue
+	
+		   	# if not empty, get the name and value of the setting
+		   	if [ ! -z "$line" ]; then
+			 	name="$(echo $line | awk -F '=' '{print $1}')"
+				value="$(echo $line | awk -F '\"' '{print $2}')"
+			fi
+		
+			case "$name" in
+				SERVER_USER) SERVER_USER="$value";;
+				SCREEN_NAME) SCREEN_NAME="$value";;
+				WORLD_STORAGE_PATH) WORLD_STORAGE_DIR="$SERVER_PATH/$value";;
+			
+				WHITELIST) WHITELIST="$SERVER_PATH/$value";;
+				BANNED_PLAYERS) BANNED_PLAYERS="$SERVER_PATH/$value";;
+				BANNED_IPS) BANNED_IPS="$SERVER_PATH/$value";;
+				OPS) OPS="$SERVER_PATH/$value";;
+			
+				JAR) JAR="$SERVER_PATH/$value";;
+				RAM) RAM="$value";;
+				INVOCATION) INVOCATION="$value";;
+			esac
+		done < "$SERVER_CONF"
+	fi
+}
+
+
+### Auto Completion Function
+
 _msm() {
-	source "/etc/msm.conf"
+	__init
 
 	local base current options
 	COMPREPLY=()
@@ -51,6 +113,8 @@ _msm() {
 				if [ -e "$server_path" ]; then
 					# If the server exists
 					
+					__init_server "${COMP_WORDS[1]}"
+					
 					if [[ $COMP_CWORD == 2 ]]; then
 						options="start stop restart status connected worlds logroll backup jar whitelist blacklist operator gamemode kick say time tdf toggledownfall save cmd cmdlog"
 					else
@@ -67,16 +131,8 @@ _msm() {
 									case "${COMP_WORDS[3]}" in
 										ram)
 											if [[ $COMP_CWORD == 4 ]]; then
-												local world_dir="${server_path}/$DEFAULT_WORLD_STORAGE_PATH"
-										
-												# Override with server specific value if present
-												local server_conf="${server_path}/$DEFAULT_SERVER_CONF"
-												if [ -f "$server_conf" ]; then
-													world_dir=$(grep "^WORLD_STORAGE_PATH=\".*\"" $server_conf | awk -F '"' '{print $2}')
-												fi
-											
-												if [ -d "$world_dir" ]; then
-													options="$(ls -1 "$world_dir")"
+												if [ -d "$WORLD_STORAGE_PATH" ]; then
+													options="$(ls -1 "$WORLD_STORAGE_PATH")"
 												fi
 											fi
 											;;
@@ -99,16 +155,8 @@ _msm() {
 									case "${COMP_WORDS[3]}" in
 										remove)
 											if [[ $COMP_CWORD == 4 ]]; then
-												local whitelist_path="${server_path}/$DEFAULT_WHITELIST"
-											
-												# Override with server specific value if present
-												local server_conf="${server_path}/$DEFAULT_SERVER_CONF"
-												if [ -f "$server_conf" ]; then
-													whitelist_path=$(grep "^WHITELIST=\".*\"" $server_conf | awk -F '"' '{print $2}')
-												fi
-											
-												if [ -f "$whitelist_path" ]; then
-													options="$(cat "$whitelist_path")"
+												if [ -f "$WHITELIST" ]; then
+													options="$(cat "$WHITELIST")"
 												fi
 											fi
 											;;
@@ -127,16 +175,8 @@ _msm() {
 												case "${COMP_WORDS[4]}" in
 													remove)
 														if [[ $COMP_CWORD == 5 ]]; then
-															local banned_players_path="${server_path}/$DEFAULT_BANNED_PLAYERS"
-
-															# Override with server specific value if present
-															local server_conf="${server_path}/$DEFAULT_SERVER_CONF"
-															if [ -f "$server_conf" ]; then
-																banned_players_path=$(grep "^BANNED_PLAYERS=\".*\"" $server_conf | awk -F '"' '{print $2}')
-															fi
-
-															if [ -f "$banned_players_path" ]; then
-																options="$(cat "$banned_players_path")"
+															if [ -f "$BANNED_PLAYERS" ]; then
+																options="$(cat "$BANNED_PLAYERS")"
 															fi
 														fi
 														;;
@@ -150,16 +190,8 @@ _msm() {
 												case "${COMP_WORDS[4]}" in
 													remove)
 														if [[ $COMP_CWORD == 5 ]]; then
-															local banned_ips_path="${server_path}/$DEFAULT_BANNED_IPS"
-
-															# Override with server specific value if present
-															local server_conf="${server_path}/$DEFAULT_SERVER_CONF"
-															if [ -f "$server_conf" ]; then
-																banned_ips_path=$(grep "^BANNED_IPS=\".*\"" $server_conf | awk -F '"' '{print $2}')
-															fi
-
-															if [ -f "$banned_ips_path" ]; then
-																options="$(cat "$banned_ips_path")"
+															if [ -f "$BANNED_IPS" ]; then
+																options="$(cat "$BANNED_IPS")"
 															fi
 														fi
 														;;
@@ -176,16 +208,8 @@ _msm() {
 									case "${COMP_WORDS[3]}" in
 										remove)
 											if [[ $COMP_CWORD == 4 ]]; then
-												local ops_path="${server_path}/$DEFAULT_OPS"
-												
-												# Override with server specific value if present
-												local server_conf="${server_path}/$DEFAULT_SERVER_CONF"
-												if [ -f "$server_conf" ]; then
-													ops_path=$(grep "^OPS=\".*\"" $server_conf | awk -F '"' '{print $2}')
-												fi
-
-												if [ -f "$ops_path" ]; then
-													options="$(cat "$ops_path")"
+												if [ -f "$OPS" ]; then
+													options="$(cat "$OPS")"
 												fi
 											fi
 											;;
