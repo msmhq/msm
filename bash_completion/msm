@@ -66,16 +66,18 @@ _msm() {
 								else
 									case "${COMP_WORDS[3]}" in
 										ram)
-											world_dir="${server_path}/$DEFAULT_WORLD_STORAGE_PATH"
+											if [[ $COMP_CWORD == 4 ]]; then
+												local world_dir="${server_path}/$DEFAULT_WORLD_STORAGE_PATH"
 										
-											# Override with server specific value if present
-											server_conf="${server_path}/$DEFAULT_SERVER_CONF"
-											if [ -e "$server_conf" ]; then
-												world_dir=$(grep "^WORLD_STORAGE_PATH=\".*\"" $server_conf | awk -F '"' '{print $2}')
-											fi
+												# Override with server specific value if present
+												local server_conf="${server_path}/$DEFAULT_SERVER_CONF"
+												if [ -f "$server_conf" ]; then
+													world_dir=$(grep "^WORLD_STORAGE_PATH=\".*\"" $server_conf | awk -F '"' '{print $2}')
+												fi
 											
-											if [ -d "$world_dir" ]; then
-												options="$(ls -1 "$world_dir")"
+												if [ -d "$world_dir" ]; then
+													options="$(ls -1 "$world_dir")"
+												fi
 											fi
 											;;
 									esac
@@ -96,16 +98,18 @@ _msm() {
 								else
 									case "${COMP_WORDS[3]}" in
 										remove)
-											whitelist_path="${server_path}/$DEFAULT_WHITELIST"
+											if [[ $COMP_CWORD == 4 ]]; then
+												local whitelist_path="${server_path}/$DEFAULT_WHITELIST"
 											
-											# Override with server specific value if present
-											server_conf="${server_path}/$DEFAULT_SERVER_CONF"
-											if [ -e "$server_conf" ]; then
-												whitelist_path=$(grep "^WHITELIST=\".*\"" $server_conf | awk -F '"' '{print $2}')
-											fi
+												# Override with server specific value if present
+												local server_conf="${server_path}/$DEFAULT_SERVER_CONF"
+												if [ -f "$server_conf" ]; then
+													whitelist_path=$(grep "^WHITELIST=\".*\"" $server_conf | awk -F '"' '{print $2}')
+												fi
 											
-											if [ -f "$whitelist_path" ]; then
-												options=$(cat "$whitelist_path")
+												if [ -f "$whitelist_path" ]; then
+													options="$(cat "$whitelist_path")"
+												fi
 											fi
 											;;
 									esac
