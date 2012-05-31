@@ -184,7 +184,7 @@ world_backup() {
 	
 	file_name="$(date "+%F-%H-%M-%S").zip"
 	local server_id=${world_server_id[$1]}
-	as_user ${server_user_name[$server_id]} "mkdir -p \"${world_backup_path[$1]}\" && cd \"${server_world_storage[$server_id]}\" && zip -rq \"${world_backup_path[$1]}/${file_name}\" ${world_name[$1]}"
+	as_user ${server_user_name[$server_id]} "mkdir -p \"${world_backup_path[$1]}\" && cd \"${server_world_storage[$server_id]}\" && zip -rq \"${world_backup_path[$1]}/${file_name}\" \"${world_name[$1]}\""
 
 	echo "Done."
 }
