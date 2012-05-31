@@ -32,7 +32,7 @@ _msm() {
 		esac
 	else
 		local servers=$(ls -1 $SERVER_STORAGE_PATH)
-		options="start stop restart server jargroup $servers"
+		options="help start stop restart server jargroup $servers"
 	fi
 	
 	COMPREPLY=( $(compgen -W "${options}" -- ${current}) )
