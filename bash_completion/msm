@@ -80,6 +80,16 @@ _msm() {
 											;;
 									esac
 								fi
+								;;
+							jar)
+								if [[ $COMP_CWORD == 3 && -d "$JAR_STORAGE_PATH" ]]; then
+									options="$(ls -1 "$JAR_STORAGE_PATH")"
+								fi
+								
+								if [[ $COMP_CWORD == 4 && -d "$JAR_STORAGE_PATH/${COMP_WORDS[3]}" ]]; then
+									options="$(find "$JAR_STORAGE_PATH/${COMP_WORDS[3]}" -type f -name "*.jar" -exec basename {} \;)"
+								fi
+								;;
 						esac
 								
 					fi
