@@ -1,0 +1,35 @@
+_msm() {
+	source "/etc/msm.conf"
+
+	local base current options
+	COMPREPLY=()
+	
+	current="${COMP_WORDS[$COMP_CWORD]}"
+	base="${COMP_WORDS[1]}"
+	
+	if [[ $COMP_CWORD -gt 1 ]]; then
+		case "$base" in
+			start)
+				;;
+			stop)
+				;;
+			restart)
+				;;
+			server)
+				;;
+			jargroup)
+				;;
+			*)
+				# Server options
+				;;
+		esac
+	else
+		local servers=$(ls -1 $SERVER_STORAGE_PATH)
+		options="start stop restart server jargroup $servers"
+	fi
+	
+	COMPREPLY=( $(compgen -W "${options}" -- ${current}) )
+	return 0
+}
+
+complete -F _msm msm
