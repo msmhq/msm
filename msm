@@ -1554,6 +1554,7 @@ main() {
 			echo -e "  <server> bl ip add|remove <ip address> \tBan/pardon an IP address from/for a server"
 			echo -e "  <server> bl list \t\t\t\tLists the banned players and IP address for a server"
 			echo -e "  <server> op add|remove <player> \t\tAdd/remove operator status for a player on a server"
+			echo -e "  <server> op list \t\t\t\tLists the operator players for a server"
 			echo -e "  <server> gm survival|creative <player> \tChange the game mode for a player on a server"
 			echo -e "  <server> kick <player> \t\t\tForcibly disconnect a player from a server"
 			echo -e "  <server> say <message> \t\t\tBroadcast a (pink) message to all players on a server"
@@ -1872,6 +1873,15 @@ main() {
 									echo "The player \"$4\" is no longer an operator for the server."
 								else
 									echo "Server \"${server_name[$id]}\" is not running."
+								fi
+								;;
+							list)
+								local players=$(cat ${server_ops[$id]})
+
+								if [ -z "$players" ]; then
+									echo "No players are operators."
+								else
+									echo "$players"
 								fi
 								;;
 							*)
