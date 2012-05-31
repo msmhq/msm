@@ -10,10 +10,17 @@ _msm() {
 	if [[ $COMP_CWORD -gt 1 ]]; then
 		case "$base" in
 			start)
+				# Do nothing there is no more
 				;;
 			stop)
+				if [[ $COMP_CWORD == 2 ]]; then
+					options="now"
+				fi
 				;;
 			restart)
+				if [[ $COMP_CWORD == 2 ]]; then
+					options="now"
+				fi
 				;;
 			server)
 				;;
