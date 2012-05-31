@@ -114,6 +114,61 @@ _msm() {
 											;;
 									esac
 								fi
+								;;
+							blacklist|bl)
+								if [[ $COMP_CWORD == 3 ]]; then
+									options="player ip list"
+								else
+									case "${COMP_WORDS[3]}" in
+										player)
+											if [[ $COMP_CWORD == 4 ]]; then
+												options="add remove"
+											else
+												case "${COMP_WORDS[4]}" in
+													remove)
+														if [[ $COMP_CWORD == 5 ]]; then
+															local banned_players_path="${server_path}/$DEFAULT_BANNED_PLAYERS"
+
+															# Override with server specific value if present
+															local server_conf="${server_path}/$DEFAULT_SERVER_CONF"
+															if [ -f "$server_conf" ]; then
+																banned_players_path=$(grep "^BANNED_PLAYERS=\".*\"" $server_conf | awk -F '"' '{print $2}')
+															fi
+
+															if [ -f "$banned_players_path" ]; then
+																options="$(cat "$banned_players_path")"
+															fi
+														fi
+														;;
+												esac
+											fi
+											;;
+										ip)
+											if [[ $COMP_CWORD == 4 ]]; then
+												options="add remove"
+											else
+												case "${COMP_WORDS[4]}" in
+													remove)
+														if [[ $COMP_CWORD == 5 ]]; then
+															local banned_ips_path="${server_path}/$DEFAULT_BANNED_IPS"
+
+															# Override with server specific value if present
+															local server_conf="${server_path}/$DEFAULT_SERVER_CONF"
+															if [ -f "$server_conf" ]; then
+																banned_ips_path=$(grep "^BANNED_IPS=\".*\"" $server_conf | awk -F '"' '{print $2}')
+															fi
+
+															if [ -f "$banned_ips_path" ]; then
+																options="$(cat "$banned_ips_path")"
+															fi
+														fi
+														;;
+												esac
+											fi
+											;;
+									esac
+								fi
+								;;
 						esac
 								
 					fi
