@@ -216,6 +216,11 @@ _msm() {
 									esac
 								fi
 								;;
+							gamemode|gm)
+								if [[ $COMP_CWORD == 3 ]]; then
+									options="survival creative"
+								fi
+								;;
 						esac
 								
 					fi
