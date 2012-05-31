@@ -99,7 +99,7 @@ _msm() {
 				else
 					case "${COMP_WORDS[2]}" in
 						delete|rename|changeurl|getlatest)
-							if [[ $COMP_CWORD == 3 && -d "JAR_STORAGE_PATH" ]]; then
+							if [[ $COMP_CWORD == 3 && -d "$JAR_STORAGE_PATH" ]]; then
 								options="$(ls -1 "$JAR_STORAGE_PATH")"
 							fi
 							;;
