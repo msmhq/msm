@@ -226,6 +226,11 @@ _msm() {
 									options="set add"
 								fi
 								;;
+							save)
+								if [[ $COMP_CWORD == 3 ]]; then
+									options="on off all"
+								fi
+								;;
 						esac
 								
 					fi
