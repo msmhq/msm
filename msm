@@ -1666,12 +1666,15 @@ main() {
 							server_save_all $id
 						fi
 						
+						server_worlds_to_disk $id
 						server_backup $id
 						
 						if server_is_running $id; then
 							server_save_on $id
 							server_eval $id "say ${server_complete_backup_finished[$id]}"
 						fi
+						
+						echo "Backup took $SECONDS seconds".
 						;;
 					jar)
 						if [ -z "$3" ]; then
