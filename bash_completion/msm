@@ -5,10 +5,12 @@ _msm() {
 	COMPREPLY=()
 	
 	current="${COMP_WORDS[$COMP_CWORD]}"
-	base="${COMP_WORDS[1]}"
 	
-	if [[ $COMP_CWORD -gt 1 ]]; then
-		case "$base" in
+	if [[ $COMP_CWORD == 1 ]]; then
+		local servers=$(ls -1 $SERVER_STORAGE_PATH)
+		options="help start stop restart server jargroup $servers"
+	else
+		case "${COMP_WORDS[1]}" in
 			stop|restart)
 				if [[ $COMP_CWORD == 2 ]]; then
 					options="now"
@@ -18,7 +20,7 @@ _msm() {
 				if [[ $COMP_CWORD == 2 ]]; then
 					options="list create delete rename"
 				else
-					case ${COMP_WORDS[2]} in
+					case "${COMP_WORDS[2]}" in
 						delete|rename)
 							if [[ $COMP_CWORD == 3 ]]; then
 								options=$(ls -1 $SERVER_STORAGE_PATH)
@@ -31,7 +33,7 @@ _msm() {
 				if [[ $COMP_CWORD == 2 ]]; then
 					options="list create delete rename changeurl getlatest"
 				else
-					case ${COMP_WORDS[2]} in
+					case "${COMP_WORDS[2]}" in
 						delete|rename|changeurl|getlatest)
 							if [[ $COMP_CWORD == 3 ]]; then
 								options=$(ls -1 $JAR_STORAGE_PATH)
@@ -42,14 +44,25 @@ _msm() {
 				;;
 			*)
 				# Server options
-				if [ -e $SERVER_STORAGE_PATH/${COMP_WORDS[2]} ]; then
-					options="start stop restart status connected worlds logroll backup jar wl whitelist bl blacklist op operator gm gamemode kick say time tdf toggledownfall save cmd cmdlog"
+				
+				if [ -e $SERVER_STORAGE_PATH/${COMP_WORDS[1]} ]; then
+					# If the server exists
+					
+					if [[ $COMP_CWORD == 2 ]]; then
+						options="start stop restart status connected worlds logroll backup jar wl whitelist bl blacklist op operator gm gamemode kick say time tdf toggledownfall save cmd cmdlog"
+					else
+						case "${COMP_WORDS[2]}" in
+							stop|restart)
+								if [[ $COMP_CWORD == 3 ]]; then
+									options="now"
+								fi
+								;;
+						esac
+								
+					fi
 				fi
 				;;
 		esac
-	else
-		local servers=$(ls -1 $SERVER_STORAGE_PATH)
-		options="help start stop restart server jargroup $servers"
 	fi
 	
 	COMPREPLY=( $(compgen -W "${options}" -- ${current}) )
