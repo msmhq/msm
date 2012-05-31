@@ -248,7 +248,7 @@ server_ensure_links() {
 	local i=${server_world_offset[$1]}
 	local max=$(( $i + ${server_num_worlds[$1]} ))
 	
-	while [[ $i < $max ]]; do
+	while [[ $i -lt $max ]]; do
 		# -L checks for the path being a link rather than a file
 		# ! -a, since it is within double square brackets means: the negation of
 		# the existence of the file. In other words: true if does not exist
