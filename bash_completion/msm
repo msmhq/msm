@@ -30,6 +30,14 @@ _msm() {
 			jargroup)
 				if [[ $COMP_CWORD == 2 ]]; then
 					options="list create delete rename changeurl getlatest"
+				else
+					case ${COMP_WORDS[2]} in
+						delete|rename|changeurl|getlatest)
+							if [[ $COMP_CWORD == 3 ]]; then
+								options=$(ls -1 $JAR_STORAGE_PATH)
+							fi
+							;;
+					esac
 				fi
 				;;
 			*)
