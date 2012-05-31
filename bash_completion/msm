@@ -23,11 +23,20 @@ _msm() {
 				fi
 				;;
 			server)
+				if [[ $COMP_CWORD == 2 ]]; then
+					options="list create delete rename"
+				fi
 				;;
 			jargroup)
+				if [[ $COMP_CWORD == 2 ]]; then
+					options="list create delete rename changeurl getlatest"
+				fi
 				;;
 			*)
 				# Server options
+				if [ -e $SERVER_STORAGE_PATH/${COMP_WORDS[2]} ]; then
+					options="start stop restart status connected worlds logroll backup jar wl whitelist bl blacklist op operator gm gamemode kick say time tdf toggledownfall save cmd cmdlog"
+				fi
 				;;
 		esac
 	else
