@@ -7,7 +7,9 @@ _msm() {
 	current="${COMP_WORDS[$COMP_CWORD]}"
 	
 	if [[ $COMP_CWORD == 1 ]]; then
-		local servers=$(ls -1 $SERVER_STORAGE_PATH)
+		if [ -d "$SERVER_STORAGE_PATH" ]; then
+			local servers="$(ls -1 "$SERVER_STORAGE_PATH")"
+		fi
 		options="help start stop restart server jargroup $servers"
 	else
 		case "${COMP_WORDS[1]}" in
@@ -22,8 +24,8 @@ _msm() {
 				else
 					case "${COMP_WORDS[2]}" in
 						delete|rename)
-							if [[ $COMP_CWORD == 3 ]]; then
-								options="$(ls -1 $SERVER_STORAGE_PATH)"
+							if [[ $COMP_CWORD == 3 && -d "$SERVER_STORAGE_PATH" ]]; then
+								options="$(ls -1 "$SERVER_STORAGE_PATH")"
 							fi
 							;;
 					esac
@@ -35,8 +37,8 @@ _msm() {
 				else
 					case "${COMP_WORDS[2]}" in
 						delete|rename|changeurl|getlatest)
-							if [[ $COMP_CWORD == 3 ]]; then
-								options="$(ls -1 $JAR_STORAGE_PATH)"
+							if [[ $COMP_CWORD == 3 && -d "JAR_STORAGE_PATH" ]]; then
+								options="$(ls -1 "$JAR_STORAGE_PATH")"
 							fi
 							;;
 					esac
@@ -73,7 +75,7 @@ _msm() {
 											fi
 											
 											if [ -d "$world_dir" ]; then
-												options="$(ls -1 $world_dir)"
+												options="$(ls -1 "$world_dir")"
 											fi
 											;;
 									esac
