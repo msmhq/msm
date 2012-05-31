@@ -248,6 +248,7 @@ server_ensure_links() {
 	echo -n "Maintaining world symbolic links... "
 	local i=${server_world_offset[$1]}
 	local max=$(( $i + ${server_num_worlds[$1]} ))
+	local output="false"
 	
 	while [[ $i -lt $max ]]; do
 		# -L checks for the path being a link rather than a file
@@ -286,12 +287,19 @@ server_ensure_links() {
 					as_user ${server_user_name[$1]} "ln -s \"${world_path[$i]}\" \"${world_link[$i]}\""
 				fi
 			fi
+		else
+			echoerr -en "\n    Error: Could not create link for world \"${world_name[$i]}\". The file \"${world_link[$i]}\" already exists, and should not be overwritten automatically. Either remove this file, or rename \"${world_name[$i]}\"."
+			output="true"
 		fi
 		
 		i=$(( $i + 1 ))
 	done
 	
-	echo "Done."
+	if [[ $output == "true" ]]; then
+		echo -e "\nDone."
+	else
+		echo "Done."
+	fi
 }
 
 # Moves a servers worlds into RAM
