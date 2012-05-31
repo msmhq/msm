@@ -1582,7 +1582,7 @@ main() {
 						server_start $id
 						;;
 					stop)
-						server_set_active $1 "inactive"
+						server_set_active $id "inactive"
 						if [[ $3 != "now" ]]; then
 							server_stop $id
 						else
