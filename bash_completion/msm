@@ -23,7 +23,7 @@ _msm() {
 					case "${COMP_WORDS[2]}" in
 						delete|rename)
 							if [[ $COMP_CWORD == 3 ]]; then
-								options=$(ls -1 $SERVER_STORAGE_PATH)
+								options="$(ls -1 $SERVER_STORAGE_PATH)"
 							fi
 							;;
 					esac
@@ -36,7 +36,7 @@ _msm() {
 					case "${COMP_WORDS[2]}" in
 						delete|rename|changeurl|getlatest)
 							if [[ $COMP_CWORD == 3 ]]; then
-								options=$(ls -1 $JAR_STORAGE_PATH)
+								options="$(ls -1 $JAR_STORAGE_PATH)"
 							fi
 							;;
 					esac
@@ -45,7 +45,8 @@ _msm() {
 			*)
 				# Server options
 				
-				if [ -e $SERVER_STORAGE_PATH/${COMP_WORDS[1]} ]; then
+				local server_path="$SERVER_STORAGE_PATH/${COMP_WORDS[1]}"
+				if [ -e "$server_path" ]; then
 					# If the server exists
 					
 					if [[ $COMP_CWORD == 2 ]]; then
@@ -57,6 +58,26 @@ _msm() {
 									options="now"
 								fi
 								;;
+							worlds)
+								if [[ $COMP_CWORD == 3 ]]; then
+									options="list load ram todisk backup"
+								else
+									case "${COMP_WORDS[3]}" in
+										ram)
+											world_dir="${server_path}/$DEFAULT_WORLD_STORAGE_PATH"
+										
+											# Override with server specific value if present
+											server_conf="${server_path}/$DEFAULT_SERVER_CONF"
+											if [ -e "$server_conf" ]; then
+												world_dir=$(grep "^WORLD_STORAGE_PATH=\".*\"" $server_conf | awk -F '"' '{print $2}')
+											fi
+											
+											if [ -d "$world_dir" ]; then
+												options="$(ls -1 $world_dir)"
+											fi
+											;;
+									esac
+								fi
 						esac
 								
 					fi
