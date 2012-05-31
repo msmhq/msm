@@ -929,7 +929,7 @@ server_backup() {
 	
 	# Zip up the server directory
 	file_name="${server_backup_path[$1]}/$(date "+%F-%H-%M-%S").zip"
-	as_user ${server_user_name[$1]} "mkdir -p \"${server_backup_path[$1]}\" && cd \"${server_path[$1]}\" && zip ${zip_flags} \"${file_name}\" ."
+	as_user ${server_user_name[$1]} "mkdir -p \"${server_backup_path[$1]}\" && cd \"$SERVER_STORAGE_PATH\" && zip ${zip_flags} \"${file_name}\" \"${server_name[$1]}\""
 	
 	echo "Done."
 }
