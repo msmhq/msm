@@ -1635,7 +1635,21 @@ main() {
 								server_save_on $id
 								;;
 							backup)
+								if server_is_running $id; then
+									server_eval $id "say ${server_world_backup_started[$id]}"
+									server_save_off $id
+									server_save_all $id
+								fi
+								
+								server_worlds_to_disk $id
 								server_worlds_backup $id
+								
+								if server_is_running $id; then
+									server_save_on $id
+									server_eval $id "say ${server_world_backup_finished[$id]}"
+								fi
+								
+								echo "Backup took $SECONDS seconds".
 								;;
 							*)
 								echo "Invalid command."
