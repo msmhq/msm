@@ -24,13 +24,6 @@ CONFIG="/etc/msm.conf"
 
 ### Config variables the user should need/want to change
 
-# Minecraft's whitelist file
-declare -r WHITELIST="white-list.txt"
-# Minecraft's banned ips file
-declare -r BANNED_IPS="banned-ips.txt"
-# Minecraft's banned players file
-declare -r BANNED_PLAYERS="banned-players.txt"
-
 # Jar group file which contains the download target URL
 declare -r JARGROUP_TARGET="target.txt"
 # Jar group directory name to download new jars to, is deleted afterwards
@@ -633,9 +626,11 @@ server_create() {
 		else
 			printf "Creating server directory... "
 			as_user "$USERNAME" "mkdir -p '$SERVER_STORAGE_PATH/$1'"
-			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$WHITELIST'"
-			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$BANNED_IPS'"
-			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$BANNED_PLAYERS'"
+			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_WHITELIST'"
+			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_BANNED_IPS'"
+			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_BANNED_PLAYERS'"
+			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_OPS'"
+			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_PROPERTIES'"
 			echo "Done."
 		fi
 	else
