@@ -169,6 +169,29 @@ _msm() {
 									esac
 								fi
 								;;
+							operator|op)
+								if [[ $COMP_CWORD == 3 ]]; then
+									options="add remove list"
+								else
+									case "${COMP_WORDS[3]}" in
+										remove)
+											if [[ $COMP_CWORD == 4 ]]; then
+												local ops_path="${server_path}/$DEFAULT_OPS"
+												
+												# Override with server specific value if present
+												local server_conf="${server_path}/$DEFAULT_SERVER_CONF"
+												if [ -f "$server_conf" ]; then
+													ops_path=$(grep "^OPS=\".*\"" $server_conf | awk -F '"' '{print $2}')
+												fi
+
+												if [ -f "$ops_path" ]; then
+													options="$(cat "$ops_path")"
+												fi
+											fi
+											;;
+									esac
+								fi
+								;;
 						esac
 								
 					fi
