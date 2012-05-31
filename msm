@@ -198,7 +198,7 @@ world_backup() {
 # $1: The name of the server
 server_get_id() {
 	local i=0
-	while [[ $i < $num_servers ]]; do
+	while [[ $i -lt $num_servers ]]; do
 		if [[ "${server_name[$i]}" == "$1" ]]; then
 			echo "$i"
 			return 0
@@ -218,7 +218,7 @@ server_world_get_id() {
 	local max=$(( $i + ${server_num_worlds[$1]} ))
 	
 	# For each of the servers worlds:
-	while [[ $i < $max ]]; do
+	while [[ $i -lt $max ]]; do
 		if [[ "${world_name[$i]}" == "$2" ]]; then
 			echo $i
 			return 0
@@ -304,7 +304,7 @@ server_worlds_to_ram() {
 		local max=$(( $i + ${server_num_worlds[$1]} ))
 		
 		# For each of the servers worlds:
-		while [[ $i < $max ]]; do
+		while [[ $i -lt $max ]]; do
 			if ${world_inram[$i]} && [ -L ${world_link[$i]} ]; then
 				world_to_ram $i
 			fi
@@ -324,7 +324,7 @@ server_worlds_to_disk() {
 		local max=$(( $i + ${server_num_worlds[$1]} ))
 		
 		# For each of the servers worlds:
-		while [[ $i < $max ]]; do
+		while [[ $i -lt $max ]]; do
 			if [ -e ${world_ramdisk_path[$i]} ]; then
 				world_to_disk $i		
 			fi
