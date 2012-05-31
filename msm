@@ -619,10 +619,7 @@ jargroup_rename() {
 
 # Echos a list of servers in the SERVER_STORAGE_PATH
 server_list() {
-	echo "Servers:"
-	for server in "$SERVER_STORAGE_PATH/*"; do
-		echo "  $(basename $server)"
-	done
+	ls -1 "$SERVER_STORAGE_PATH"
 }
 
 # Creates a new server
