@@ -632,6 +632,12 @@ server_create() {
 			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_OPS'"
 			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_PROPERTIES'"
 			echo "Done."
+			
+			# Now that the new server has been created, we must call init again
+			# to ensure it is recognised.
+			init
+			
+			server_set_jar $(server_get_id "$1") "minecraft"
 		fi
 	else
 		return 1
@@ -925,6 +931,38 @@ server_backup() {
 	as_user ${server_user_name[$1]} "mkdir -p \"${server_backup_path[$1]}\" && cd \"${server_path[$1]}\" && zip ${zip_flags} \"${file_name}\" ."
 	
 	echo "Done."
+}
+
+# Sets a server's jar file
+# $1: The ID of the server
+# $2: The name of the jar group
+# $3: Optionally, a specific jar to use.
+server_set_jar() {
+	if [ -e "$JAR_STORAGE_PATH/$3" ]; then
+		
+		if [ -z "$3" ]; then
+			# If a specific jar file is not mentioned
+			
+			# Download the latest version
+			jargroup_getlatest "$2"
+			local jar=$(get_latest_file "$JAR_STORAGE_PATH/$2")
+		else
+			# If a specific jar IS mentioned use that
+			local jar="$JAR_STORAGE_PATH/$2/$3"
+			
+			if [[ ! -e "$jar" ]]; then
+				echo "There is no jar named \"$3\" in jargroup \"$2\"."
+				return 1
+			fi
+		fi
+		
+		if [[ ! -z "$jar" ]]; then
+			as_user "${server_user[$1]}" "ln -sf $jar ${server_jar[$1]}"
+			echo "Server \"${server_name[$1]}\" is now using \"$jar\"."
+		fi
+	else
+		echo "There is no jargorup named \"$2\"."
+	fi
 }
 
 # Lists the players currently connected to a server
@@ -1618,6 +1656,13 @@ main() {
 						if server_is_running $id; then
 							server_save_on $id
 							server_eval $id "say ${server_complete_backup_finished[$id]}"
+						fi
+						;;
+					jar)
+						if [ -z "$3" ]; then
+							echo "Invalid command."
+						else
+							server_set_jar $id "$3"
 						fi
 						;;
 					whitelist|wl)
