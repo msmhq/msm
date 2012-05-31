@@ -1356,21 +1356,22 @@ init() {
 interrupt() {
 	local exit_message="false"
 	for ((i=0; $i<$num_servers; i++)); do
-		if [[ "${STOP_COUNTDOWN[$i]}" ]] && server_is_running $i; then
+		if [[ "${STOP_COUNTDOWN[$i]}" == "true" ]] && server_is_running $i; then
 			if [[ "$exit_message" == "false" ]]; then
 				echo -e "\nInterrupted..."
 				exit_message="true"
 			fi
 			server_eval $i "say ${server_stop_abort[$i]}"
-			echo "Server \"${server_name[$id]}\" shutdown was aborted."
+			echo "Server \"${server_name[$i]}\" shutdown was aborted."
 		fi
-		if [[ "${RESTART_COUNTDOWN[$i]}" ]] && server_is_running $i; then
+		
+		if [[ "${RESTART_COUNTDOWN[$i]}" == "true" ]] && server_is_running $i; then
 			if [[ "$exit_message" == "false" ]]; then
 				echo -e "\nInterrupted..."
 				exit_message="true"
 			fi
 			server_eval $i "say ${server_restart_abort[$i]}"
-			echo "Server \"${server_name[$id]}\" restart was aborted."
+			echo "Server \"${server_name[$i]}\" restart was aborted."
 		fi
 	done
 	exit
