@@ -1129,7 +1129,7 @@ manager_stop_all_servers_now() {
 
 init() {
 	# Sourcing $CONFIG will override the previous defaults, with new values
-	source $CONFIG
+	source "$CONFIG"
 
 	local i=0
 	local j=0
