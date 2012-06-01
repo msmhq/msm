@@ -1128,56 +1128,6 @@ manager_stop_all_servers_now() {
 ### Main Functions
 
 init() {
-
-	# These defaults can be overriden in the file specified by $CONFIG
-	
-	USERNAME="minecraft"
-	SERVER_STORAGE_PATH="/opt/msm/servers"
-	JAR_STORAGE_PATH="/opt/msm/jars"
-	RAMDISK_STORAGE_PATH="/dev/shm/msm"
-	WORLD_ARCHIVE_PATH="/opt/msm/archives/worlds"
-	LOG_ARCHIVE_PATH="/opt/msm/archives/logs"
-	BACKUP_ARCHIVE_PATH="/opt/msm/archives/backups"
-	DEFAULT_SERVER_CONF="server.conf"
-	DEFAULT_SERVER_USER="minecraft"
-	DEFAULT_SCREEN_NAME="msm-{SERVER_NAME}"
-	DEFAULT_WORLD_STORAGE_PATH="worldstorage"
-	DEFAULT_COMPLETE_BACKUP_FOLLOW_SYMLINKS="false"
-	DEFAULT_LOG="server.log"
-	DEFAULT_PROPERTIES="server.properties"
-	DEFAULT_WHITELIST="white-list.txt"
-	DEFAULT_BANNED_PLAYERS="banned-players.txt"
-	DEFAULT_BANNED_IPS="banned-ips.txt"
-	DEFAULT_OPS="ops.txt"
-	DEFAULT_JAR="server.jar"
-	DEFAULT_RAM="1024"
-	DEFAULT_INVOCATION="java -Xms{RAM}M -Xmx{RAM}M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:+AggressiveOpts -jar {JAR} nogui"
-	DEFAULT_STOP_DELAY=10
-	DEFAULT_RESTART_DELAY=10
-	DEFAULT_STOP_MESSAGE="SERVER SHUTTING DOWN IN {DELAY} SECONDS!"
-	DEFAULT_STOP_ABORT="Server shut down aborted."
-	DEFAULT_RESTART_MESSAGE="SERVER REBOOT IN {DELAY} SECONDS!"
-	DEFAULT_RESTART_ABORT="Server reboot aborted."
-	DEFAULT_WORLD_BACKUP_STARTED="Backing up world."
-	DEFAULT_WORLD_BACKUP_FINISHED="Backup complete."
-	DEFAULT_COMPLETE_BACKUP_STARTED="Backing up entire server."
-	DEFAULT_COMPLETE_BACKUP_FINISHED="Backup complete."
-	DEFAULT_CONFIRM_SAVE_ON="CONSOLE: Enabling level saving.."
-	DEFAULT_CONFIRM_SAVE_OFF="CONSOLE: Disabling level saving.."
-	DEFAULT_CONFIRM_SAVE_ALL="CONSOLE: Save complete."
-	DEFAULT_CONFIRM_START="Done"
-	DEFAULT_CONFIRM_KICK="CONSOLE: Kicking "
-	DEFAULT_CONFIRM_KICK_FAIL="Can't find user "
-	DEFAULT_CONFIRM_TIME_SET="CONSOLE: Set time to"
-	DEFAULT_CONFIRM_TIME_SET_FAIL="Unable to convert time value"
-	DEFAULT_CONFIRM_TIME_ADD="CONSOLE: Added .+ to time"
-	DEFAULT_CONFIRM_TIME_ADD_FAIL="Unable to convert time value"
-	DEFAULT_CONFIRM_TOGGLEDOWNFALL="CONSOLE: Toggling downfall on|off for world"
-	DEFAULT_CONFIRM_TOGGLEDOWNFALL_FAIL=".\[31m;1mNo world exists with the name"
-	DEFAULT_CONFIRM_GAMEMODE="CONSOLE: Setting .+ to game mode (1|0)"
-	DEFAULT_CONFIRM_GAMEMODE_FAIL_NO_USER="Can't find user .+"
-	DEFAULT_CONFIRM_GAMEMODE_FAIL_NO_CHANGE=".+ already has game mode (1|0)"
-	
 	# Sourcing $CONFIG will override the previous defaults, with new values
 	source $CONFIG
 
