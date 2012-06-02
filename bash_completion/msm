@@ -16,6 +16,7 @@ __init_server() {
 	SERVER_USER="$DEFAULT_SERVER_USER"
 	SCREEN_NAME="${DEFAULT_SCREEN_NAME//\{SERVER_NAME\}/${1}}"
 	WORLD_STORAGE_PATH="$SERVER_PATH/$DEFAULT_WORLD_STORAGE_PATH"
+	WORLD_STORAGE_INACTIVE_PATH="$SERVER_PATH/$DEFAULT_WORLD_STORAGE_INACTIVE_PATH"
 
 	WHITELIST="$SERVER_PATH/$DEFAULT_WHITELIST"
 	BANNED_PLAYERS="$SERVER_PATH/$DEFAULT_BANNED_PLAYERS"
@@ -42,7 +43,8 @@ __init_server() {
 			case "$name" in
 				SERVER_USER) SERVER_USER="$value";;
 				SCREEN_NAME) SCREEN_NAME="$value";;
-				WORLD_STORAGE_PATH) WORLD_STORAGE_DIR="$SERVER_PATH/$value";;
+				WORLD_STORAGE_PATH) WORLD_STORAGE_PATH="$SERVER_PATH/$value";;
+				WORLD_STORAGE_INACTIVE_PATH) WORLD_STORAGE_INACTIVE_PATH="$SERVER_PATH/$value";;
 			
 				WHITELIST) WHITELIST="$SERVER_PATH/$value";;
 				BANNED_PLAYERS) BANNED_PLAYERS="$SERVER_PATH/$value";;
@@ -126,10 +128,24 @@ _msm() {
 								;;
 							worlds)
 								if [[ $COMP_CWORD == 3 ]]; then
-									options="list load ram todisk backup"
+									options="list load ram todisk backup on off"
 								else
 									case "${COMP_WORDS[3]}" in
 										ram)
+											if [[ $COMP_CWORD == 4 ]]; then
+												if [ -d "$WORLD_STORAGE_PATH" ]; then
+													options="$(ls -1 "$WORLD_STORAGE_PATH")"
+												fi
+											fi
+											;;
+										on)
+											if [[ $COMP_CWORD == 4 ]]; then
+												if [ -d "$WORLD_STORAGE_INACTIVE_PATH" ]; then
+													options="$(ls -1 "$WORLD_STORAGE_INACTIVE_PATH")"
+												fi
+											fi
+											;;
+										off)
 											if [[ $COMP_CWORD == 4 ]]; then
 												if [ -d "$WORLD_STORAGE_PATH" ]; then
 													options="$(ls -1 "$WORLD_STORAGE_PATH")"
