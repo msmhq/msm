@@ -11,6 +11,10 @@ Maintainers:
 Change Log
 ----------
 
+### [0.2.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.1...0.2.2)
+
+* Added `msm version` command, to check your installation version.
+
 ### [0.2.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2...0.2.1)
 
 * Added `msm <server> worlds on|off <world>` command, which activates and deactives worlds. Inactive worlds don't get backed up, cannot be used by the server, but are included in complete server backups.

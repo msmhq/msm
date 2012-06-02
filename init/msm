@@ -22,6 +22,10 @@
 CONFIG="/etc/msm.conf"
 
 
+### The Minecraft Server Manager version, use "msm version" to check yours.
+VERSION="0.2.2 Beta"
+
+
 ### Config variables the user should need/want to change
 
 # Jar group file which contains the download target URL
@@ -92,11 +96,11 @@ debug() {
 # It must also not be one of a list of reserved names.
 is_valid_name() {
 	local valid="^[a-zA-Z0-9\_\-]+$"
-	local invalid="^server|jargroup|start|stop|restart|all$"
+	local invalid="^start|stop|restart|version|server|jargroup|all$"
 	
 	if [[ $1 =~ $valid ]]; then
 		if [[ $1 =~ $invalid ]]; then
-			echoerr "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"jargroup\" or \"all\"."
+			echoerr "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"version\", \"jargroup\" or \"all\"."
 			return 1
 		else
 			return 0
@@ -1577,6 +1581,9 @@ main() {
 			echo "Starting servers:"
 			main "start"
 			;;
+		version)
+			echo "Minecraft Server Manager $VERSION"
+			;;
 		server)
 			case "$2" in
 				list)
@@ -1721,6 +1728,7 @@ main() {
 			echo -e "  start                                         Starts all active servers"
 			echo -e "  stop [now]                                    Stops all running servers"
 			echo -e "  restart [now]                                 Restarts all active servers"
+			echo -e "  version                                       Prints the Minecraft Server Manager version installed8"
 			;;
 		"")
 			echo "No such command see: $0 help"
