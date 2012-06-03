@@ -13,7 +13,11 @@ Change Log
 
 ### [0.2.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.2...0.2.3)
 
-* Fixed issues #12 and #13 thanks to @Jonek01, which prevented the first loaded server from having the correct path, and prevented the same for the first loaded world.
+* Fixed issues [#12][#12] and [#13][#13] thanks to [@Jonek01][@Jonek01], which prevented the first loaded server from having the correct path, and prevented the same for the first loaded world.
+
+[#12]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/12
+[#13]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/13
+[@Jonek01]: https://github.com/Jonek01
 
 ### [0.2.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.1...0.2.2)
 
