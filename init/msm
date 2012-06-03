@@ -23,7 +23,7 @@ CONFIG="/etc/msm.conf"
 
 
 ### The Minecraft Server Manager version, use "msm version" to check yours.
-VERSION="0.2.2 Beta"
+VERSION="0.2.3 Beta"
 
 
 ### Config variables the user should need/want to change
