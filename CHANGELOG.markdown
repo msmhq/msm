@@ -6,7 +6,7 @@ Visit https://github.com/marcuswhybrow/minecraft-server-manager for more informa
 Maintainers:
 ------------
 
-* [Marcus Whybrow](https://github.com/marcuswybrow)
+* [Marcus Whybrow](https://github.com/marcuswhybrow)
 
 Change Log
 ----------
