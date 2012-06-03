@@ -741,27 +741,32 @@ server_delete() {
 # $2: The new name for the server
 server_rename() {
 	if is_valid_name "$1"; then
-		if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
-			# If the server name is valid and exists
+		if server_is_running "$(server_get_id "$1")"; then
+			echoerr "Error: Can only rename a stopped server."
+			return 1
+		else
+			if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
+				# If the server name is valid and exists
 		
-			# TODO: Check that the server is not running first, return if it is
+				# TODO: Check that the server is not running first, return if it is
 		
-			if is_valid_name "$2"; then
-				# If the server name is valid
-				if [[ -e "$SERVER_STORAGE_PATH/$2" ]]; then
-					# and there is not already a server with the name $2
-					echo "Could not be renamed, there is already a server with the name \"$2\"."
-					return 1
+				if is_valid_name "$2"; then
+					# If the server name is valid
+					if [[ -e "$SERVER_STORAGE_PATH/$2" ]]; then
+						# and there is not already a server with the name $2
+						echoerr "Error: Could not be renamed, there is already a server with the name \"$2\"."
+						return 1
+					else
+						as_user "$USERNAME" "mv '$SERVER_STORAGE_PATH/$1' '$SERVER_STORAGE_PATH/$2'"
+						echo "Renamed server \"$1\" to \"$2\"."
+					fi
 				else
-					as_user "$USERNAME" "mv '$SERVER_STORAGE_PATH/$1' '$SERVER_STORAGE_PATH/$2'"
-					echo "Renamed server \"$1\" to \"$2\"."
+					return 1
 				fi
 			else
+				echoerr "Error: There is no server with the name \"$1\"."
 				return 1
 			fi
-		else
-			echo "There is no server with the name \"$1\"."
-			return 1
 		fi
 	else
 		return 1
