@@ -1379,49 +1379,49 @@ server_init() {
 	server_num_worlds[$1]=0
 	
 	# Start world id's for this server's worlds at the end of the array
-	local world_id=$num_worlds
+	local id=$num_worlds
 	
 	# Record the index at which worlds for this server start
-	server_world_offset[$1]=$world_id
+	server_world_offset[$1]=$id
 	
 	if [[ -d "${server_world_storage[$1]}" ]]; then
 		# Load active worlds
-		while IFS= read -r -d $'\0' world_path; do
-			local name=$(basename $world_path)
-			server_world_init $1 $world_id $name
+		while IFS= read -r -d $'\0' path; do
+			local name=$(basename $path)
+			server_world_init $1 $id $name
 			
 			# Build the server_worlds comma separated list
-			if [[ $world_id == $server_world_offset[$1] ]]; then
+			if [[ $id == $server_world_offset[$1] ]]; then
 				server_worlds[$1]="$name"
 			else
 				server_worlds[$1]="${server_worlds[$1]}, $name"
 			fi
 			
-			world_id=$(($world_id+1))
-			num_worlds=$world_id
+			id=$(($id+1))
+			num_worlds=$id
 		done < <(find "${server_world_storage[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 	
 	if [[ -d "${server_world_storage_inactive[$1]}" ]]; then
 		# Load inactive worlds
-		while IFS= read -r -d $'\0' world_path; do
-			local name=$(basename $world_path)
-			server_world_init $1 $world_id $name
+		while IFS= read -r -d $'\0' path; do
+			local name=$(basename $path)
+			server_world_init $1 $id $name
 			
 			# Build the server_worlds_inactive comma separated list
-			if [[ $world_id == $server_world_offset[$1] ]]; then
+			if [[ $id == $server_world_offset[$1] ]]; then
 				server_worlds[$1]="$name"
 			else
 				server_worlds[$1]="${server_worlds[$1]}, $name"
 			fi
 			
-			world_id=$(($world_id+1))
-			num_worlds=$world_id
+			id=$(($id+1))
+			num_worlds=$id
 		done < <(find "${server_world_storage_inactive[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 	
 	# Record the number of worlds this server has
-	server_num_worlds[$1]=$(( $world_id - ${server_world_offset[$1]} ))
+	server_num_worlds[$1]=$(( $id - ${server_world_offset[$1]} ))
 }
 
 # Asserts that a variable has been set in the config file
