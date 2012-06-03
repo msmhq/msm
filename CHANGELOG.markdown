@@ -11,6 +11,12 @@ Maintainers:
 Change Log
 ----------
 
+### [0.2.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.3...0.2.4)
+
+* Fixes issue [#11][#11]. Now running server's cannot be renamed, preventing not being able to stop a server renamed whilst running.
+
+[#11]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/11
+
 ### [0.2.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.2...0.2.3)
 
 * Fixed issues [#12][#12] and [#13][#13] thanks to [@Jonek01][@Jonek01], which prevented the first loaded server from having the correct path, and prevented the same for the first loaded world.
