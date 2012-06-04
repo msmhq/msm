@@ -48,6 +48,14 @@ test_create_server_without_any_jargroups() {
 	assertTrue "Server was not created." '[ -d "$SERVER_STORAGE_PATH/example" ]'
 }
 
+test_create_server_with_jar_groups() {
+	$SCRIPT jargroup create minecraft "https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar" > /dev/null
+	$SCRIPT server create example > /dev/null
+	
+	assertTrue "Server was not created." '[ -d "$SERVER_STORAGE_PATH/example" ]'
+	assertTrue "Server jar was not linked." '[ -f "$SERVER_STORAGE_PATH/example/$DEFAULT_JAR" ]'
+}
+
 
 # Server Tests
 # ------------
