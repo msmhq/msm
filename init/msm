@@ -62,7 +62,7 @@ as_user() {
 		bash -c "$2"
 	else
 		if [ "$user" == "root" ]; then
-			su - $1 -s /bin/bash -c "$2"
+			su - "$1" -s /bin/bash -c "$2"
 		else
 			echoerr "This command must be executed as the user \"$1\" or \"root\"."
 			exit 1
@@ -85,7 +85,7 @@ echoerr() {
 # distinguished from necessary echo statements.
 # $1: The message to output
 debug() {
-	if [[ $DEBUG == "true" ]]; then
+	if [[ "$DEBUG" == "true" ]]; then
 		echoerr "$1"
 	fi
 }
@@ -98,8 +98,8 @@ is_valid_name() {
 	local valid="^[a-zA-Z0-9\_\-]+$"
 	local invalid="^start|stop|restart|version|server|jargroup|all$"
 	
-	if [[ $1 =~ $valid ]]; then
-		if [[ $1 =~ $invalid ]]; then
+	if [[ "$1" =~ $valid ]]; then
+		if [[ "$1" =~ $invalid ]]; then
 			echoerr "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"version\", \"jargroup\" or \"all\"."
 			return 1
 		else
@@ -120,19 +120,19 @@ get_latest_file() {
 	
 	while IFS= read -r -d $'\0' file; do
 		# Remove the path, leaving just the file name
-		local date_time=$(basename "$file" | awk -F '-' '{print $1 "-" $2 "-" $3 " " $4 ":" $5 ":" $6}')
+		local date_time="$(basename "$file" | awk -F '-' '{print $1 "-" $2 "-" $3 " " $4 ":" $5 ":" $6}')"
 		
 		# Get the time in seconds since 1970 from file name
-		local seconds=$(date -d "$date_time" "+%s" 2> /dev/null)
+		local seconds="$(date -d "$date_time" "+%s" 2> /dev/null)"
 		
 		# If that is newer than the current best, override variables
-		if [[ $seconds > $best_time ]]; then
-			best_time=$seconds
-			best_file=$file
+		if [[ "$seconds" -gt "$best_time" ]]; then
+			best_time="$seconds"
+			best_file="$file"
 		fi
 	done < <(find "$1" -maxdepth 1 -type f -print0)
 	
-	echo $best_file
+	echo "$best_file"
 }
 
 # Returns the current time as a UNIX timestamp (in seconds since 1970)
@@ -147,7 +147,7 @@ now() {
 # $1: A server log line
 # returns: Time in seconds since 1970-01-01 00:00:00 UTC
 log_line_get_time() {
-	time_string=$(echo $1 | awk '{print $1 " " $2}')
+	time_string="$(echo "$1" | awk '{print $1 " " $2}')"
 	date -d "$time_string" "+%s" 2> /dev/null
 }
 
@@ -157,35 +157,35 @@ log_line_get_time() {
 # Moves a world to RAM
 # $1: the ID of the world to move
 world_to_ram() {
-	if [ ! -z $RAMDISK_STORAGE_PATH ]; then
-		as_user ${server_user_name[${world_server_id[$1]}]} "mkdir -p ${world_ramdisk_path[$1]} && rsync -rt --exclude '$WORLD_FLAG_INRAM' \"${world_path[$1]}/\" \"${world_ramdisk_path[$1]}\""
+	if [ ! -z "$RAMDISK_STORAGE_PATH" ]; then
+		as_user "${server_user_name[${world_server_id[$1]}]}" "mkdir -p \"${world_ramdisk_path[$1]}\" && rsync -rt --exclude '$WORLD_FLAG_INRAM' \"${world_path[$1]}/\" \"${world_ramdisk_path[$1]}\""
 	fi
 }
 
 # Moves a world in RAM to disk
 # $1: the ID of the world to move
 world_to_disk() {
-	as_user ${server_user_name[${world_server_id[$1]}]} "rsync -rt --exclude '$WORLD_FLAG_INRAM' \"${world_ramdisk_path[$1]}/\" \"${world_path[$1]}\""
+	as_user "${server_user_name[${world_server_id[$1]}]}" "rsync -rt --exclude '$WORLD_FLAG_INRAM' \"${world_ramdisk_path[$1]}/\" \"${world_path[$1]}\""
 }
 
 # Toggles a worlds ramdisk state
 # $1: The ID of the world
 world_toggle_ramdisk_state() {
-	if [ -e ${world_flag_inram[$1]} ]; then
+	if [ -f "${world_flag_inram[$1]}" ]; then
 		echo -n "Removing RAM flag from world \"${world_name[$1]}\"... "
-		as_user ${server_user_name[${world_server_id[$1]}]} "rm -f \"${world_flag_inram[$1]}\""
+		as_user "${server_user_name[${world_server_id[$1]}]}" "rm -f \"${world_flag_inram[$1]}\""
 		echo "Done."
 		
 		echo -n "Removing world \"${world_name[$1]}\" from RAM... "
-		as_user ${server_user_name[${world_server_id[$1]}]} "rm -r \"${world_ramdisk_path[$1]}\""
+		as_user "${server_user_name[${world_server_id[$1]}]}" "rm -r \"${world_ramdisk_path[$1]}\""
 		echo "Done."
 	else
 		echo -n "Adding RAM flag to world \"${world_name[$1]}\"... "
-		as_user ${server_user_name[${world_server_id[$1]}]} "touch \"${world_flag_inram[$1]}\""
+		as_user "${server_user_name[${world_server_id[$1]}]}" "touch \"${world_flag_inram[$1]}\""
 		echo "Done."
 		
 		echo -n "Copying world to RAM... "
-		world_to_ram $1
+		world_to_ram "$1"
 		echo "Done."
 	fi
 	echo "Changes will only take effect after server is restarted."	
@@ -197,10 +197,10 @@ world_backup() {
 	echo -n "Backing up world \"${world_name[$1]}\"... "
 	
 	file_name="$(date "+%F-%H-%M-%S").zip"
-	local server_id=${world_server_id[$1]}
+	local server_id="${world_server_id[$1]}"
 	local containing_dir="$(dirname "${world_path[$1]}")"
 	local dir_name="$(basename "${world_path[$1]}")"
-	as_user ${server_user_name[$server_id]} "mkdir -p \"${world_backup_path[$1]}\" && cd \"$containing_dir\" && zip -rq \"${world_backup_path[$1]}/${file_name}\" \"${dir_name}\""
+	as_user "${server_user_name[$server_id]}" "mkdir -p \"${world_backup_path[$1]}\" && cd \"$containing_dir\" && zip -rq \"${world_backup_path[$1]}/${file_name}\" \"${dir_name}\""
 
 	echo "Done."
 }
@@ -254,13 +254,13 @@ world_deactivate() {
 # $1: The name of the server
 server_get_id() {
 	local i=0
-	while [[ $i -lt $num_servers ]]; do
+	while [[ "$i" -lt "$num_servers" ]]; do
 		if [[ "${server_name[$i]}" == "$1" ]]; then
 			echo "$i"
 			return 0
 		fi
 		
-		i=$(( $i + 1 ))
+		i="$(( $i + 1 ))"
 	done
 	
 	return 1
@@ -273,13 +273,13 @@ server_world_get_id() {
 	if [ -d "${server_world_storage[$1]}/$2" ] || [ -d "${server_world_storage_inactive[$1]}/$2" ]; then
 		# If the directory exists
 		
-		local start=${server_world_offset[$1]}
-		local max=$(( $i + ${server_num_worlds[$1]} ))
+		local start="${server_world_offset[$1]}"
+		local max="$(( $i + ${server_num_worlds[$1]} ))"
 	
 		# For each of the servers worlds:
 		for ((i=$start; i<$max; i++)); do
 			if [[ "${world_name[$i]}" == "$2" ]]; then
-				echo $i
+				echo "$i"
 				return 0
 			fi
 		done
@@ -304,12 +304,12 @@ server_is_running() {
 # $1: The id of the server for which links should be ensured
 server_ensure_links() {
 	echo -n "Maintaining world symbolic links... "
-	local start=${server_world_offset[$1]}
-	local max=$(( $start + ${server_num_worlds[$1]} ))
+	local start="${server_world_offset[$1]}"
+	local max="$(( $start + ${server_num_worlds[$1]} ))"
 	local output="false"
 	
 	for ((i=$start; i<$max; i++)); do
-		if [[ ${world_status[$i]} != "active" ]]; then
+		if [[ "${world_status[$i]}" != "active" ]]; then
 			# Remove the symbolic link if it exists
 			as_user "${server_user_name[$1]}" "rm -f \"${world_link[$i]}\""
 			continue
@@ -324,19 +324,19 @@ server_ensure_links() {
 			
 			# Get the original file path the symbolic link is pointing to
 			# If there is no link, link_target will contain nothing
-			link_target=$(readlink "${world_link[$i]}")
+			link_target="$(readlink "${world_link[$i]}")"
 			
-			if ${world_inram[$i]}; then
+			if "${world_inram[$i]}"; then
 				# If this world is marked as loaded into RAM
 
 				if [ "${link_target}" != "${world_ramdisk_path[$i]}" ]; then
 					# If the symbolic link does not point to the RAM version of the world
 
 					# Remove the symbolic link if it exists
-					as_user ${server_user_name[$1]} "rm -f \"${world_link[$i]}\""
+					as_user "${server_user_name[$1]}" "rm -f \"${world_link[$i]}\""
 
 					# Create a new symbolic link pointing to the RAM version of the world
-					as_user ${server_user_name[$1]} "ln -s \"${world_ramdisk_path[$i]}\" \"${world_link[$i]}\""
+					as_user "${server_user_name[$1]}" "ln -s \"${world_ramdisk_path[$i]}\" \"${world_link[$i]}\""
 				fi
 			else
 				# Otherwise the world is not loaded into RAM, and is just on disk
@@ -345,10 +345,10 @@ server_ensure_links() {
 					# If the symbolic link does not point to the disk version of the world
 
 					# Remove the symbolic link if it exists
-					as_user ${server_user_name[$1]} "rm -f \"${world_link[$i]}\""
+					as_user "${server_user_name[$1]}" "rm -f \"${world_link[$i]}\""
 
 					# Create a new symbolic link pointing to the disk version of the world
-					as_user ${server_user_name[$1]} "ln -s \"${world_path[$i]}\" \"${world_link[$i]}\""
+					as_user "${server_user_name[$1]}" "ln -s \"${world_path[$i]}\" \"${world_link[$i]}\""
 				fi
 			fi
 		else
@@ -357,7 +357,7 @@ server_ensure_links() {
 		fi
 	done
 	
-	if [[ $output == "true" ]]; then
+	if [[ "$output" == "true" ]]; then
 		echo -e "\nDone."
 	else
 		echo "Done."
@@ -368,18 +368,18 @@ server_ensure_links() {
 # $1: The ID of the server
 server_worlds_to_ram() {
 	# Only proceed if there is a ramdisk path set in config
-	if [ ! -z $RAMDISK_STORAGE_PATH ]; then
+	if [ ! -z "$RAMDISK_STORAGE_PATH" ]; then
 		echo -n "Synchronising flagged worlds on disk to RAM... "
-		local i=${server_world_offset[$1]}
-		local max=$(( $i + ${server_num_worlds[$1]} ))
+		local i="${server_world_offset[$1]}"
+		local max="$(( $i + ${server_num_worlds[$1]} ))"
 		
 		# For each of the servers worlds:
-		while [[ $i -lt $max ]]; do
-			if ${world_inram[$i]} && [ -L ${world_link[$i]} ]; then
-				world_to_ram $i
+		while [[ "$i" -lt "$max" ]]; do
+			if "${world_inram[$i]}" && [ -L "${world_link[$i]}" ]; then
+				world_to_ram "$i"
 			fi
 			
-			i=$(( $i + 1 ))
+			i="$(( $i + 1 ))"
 		done
 		echo "Done."
 	fi
@@ -388,18 +388,18 @@ server_worlds_to_ram() {
 # Moves a servers "in RAM" worlds back to disk
 # $1: The ID of the server
 server_worlds_to_disk() {
-	if [ ! -z $RAMDISK_STORAGE_PATH ]; then
+	if [ ! -z "$RAMDISK_STORAGE_PATH" ]; then
 		echo -n "Synchronising worlds in RAM to disk... "
-		local i=${server_world_offset[$1]}
-		local max=$(( $i + ${server_num_worlds[$1]} ))
+		local i="${server_world_offset[$1]}"
+		local max="$(( $i + ${server_num_worlds[$1]} ))"
 		
 		# For each of the servers worlds:
-		while [[ $i -lt $max ]]; do
-			if [ -e ${world_ramdisk_path[$i]} ]; then
-				world_to_disk $i		
+		while [[ "$i" -lt "$max" ]]; do
+			if [ -d "${world_ramdisk_path[$i]}" ]; then
+				world_to_disk "$i"
 			fi
 			
-			i=$(( $i + 1 ))
+			i="$(( $i + 1 ))"
 		done
 		echo "Done."
 	fi
@@ -412,23 +412,23 @@ server_worlds_to_disk() {
 # returns: When the line is found
 server_log_get_line() {
     # Make sure there is a server log to check
-    as_user ${server_user_name[$1]} "touch ${server_log[$1]}"
+    as_user "${server_user_name[$1]}" "touch ${server_log[$1]}"
 
 	while read line; do
-		line_time=$(log_line_get_time "$line")
+		line_time="$(log_line_get_time "$line")"
 
 		# If the entry is old enough
-		if [[ $line_time -ge $2 ]]; then
+		if [[ "$line_time" -ge "$2" ]]; then
 			for search_line in "${@:3}"; do
 				local regex="${LOG_REGEX} ${search_line}"
 				# and matches the regular expression
-				if [[ $line =~ $regex ]]; then
-					echo $line
+				if [[ "$line" =~ $regex ]]; then
+					echo "$line"
 					return 0
 				fi
 			done
 		fi
-	done < <(as_user ${server_user_name[$1]} "tail --follow --lines=100 --sleep-interval=0.1 ${server_log[$1]}")
+	done < <(as_user "${server_user_name[$1]}" "tail --follow --lines=100 --sleep-interval=0.1 \"${server_log[$1]}\"")
 }
 
 # The same as server_log_get_line, but does not print the line to stdout
@@ -441,7 +441,7 @@ server_log_wait_for_line() {
 # $1: The ID of the server
 # $2: The line of text to enter into the server console
 server_eval() {
-	as_user ${server_user_name[$1]} "screen -p 0 -S ${server_screen_name[$1]} -X eval 'stuff \"$2\"\015'"
+	as_user "${server_user_name[$1]}" "screen -p 0 -S ${server_screen_name[$1]} -X eval 'stuff \"$2\"\015'"
 }
 
 # The same as server_eval, but also waits for a log entry before returning
@@ -450,9 +450,9 @@ server_eval() {
 # $3->: The line or lines of text in the log to wait for
 # stdout: The full entry found in the logs
 server_eval_and_get_line() {
-	time_now=$(now)
-	server_eval $1 "$2"
-	server_log_get_line $1 "$time_now" "${@:3}"
+	time_now="$(now)"
+	server_eval "$1" "$2"
+	server_log_get_line "$1" "$time_now" "${@:3}"
 }
 
 # The same as server_eval_and_get_line, but does not print anything to stdout
@@ -471,11 +471,11 @@ server_pid() {
 # server to stop soon
 # $1: The ID of the server to wait for
 server_wait_for_stop() {
-	local pid=$(server_pid $1)
+	local pid="$(server_pid "$1")"
 	
 	# if the process is still running, wait for it to stop
-	if [ ! -z $pid ]; then
-		while ps -p $pid > /dev/null; do
+	if [ ! -z "$pid" ]; then
+		while ps -p "$pid" > /dev/null; do
 			sleep 0.1
 		done
 	fi
@@ -487,11 +487,11 @@ server_wait_for_stop() {
 server_set_active() {
 	case "$2" in
 		active)
-			as_user ${server_user_name[$1]} "touch ${server_flag_active[$1]}"
+			as_user "${server_user_name[$1]}" "touch \"${server_flag_active[$1]}\""
 			server_active[$1]="true"
 			;;
 		inactive)
-			as_user ${server_user_name[$1]} "rm -f ${server_flag_active[$1]}"
+			as_user "${server_user_name[$1]}" "rm -f \"${server_flag_active[$1]}\""
 			server_active[$1]="false"
 			;;
 		*)
@@ -507,8 +507,8 @@ server_set_active() {
 jargroup_list() {
 	for group in $(ls -1 "$JAR_STORAGE_PATH"); do
 		echo "${group}:"
-		for jar in $(ls -1r $JAR_STORAGE_PATH/$group); do
-			if [[ $jar =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}- ]]; then
+		for jar in $(ls -1r "$JAR_STORAGE_PATH/$group"); do
+			if [[ "$jar" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}- ]]; then
 				echo "    $jar"
 			fi
 		done
@@ -522,14 +522,14 @@ jargroup_create() {
 		if [[ ! -e "$JAR_STORAGE_PATH/$1" ]]; then
 			printf "Creating jar group... "
 			
-			local error=$(as_user_stderr "$USERNAME" "mkdir -p '$JAR_STORAGE_PATH/$1'")
+			local error="$(as_user_stderr "$USERNAME" "mkdir -p \"$JAR_STORAGE_PATH/$1\"")"
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
 				echo "Reason: $error"
 				return 1
 			fi
 			
-			error=$(as_user "$USERNAME" "echo \"$2\" > '$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET'")
+			error="$(as_user "$USERNAME" "echo \"$2\" > \"$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET\"")"
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
 				echo "Reason: $error"
@@ -561,7 +561,7 @@ jargroup_getlatest() {
 				printf "Downloading latest version... "
 			
 				# Try and make 
-				local error=$(as_user_stderr "$USERNAME" "mkdir -p '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'")
+				local error="$(as_user_stderr "$USERNAME" "mkdir -p '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'")"
 				if [[ "$error" != "" ]]; then
 					echo "Failed."
 					echo "Reason: $error"
@@ -571,14 +571,14 @@ jargroup_getlatest() {
 				as_user "$USERNAME" "wget --quiet --trust-server-names --no-check-certificate --input-file='$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET' --directory-prefix='$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'"
 				echo "Done."
 			
-				local num_files=$(as_user "$USERNAME" "ls -1 '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' | wc -l")
+				local num_files="$(as_user "$USERNAME" "ls -1 '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' | wc -l")"
 			
-				if [[ $num_files == 1 ]]; then
+				if [[ "$num_files" == 1 ]]; then
 					# There was 1 file downloaded
 				
-					local file_name=$(ls -1 "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR")
+					local file_name="$(ls -1 "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR")"
 					local new_name="$(date +%F-%H-%M-%S)-$file_name"
-					local most_recent_jar=$(get_latest_file "$JAR_STORAGE_PATH/$1")
+					local most_recent_jar="$(get_latest_file "$JAR_STORAGE_PATH/$1")"
 					
 				
 					if [[ ! -e "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name" > /dev/null; then
@@ -587,11 +587,11 @@ jargroup_getlatest() {
 						# Add it to the group
 					
 						[[ -e "$most_recent_jar" ]]
-						local was_previous=$?
+						local was_previous="$?"
 					
 						as_user "$USERNAME" "mv '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name' '$JAR_STORAGE_PATH/$1/$new_name'"
 					
-						if [[ ! -z $most_recent_jar ]]; then
+						if [[ ! -z "$most_recent_jar" ]]; then
 							echo "Downloaded version was different to previous latest. Saved as \"$JAR_STORAGE_PATH/$1/$new_name\"."
 						else
 							echo "Saved as \"$JAR_STORAGE_PATH/$1/$new_name\"."
@@ -600,7 +600,7 @@ jargroup_getlatest() {
 						echo "Existing version \"$JAR_STORAGE_PATH/$1/$new_name\" was already up to date."
 					fi
 				
-				elif [[ $num_files == 0 ]]; then
+				elif [[ "$num_files" == 0 ]]; then
 					# No file was downloaded
 					echo "Failed. No files were downloaded."
 				else
@@ -631,8 +631,8 @@ jargroup_delete() {
 			printf "Are you sure you want to delete this jar group [y/N]: "
 		
 			read answer
-			if [[ $answer =~ ^y|Y|yes$ ]]; then
-				as_user "$USERNAME" "rm -rf $JAR_STORAGE_PATH/$1"
+			if [[ "$answer" =~ ^y|Y|yes$ ]]; then
+				as_user "$USERNAME" "rm -rf \"$JAR_STORAGE_PATH/$1\""
 				echo "Jar group deleted."
 			else
 				echo "Jar group was NOT deleted."
@@ -705,7 +705,7 @@ server_create() {
 			# to ensure it is recognised.
 			init
 			
-			server_set_jar $(server_get_id "$1") "minecraft"
+			server_set_jar "$(server_get_id "$1")" "minecraft"
 		fi
 	else
 		return 1
@@ -720,7 +720,7 @@ server_delete() {
 			printf "Are you sure you want to delete this server and its worlds (note: backups are preserved) [y/N]: "
 
 			read answer
-			if [[ $answer =~ ^y|Y|yes$ ]]; then
+			if [[ "$answer" =~ ^y|Y|yes$ ]]; then
 				# TODO: stop the server if running first
 				as_user "$USERNAME" "rm -rf '$SERVER_STORAGE_PATH/$1'"
 				echo "Server deleted."
@@ -776,18 +776,17 @@ server_rename() {
 # Starts a single server
 # $1: The ID of the server
 server_start() {
-	if server_is_running $1; then
+	if server_is_running "$1"; then
 		echo "Server \"${server_name[$1]}\" is already running!"
 	else
-		server_ensure_links $1
-		server_worlds_to_ram $1
+		server_ensure_links "$1"
+		server_worlds_to_ram "$1"
 
-		local time_now=$(now)
+		local time_now="$(now)"
 		
 		printf "Starting server... "
-		
-		as_user ${server_user_name[$1]} "cd ${server_path[$1]} && screen -dmS ${server_screen_name[$1]} ${server_invocation[$1]}"
-		server_log_wait_for_line $1 "$time_now" "${server_confirm_start[$1]}"
+		as_user "${server_user_name[$1]}" "cd \"${server_path[$1]}\" && screen -dmS \"${server_screen_name[$1]}\" ${server_invocation[$1]}"
+		server_log_wait_for_line "$1" "$time_now" "${server_confirm_start[$1]}"
 		
 		echo "Done."
 	fi
@@ -796,11 +795,11 @@ server_start() {
 # Sends the "save-all" command to a server
 # $1: The ID of the server
 server_save_all() {
-	if server_is_running $1; then
+	if server_is_running "$1"; then
 		echo -n "Forcing save... "
 		
 		# Send the "save-all" command and wait for it to finish
-		server_eval_and_wait $1 "save-all" "${server_confirm_save_all[$1]}"
+		server_eval_and_wait "$1" "save-all" "${server_confirm_save_all[$1]}"
 		
 		echo "Done."
 	else
@@ -811,11 +810,11 @@ server_save_all() {
 # Sends the "save-off" command to a server
 # $1: The ID of the server
 server_save_off() {
-	if server_is_running $1; then
+	if server_is_running "$1"; then
 		echo -n "Disabling level saving... "
 		
 		# Send the "save-off" command and wait for it to finish
-		server_eval_and_wait $1 "save-off" "${server_confirm_save_off[$1]}"
+		server_eval_and_wait "$1" "save-off" "${server_confirm_save_off[$1]}"
 		
 		echo "Done."
 		
@@ -829,11 +828,11 @@ server_save_off() {
 # Sends the "save-on" command to a server
 # $1: The ID of the server
 server_save_on() {
-	if server_is_running $1; then
+	if server_is_running "$1"; then
 		echo -n "Enabling level saving... "
 		
 		# Send the "save-on" command and wait for it to finish
-		server_eval_and_wait $1 "save-on" "${server_confirm_save_on[$1]}"
+		server_eval_and_wait "$1" "save-on" "${server_confirm_save_on[$1]}"
 		
 		echo "Done."
 	else
@@ -844,16 +843,16 @@ server_save_on() {
 # Stops a single server after a delay
 # $1: The ID of the server
 server_stop() {
-	if server_is_running $1; then
+	if server_is_running "$1"; then
 		# Change the state of the script
 		STOP_COUNTDOWN[$id]="true"
 	
-	    server_eval $id "say ${server_stop_message[$id]}"
+	    server_eval "$id" "say ${server_stop_message[$id]}"
 	    echo "Issued the warning \"${server_stop_message[$id]}\" to players."
 	
 		echo -n "Shutting down... "
 	
-		for ((i=${server_stop_delay[$id]}; i>0; i--)); do
+		for ((i="${server_stop_delay[$id]}"; i>0; i--)); do
 			tput sc # Save cursor position
 			echo -n "in $i seconds."
 			sleep 1
@@ -864,7 +863,7 @@ server_stop() {
 	
 		echo -e "Now."
 		
-		server_stop_now $1
+		server_stop_now "$1"
    	else
 		echo "Server \"${server_name[$1]}\" is not running."
 	fi
@@ -873,20 +872,20 @@ server_stop() {
 # Stops a single server right now
 # $1: The ID of the server
 server_stop_now() {
-	if server_is_running $1; then
-		server_save_all $1
+	if server_is_running "$1"; then
+		server_save_all "$1"
 		
 		echo -n "Stopping the server... "
 		
-		server_eval $1 "stop"
+		server_eval "$1" "stop"
 		STOP_COUNTDOWN[$1]="false"
 		RESTART_COUNTDOWN[$1]="false"
-		server_wait_for_stop $1
+		server_wait_for_stop "$1"
 		
 		echo "Done."
 		
 		# Synchronise all worlds in RAM to disk
-		server_worlds_to_disk $1
+		server_worlds_to_disk "$1"
 	else
 		echo "Server \"${server_name[$1]}\" is not running."
 	fi
@@ -896,16 +895,16 @@ server_stop_now() {
 # $1: The ID of the server 
 server_restart() {
 	# Restarts the server if it is already running
-	if server_is_running $1; then
+	if server_is_running "$1"; then
 		# Change the state of the script
 		RESTART_COUNTDOWN[$id]="true"
 	
-	    server_eval $id "say ${server_restart_message[$id]}"
+	    server_eval "$id" "say ${server_restart_message[$id]}"
 	    echo "Issued the warning \"${server_restart_message[$id]}\" to players."
 	
 		echo -n "Restarting... "
 	
-		for ((i=${server_stop_delay[$id]}; i>0; i--)); do
+		for ((i="${server_stop_delay[$id]}"; i>0; i--)); do
 			tput sc # Save cursor position
 			echo -n "in $i seconds."
 			sleep 1
@@ -916,51 +915,51 @@ server_restart() {
 	
 		echo -e "Now."
 		
-		server_stop_now $1
+		server_stop_now "$1"
 	fi
 	
-	server_start $1
+	server_start "$1"
 }
 
 # Restarts a single server right away
 # $1: The ID of the server
 server_restart_now() {
 	# Restarts the server if it is already running
-	if server_is_running $1; then
-		server_stop_now $1
+	if server_is_running "$1"; then
+		server_stop_now "$1"
 	fi
 	
-	server_start $1
+	server_start "$1"
 }
 
 # List the worlds available for a server
 # $1: The ID of the server
 server_worlds_list() {
-	local i=${server_world_offset[$1]}
-	local max=$(( $i + ${server_num_worlds[$1]} ))
+	local i="${server_world_offset[$1]}"
+	local max="$(( $i + ${server_num_worlds[$1]} ))"
 	
 	# For each of the servers worlds:
-	while [[ $i -lt $max ]]; do
-		if ${world_inram[$i]}; then
+	while [[ "$i" -lt "$max" ]]; do
+		if "${world_inram[$i]}"; then
 			echo "[RAM] ${world_name[$i]}"
 		else
 			echo "[DSK] ${world_name[$i]}"
 		fi
 		
-		i=$(( $i + 1 ))
+		i="$(( $i + 1 ))"
 	done
 }
 
 # Backs up the worlds for a server
 # $1: The ID of the server
 server_worlds_backup() {
-	local i=${server_world_offset[$1]}
-	local max=$(( $i + ${server_num_worlds[$1]} ))
+	local i="${server_world_offset[$1]}"
+	local max="$(( $i + ${server_num_worlds[$1]} ))"
 
 	# For each of the servers worlds:
-	while [[ $i -lt $max ]]; do
-		world_backup $i
-		i=$(( $i + 1 ))
+	while [[ "$i" -lt "$max" ]]; do
+		world_backup "$i"
+		i="$(( $i + 1 ))"
 	done
 }
 
@@ -974,11 +973,11 @@ server_log_roll() {
 	
 	if [ -e "${server_log[$1]}" ]; then
 		file_name="${server_name[$1]}-$(date +%F-%H-%M-%S).log"
-		as_user ${server_user_name[$1]} "mkdir -p \"${server_log_archive_path[$1]}\" && cp \"${server_log[$1]}\" \"${server_log_archive_path[$1]}/${file_name}\" && gzip \"${server_log_archive_path[$1]}/${file_name}\""
+		as_user "${server_user_name[$1]}" "mkdir -p \"${server_log_archive_path[$1]}\" && cp \"${server_log[$1]}\" \"${server_log_archive_path[$1]}/${file_name}\" && gzip \"${server_log_archive_path[$1]}/${file_name}\""
 		
 		if [ -e "${server_log_archive_path[$1]}/${file_name}.gz" ]; then
-			as_user ${server_user_name[$1]} "cp \"/dev/null\" ${server_log[$1]}"
-			as_user ${server_user_name[$1]} "echo \"Previous logs can be found at \\\"${server_log_archive_path[$1]}\\\"\" > ${server_log[$1]}"
+			as_user "${server_user_name[$1]}" "cp \"/dev/null\" \"${server_log[$1]}\""
+			as_user "${server_user_name[$1]}" "echo \"Previous logs can be found at \\\"${server_log_archive_path[$1]}\\\"\" > \"${server_log[$1]}\""
 		else
 			echoerr "Failed."
 			return 1
@@ -1001,7 +1000,7 @@ server_backup() {
 	
 	# Zip up the server directory
 	file_name="${server_backup_path[$1]}/$(date "+%F-%H-%M-%S").zip"
-	as_user ${server_user_name[$1]} "mkdir -p \"${server_backup_path[$1]}\" && cd \"$SERVER_STORAGE_PATH\" && zip ${zip_flags} \"${file_name}\" \"${server_name[$1]}\""
+	as_user "${server_user_name[$1]}" "mkdir -p \"${server_backup_path[$1]}\" && cd \"$SERVER_STORAGE_PATH\" && zip ${zip_flags} \"${file_name}\" \"${server_name[$1]}\""
 	
 	echo "Done."
 }
@@ -1018,7 +1017,7 @@ server_set_jar() {
 			
 			# Download the latest version
 			jargroup_getlatest "$2"
-			local jar=$(get_latest_file "$JAR_STORAGE_PATH/$2")
+			local jar="$(get_latest_file "$JAR_STORAGE_PATH/$2")"
 		else
 			# If a specific jar IS mentioned use that
 			local jar="$JAR_STORAGE_PATH/$2/$3"
@@ -1030,7 +1029,7 @@ server_set_jar() {
 		fi
 		
 		if [[ ! -z "$jar" ]]; then
-			as_user "${server_user[$1]}" "ln -sf $jar ${server_jar[$1]}"
+			as_user "${server_user[$1]}" "ln -sf \"$jar\" \"${server_jar[$1]}\""
 			echo "Server \"${server_name[$1]}\" is now using \"$jar\"."
 		fi
 	else
@@ -1041,12 +1040,12 @@ server_set_jar() {
 # Lists the players currently connected to a server
 # $1: The ID of the server
 server_connected() {
-	if server_is_running $1; then
-		local line=$(server_eval_and_get_line $1 "list" "Connected players:")
+	if server_is_running "$1"; then
+		local line="$(server_eval_and_get_line "$1" "list" "Connected players:")"
 		
 		# Cuts the start off the line, and the last three (invisible)
 		# characters from the end.
-		local players=${line:46:(-3)}
+		local players="${line:46}"
 		
 		if [ -z "$players" ]; then
 			echo "No players are connected."
@@ -1075,18 +1074,18 @@ manager_stop_all_servers() {
 	local max_countdown=0
 	
 	for ((server=0; server<${num_servers}; server++)); do
-		if server_is_running $server; then
+		if server_is_running "$server"; then
 			any_running="true"
 			was_running[$server]="true"
 			STOP_COUNTDOWN[$server]="true"
-			if [[ ${server_stop_delay[$i]} > $max_countdown ]]; then
-				max_countdown=${server_stop_delay[$server]}
+			if [[ "${server_stop_delay[$i]}" -gt "$max_countdown" ]]; then
+				max_countdown="${server_stop_delay[$server]}"
 			fi
 			
 			# Send a warning message to the server
 			case "$1" in
-				stop) server_eval $server "say ${server_stop_message[$server]}";;
-				restart) server_eval $server "say ${server_restart_message[$server]}";;
+				stop) server_eval "$server" "say ${server_stop_message[$server]}";;
+				restart) server_eval "$server" "say ${server_restart_message[$server]}";;
 			esac
 			
 			# Send message to stdout
@@ -1097,7 +1096,7 @@ manager_stop_all_servers() {
 				restart) echo "    Issued the warning \"${server_restart_message[$server]}\" to players.";;
 			esac
 			
-			case ${server_stop_delay[$server]} in
+			case "${server_stop_delay[$server]}" in
 				0) echo "    Stopping without delay.";;
 				1) echo "    Stopping after 1 second.";;
 				*) echo "    Stopping after ${server_stop_delay[$server]} seconds.";;
@@ -1112,10 +1111,10 @@ manager_stop_all_servers() {
 		# Wait for the maximum possible delay, stopping servers
 		# at the correct times
 		echo -n "All servers will have been issued the stop command... "
-		for ((tick=${max_countdown}; tick>=0; tick--)); do
+		for ((tick="${max_countdown}"; tick>=0; tick--)); do
 			tput sc # Save cursor position
 		
-			if [[ $tick -le 1 ]]; then
+			if [[ "$tick" -le 1 ]]; then
 				echo -n "in $tick second."
 			else
 				echo -n "in $tick seconds."
@@ -1124,16 +1123,16 @@ manager_stop_all_servers() {
 			# Each second check all server, to see if its their time to
 			# stop. If so issue the stop command, and don't hang.
 			for ((server=0; server<${num_servers}; server++)); do
-				if server_is_running $server; then
-					stop_tick=$(( ${max_countdown} - ${server_stop_delay[$server]} ))
-					if [[ $stop_tick == $tick ]]; then
-						server_eval $server "stop"
+				if server_is_running "$server"; then
+					stop_tick="$(( ${max_countdown} - ${server_stop_delay[$server]} ))"
+					if [[ "$stop_tick" == "$tick" ]]; then
+						server_eval "$server" "stop"
 						STOP_COUNTDOWN[$server]="false"
 					fi
 				fi
 			done
 		
-			if [[ $tick > 0 ]]; then
+			if [[ "$tick" > 0 ]]; then
 				sleep 1
 			fi
 
@@ -1148,7 +1147,7 @@ manager_stop_all_servers() {
 		for ((server=0; server<${num_servers}; server++)); do
 			if "${was_running[$server]}"; then
 				echo -n "Ensuring server \"${server_name[$server]}\" has stopped... "
-				server_wait_for_stop $server
+				server_wait_for_stop "$server"
 				echo "Done."
 			fi
 		done
@@ -1166,23 +1165,23 @@ manager_stop_all_servers_now() {
 	
 	# Stop all servers at the same time
 	for ((server=0; server<${num_servers}; server++)); do
-		if server_is_running $server; then
+		if server_is_running "$server"; then
 			was_running[$server]="true"
 			any_running="true"
 			echo "Server \"${server_name[$server]}\" was running, now stopping."
-			server_eval $server "stop"
+			server_eval "$server" "stop"
 		else
 			echo "Server \"${server_name[$server]}\" was NOT running."
 			was_running[$server]="false"
 		fi
 	done
 	
-	if $any_running; then
+	if "$any_running"; then
 		# Ensure all the servers have stopped
 		for ((server=0; server<${num_servers}; server++)); do
-			if ${was_running[$server]}; then
+			if "${was_running[$server]}"; then
 				echo -n "Ensuring server \"${server_name[$server]}\" has stopped... "
-				server_wait_for_stop $server
+				server_wait_for_stop "$server"
 				echo "Done."
 			fi
 		done
@@ -1367,7 +1366,7 @@ server_init() {
 	
 	
 	# Load config overrides from server config file if present
-	server_load_config $1
+	server_load_config "$1"
 	
 	
 	# Replace tags in delay messages
@@ -1384,49 +1383,49 @@ server_init() {
 	server_num_worlds[$1]=0
 	
 	# Start world id's for this server's worlds at the end of the array
-	local id=$num_worlds
+	local id="$num_worlds"
 	
 	# Record the index at which worlds for this server start
-	server_world_offset[$1]=$id
+	server_world_offset[$1]="$id"
 	
 	if [[ -d "${server_world_storage[$1]}" ]]; then
 		# Load active worlds
 		while IFS= read -r -d $'\0' path; do
-			local name=$(basename $path)
-			server_world_init $1 $id $name
+			local name="$(basename "$path")"
+			server_world_init "$1" "$id" "$name"
 			
 			# Build the server_worlds comma separated list
-			if [[ $id == $server_world_offset[$1] ]]; then
+			if [[ "$id" == "${server_world_offset[$1]}" ]]; then
 				server_worlds[$1]="$name"
 			else
 				server_worlds[$1]="${server_worlds[$1]}, $name"
 			fi
 			
-			id=$(($id+1))
-			num_worlds=$id
+			id="$(($id+1))"
+			num_worlds="$id"
 		done < <(find "${server_world_storage[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 	
 	if [[ -d "${server_world_storage_inactive[$1]}" ]]; then
 		# Load inactive worlds
 		while IFS= read -r -d $'\0' path; do
-			local name=$(basename $path)
-			server_world_init $1 $id $name
+			local name="$(basename "$path")"
+			server_world_init "$1" "$id" "$name"
 			
 			# Build the server_worlds_inactive comma separated list
-			if [[ $id == $server_world_offset[$1] ]]; then
+			if [[ "$id" == "${server_world_offset[$1]}" ]]; then
 				server_worlds[$1]="$name"
 			else
 				server_worlds[$1]="${server_worlds[$1]}, $name"
 			fi
 			
-			id=$(($id+1))
-			num_worlds=$id
+			id="$(($id+1))"
+			num_worlds="$id"
 		done < <(find "${server_world_storage_inactive[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 	
 	# Record the number of worlds this server has
-	server_num_worlds[$1]=$(( $id - ${server_world_offset[$1]} ))
+	server_num_worlds[$1]="$(( $id - ${server_world_offset[$1]} ))"
 }
 
 # Asserts that a variable has been set in the config file
@@ -1506,10 +1505,10 @@ init() {
 
 	local id=0
 	while IFS= read -r -d $'\0' path; do
-		local name=$(basename $path)
-		server_init $id $name
-		id=$(($id+1))
-		num_servers=$id
+		local name="$(basename "$path")"
+		server_init "$id" "$name"
+		id="$(($id+1))"
+		num_servers="$id"
 	done < <(find "$SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
 }
 
@@ -1517,21 +1516,21 @@ init() {
 interrupt() {
 	local exit_message="false"
 	for ((i=0; $i<$num_servers; i++)); do
-		if [[ "${STOP_COUNTDOWN[$i]}" == "true" ]] && server_is_running $i; then
+		if [[ "${STOP_COUNTDOWN[$i]}" == "true" ]] && server_is_running "$i"; then
 			if [[ "$exit_message" == "false" ]]; then
 				echo -e "\nInterrupted..."
 				exit_message="true"
 			fi
-			server_eval $i "say ${server_stop_abort[$i]}"
+			server_eval "$i" "say ${server_stop_abort[$i]}"
 			echo "Server \"${server_name[$i]}\" shutdown was aborted."
 		fi
 		
-		if [[ "${RESTART_COUNTDOWN[$i]}" == "true" ]] && server_is_running $i; then
+		if [[ "${RESTART_COUNTDOWN[$i]}" == "true" ]] && server_is_running "$i"; then
 			if [[ "$exit_message" == "false" ]]; then
 				echo -e "\nInterrupted..."
 				exit_message="true"
 			fi
-			server_eval $i "say ${server_restart_abort[$i]}"
+			server_eval "$i" "say ${server_restart_abort[$i]}"
 			echo "Server \"${server_name[$i]}\" restart was aborted."
 		fi
 	done
@@ -1551,15 +1550,15 @@ main() {
 			# Required start option, for debian init.d scripts
 			for ((server=0; server<${num_servers}; server++)); do
 				# Only starts active servers
-				if ${server_active[$server]}; then
-					if server_is_running $server; then
+				if "${server_active[$server]}"; then
+					if server_is_running "$server"; then
 						echo "[ACTIVE] Server \"${server_name[$server]}\" already started."
 					else
 						echo "[ACTIVE] Server \"${server_name[$server]}\" starting:"
-						server_start $server
+						server_start "$server"
 					fi
 				else
-					if server_is_running $server; then
+					if server_is_running "$server"; then
 						echo "[INACTIVE] Server \"${server_name[$server]}\" already started. It should not be running! Use \"$0 ${server_name[$server]} stop\" to stop this server."
 					else
 						echo "[INACTIVE] Server \"${server_name[$server]}\" leaving stopped, as this server is inactive."
@@ -1653,7 +1652,7 @@ main() {
 					if [ -z "$3" ] || [ -z "$4" ]; then
 						echo "Invalid command."
 					else
-						jargroup_rename $3 $4
+						jargroup_rename "$3" "$4"
 					fi
 					;;
 				changetarget)
@@ -1741,79 +1740,79 @@ main() {
 		*)	
 			if [[ "$1" == "all" ]] || [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
 				
-				local id=$(server_get_id "$1")
+				local id="$(server_get_id "$1")"
 				
 				case "$2" in
 					start)
-						server_set_active $id "active"
-						server_start $id
+						server_set_active "$id" "active"
+						server_start "$id"
 						;;
 					stop)
-						server_set_active $id "inactive"
-						if [[ $3 != "now" ]]; then
-							server_stop $id
+						server_set_active "$id" "inactive"
+						if [[ "$3" != "now" ]]; then
+							server_stop "$id"
 						else
-							server_stop_now $id
+							server_stop_now "$id"
 						fi
 						;;
 					restart)
-						server_set_active $1 "active"
-						if [[ $3 != "now" ]]; then
-							server_restart $id
+						server_set_active "$1" "active"
+						if [[ "$3" != "now" ]]; then
+							server_restart "$id"
 						else
-							server_restart_now $id
+							server_restart_now "$id"
 						fi
 						;;
 					status)
-						if server_is_running $id; then
+						if server_is_running "$id"; then
 							echo "Server \"${server_name[$id]}\" is running."
 						else
 							echo "Server \"${server_name[$id]}\" is stopped."
 						fi
 						;;
 					connected)
-						server_connected $id
+						server_connected "$id"
 						;;
 					worlds)
 						case "$3" in
 							list)
-								server_worlds_list $id
+								server_worlds_list "$id"
 								;;
 							load)
-								server_ensure_links $id
+								server_ensure_links "$id"
 								;;
 							ram)
 								if [ -z "$4" ]; then
 									echo "Invalid command."
 								else
-									world_id=$(server_world_get_id $id "$4")
+									world_id="$(server_world_get_id "$id" "$4")"
 									
-									if [ ! -z $world_id ]; then
-										world_toggle_ramdisk_state $world_id
+									if [ ! -z "$world_id" ]; then
+										world_toggle_ramdisk_state "$world_id"
 									else
 										echo "Server \"${server_name[$id]}\" has no world with that name."
 									fi
 								fi
 								;;
 							todisk)
-								server_save_off $id
-								server_save_all $id
-								server_worlds_to_disk $id
-								server_save_on $id
+								server_save_off "$id"
+								server_save_all "$id"
+								server_worlds_to_disk "$id"
+								server_save_on "$id"
 								;;
 							backup)
-								if server_is_running $id; then
-									server_eval $id "say ${server_world_backup_started[$id]}"
-									server_save_off $id
-									server_save_all $id
+								if server_is_running "$id"; then
+									server_eval "$id" "say ${server_world_backup_started[$id]}"
+									server_save_off "$id"
+									server_save_all "$id"
 								fi
 								
-								server_worlds_to_disk $id
-								server_worlds_backup $id
+								server_worlds_to_disk "$id"
+								server_worlds_backup "$id"
 								
-								if server_is_running $id; then
-									server_save_on $id
-									server_eval $id "say ${server_world_backup_finished[$id]}"
+								if server_is_running "$id"; then
+									server_save_on "$id"
+									server_eval "$id" "say ${server_world_backup_finished[$id]}"
 								fi
 								
 								echo "Backup took $SECONDS seconds".
@@ -1838,21 +1837,21 @@ main() {
 						esac
 						;;
 					logroll)
-						server_log_roll $id
+						server_log_roll "$id"
 						;;
 					backup)
-						if server_is_running $id; then
-							server_eval $id "say ${server_complete_backup_started[$id]}"
-							server_save_off $id
-							server_save_all $id
+						if server_is_running "$id"; then
+							server_eval "$id" "say ${server_complete_backup_started[$id]}"
+							server_save_off "$id"
+							server_save_all "$id"
 						fi
 						
-						server_worlds_to_disk $id
-						server_backup $id
+						server_worlds_to_disk "$id"
+						server_backup "$id"
 						
-						if server_is_running $id; then
-							server_save_on $id
-							server_eval $id "say ${server_complete_backup_finished[$id]}"
+						if server_is_running "$id"; then
+							server_save_on "$id"
+							server_eval "$id" "say ${server_complete_backup_finished[$id]}"
 						fi
 						
 						echo "Backup took $SECONDS seconds".
@@ -1861,22 +1860,22 @@ main() {
 						if [ -z "$3" ]; then
 							echo "Invalid command."
 						else
-							server_set_jar $id "$3" "$4"
+							server_set_jar "$id" "$3" "$4"
 						fi
 						;;
 					whitelist|wl)
 						case "$3" in
 							on)
-								if server_is_running $id; then
-									server_eval $id "whitelist on"
+								if server_is_running "$id"; then
+									server_eval "$id" "whitelist on"
 									echo "Whitelist enabled"
 								else
 									echo "Server \"${server_name[$id]}\" is not running."
 								fi
 								;;
 							off)
-								if server_is_running $id; then
-									server_eval $id "whitelist off"
+								if server_is_running "$id"; then
+									server_eval "$id" "whitelist off"
 									echo "Whitelist disabled"
 								else
 									echo "Server \"${server_name[$id]}\" is not running."
@@ -1886,8 +1885,8 @@ main() {
 								if [ -z "$4" ]; then
 									echo "Invalid command."
 								else
-									if server_is_running $id; then
-										server_eval $id "whitelist add $4"
+									if server_is_running "$id"; then
+										server_eval "$id" "whitelist add $4"
 										echo "Added \"$4\" to the whitelist."
 									else
 										echo "Server \"${server_name[$id]}\" is not running."
@@ -1898,8 +1897,8 @@ main() {
 								if [ -z "$4" ]; then
 									echo "Invalid command."
 								else
-									if server_is_running $id; then
-										server_eval $id "whitelist remove $4"
+									if server_is_running "$id"; then
+										server_eval "$id" "whitelist remove $4"
 										echo "Removed \"$4\" from the whitelist."
 									else
 										echo "Server \"${server_name[$id]}\" is not running."
@@ -1907,7 +1906,7 @@ main() {
 								fi
 								;;
 							list)
-								local players=$(cat ${server_whitelist[$id]})
+								local players="$(cat "${server_whitelist[$id]}")"
 
 								if [ -z "$players" ]; then
 									echo "No players are whitelisted."
@@ -1929,9 +1928,9 @@ main() {
 									case "$4" in
 										add)
 											for player in ${*:5}; do
-											 	server_eval $id "ban $player"
+											 	server_eval "$id" "ban $player"
 											done
-											if [[ $# > 5 ]]; then
+											if [[ $# -gt 5 ]]; then
 												echo -n "Blacklisted the following players: "
 												echo -n "$5"
 												for player in ${*:6}; do
@@ -1944,9 +1943,9 @@ main() {
 											;;
 										remove)
 											for player in ${*:5}; do
-											 	server_eval $id "pardon $player"
+											 	server_eval "$id" "pardon $player"
 											done
-											if [[ $# > 5 ]]; then
+											if [[ $# -gt 5 ]]; then
 												echo -n "Removed the following players from the blacklist: "
 												echo -n "$5"
 												for player in ${*:6}; do
@@ -1967,7 +1966,7 @@ main() {
 								case "$4" in
 									add)
 										for address in ${*:5}; do
-										 	server_eval $id "ban-ip $address"
+										 	server_eval "$id" "ban-ip $address"
 										done
 										if [[ $# > 5 ]]; then
 											echo -n "Blacklisted the following ip addresses: "
@@ -1982,7 +1981,7 @@ main() {
 										;;
 									remove)
 										for address in ${*:5}; do
-										 	server_eval $id "pardon-ip $address"
+										 	server_eval "$id" "pardon-ip $address"
 										done
 										if [[ $# > 5 ]]; then
 											echo -n "Removed the following ip addresses from the blacklist: "
@@ -2001,9 +2000,9 @@ main() {
 								esac
 								;;
 							list)
-								local players=$(cat ${server_banned_players[$id]})
+								local players="$(cat "${server_banned_players[$id]}")"
 								
-								local ips=$(cat ${server_banned_ips[$id]})
+								local ips="$(cat "${server_banned_ips[$id]}")"
 
 								if [[ -z "$players" && -z "$ips" ]]; then
 									echo "The blacklist is empty."
@@ -2031,23 +2030,23 @@ main() {
 					operator|op)
 						case "$3" in
 							add)
-								if server_is_running $id; then
-									server_eval $id "op $4"
+								if server_is_running "$id"; then
+									server_eval "$id" "op $4"
 									echo "The player \"$4\" is now an operator for the server."
 								else
 									echo "Server \"${server_name[$id]}\" is not running."
 								fi
 								;;
 							remove)
-								if server_is_running $id; then
-									server_eval $id "deop $4"
+								if server_is_running "$id"; then
+									server_eval "$id" "deop $4"
 									echo "The player \"$4\" is no longer an operator for the server."
 								else
 									echo "Server \"${server_name[$id]}\" is not running."
 								fi
 								;;
 							list)
-								local players=$(cat ${server_ops[$id]})
+								local players="$(cat "${server_ops[$id]}")"
 
 								if [ -z "$players" ]; then
 									echo "No players are operators."
@@ -2066,25 +2065,25 @@ main() {
 								if [ -z "$4" ]; then
 									echo "Invalid command."
 								else
-									if server_is_running $id; then
+									if server_is_running "$id"; then
 										case "$3" in
 											creative|1) local mode=1;;
 											survival|0) local mode=0;;
 											*) echoerr "Invalid mode"; exit 1;;
 										esac
 										
-										local line=$(server_eval_and_get_line $id "gamemode $4 $mode" "${server_confirm_gamemode[$id]}" "${server_confirm_gamemode_fail_no_user[$id]}" "${server_confirm_gamemode_fail_no_change[$id]}")
+										local line="$(server_eval_and_get_line "$id" "gamemode $4 $mode" "${server_confirm_gamemode[$id]}" "${server_confirm_gamemode_fail_no_user[$id]}" "${server_confirm_gamemode_fail_no_change[$id]}")"
 
 										local regex="${LOG_REGEX} ${server_confirm_gamemode[$id]}"
-										if [[ $line =~ $regex ]]; then
+										if [[ "$line" =~ $regex ]]; then
 											echo "Changed game mode of \"$4\" to \"$3\"."
 										fi
 										local regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_user[$id]}"
-										if [[ $line =~ $regex ]]; then
+										if [[ "$line" =~ $regex ]]; then
 											echo "The player \"$4\" was not found to be logged on."
 										fi
 										local regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_change[$id]}"
-										if [[ $line =~ $regex ]]; then
+										if [[ "$line" =~ $regex ]]; then
 											echo "The player \"$4\" was already in mode \"$3\"."
 										fi
 									else
@@ -2101,15 +2100,15 @@ main() {
 						if [ -z "$3" ]; then
 							echo "Invalid command."
 						else
-							if server_is_running $id; then
-								local line=$(server_eval_and_get_line $id "kick $3" "${server_confirm_kick[$id]}" "${server_confirm_kick_fail[$id]}")
+							if server_is_running "$id"; then
+								local line="$(server_eval_and_get_line "$id" "kick $3" "${server_confirm_kick[$id]}" "${server_confirm_kick_fail[$id]}")"
 								
 								local regex="${LOG_REGEX} ${server_confirm_kick[$id]}"
-								if [[ $line =~ $regex ]]; then
+								if [[ "$line" =~ $regex ]]; then
 									echo "Kicked \"$3\" from game."
 								fi
 								local regex="${LOG_REGEX} ${server_confirm_kick_fail[$id]}"
-								if [[ $line =~ $regex ]]; then
+								if [[ "$line" =~ $regex ]]; then
 									echo "The player \"$3\" is not connected."
 								fi
 							else
@@ -2121,8 +2120,8 @@ main() {
 						if [ -z "$3" ]; then
 							echo "Invalid command."
 						else
-							if server_is_running $id; then
-								server_eval $id "say ${*:3}"
+							if server_is_running "$id"; then
+								server_eval "$id" "say ${*:3}"
 								echo "Message sent to players."
 							else
 								echo "Server \"${server_name[$id]}\" is not running."
@@ -2135,15 +2134,15 @@ main() {
 								if [ -z "$4" ]; then
 									echo "Invalid command."
 								else
-									if server_is_running $id; then
-										local line=$(server_eval_and_get_line $id "time set $4" "${server_confirm_time_set[$id]}" "${server_confirm_time_set_fail[$id]}")
+									if server_is_running "$id"; then
+										local line="$(server_eval_and_get_line "$id" "time set $4" "${server_confirm_time_set[$id]}" "${server_confirm_time_set_fail[$id]}")"
 										
 										local regex="${LOG_REGEX} ${server_confirm_time_set[$id]}"
-										if [[ $line =~ $regex ]]; then
+										if [[ "$line" =~ $regex ]]; then
 											echo "Set time to \"$4\"."
 										fi
 										local regex="${LOG_REGEX} ${server_confirm_time_set_fail[$id]}"
-										if [[ $line =~ $regex ]]; then
+										if [[ "$line" =~ $regex ]]; then
 											echo "Unable to convert \"$4\" to a time."
 										fi
 									else
@@ -2155,15 +2154,15 @@ main() {
 								if [ -z "$4" ]; then
 									echo "Invalid command."
 								else
-									if server_is_running $id; then
-										local line=$(server_eval_and_get_line $id "time add $4" "${server_confirm_time_add[$id]}" "${server_confirm_time_add_fail[$id]}")
+									if server_is_running "$id"; then
+										local line="$(server_eval_and_get_line "$id" "time add $4" "${server_confirm_time_add[$id]}" "${server_confirm_time_add_fail[$id]}")"
 										
 										local regex="${LOG_REGEX} ${server_confirm_time_add[$id]}"
-										if [[ $line =~ $regex ]]; then
+										if [[ "$line" =~ $regex ]]; then
 											echo "Added \"$4\" to time."
 										fi
 										local regex="${LOG_REGEX} ${server_confirm_time_add_fail[$id]}"
-										if [[ $line =~ $regex ]]; then
+										if [[ "$line" =~ $regex ]]; then
 											echo "Unable to convert \"$4\" to a time."
 										fi
 									else
@@ -2177,16 +2176,16 @@ main() {
 						esac
 						;;
 					toggledownfall|tdf)
-						if server_is_running $id; then
-							local line=$(server_eval_and_get_line $id "toggledownfall $3" "${server_confirm_toggledownfall[$id]}" "${server_confirm_toggledownfall_fail[$id]}")
+						if server_is_running "$id"; then
+							local line="$(server_eval_and_get_line "$id" "toggledownfall $3" "${server_confirm_toggledownfall[$id]}" "${server_confirm_toggledownfall_fail[$id]}")"
 							
 							local regex="${LOG_REGEX} ${server_confirm_toggledownfall[$id]}"
-							if [[ $line =~ $regex ]]; then
-								echo ${line:36:(-3)}
+							if [[ "$line" =~ $regex ]]; then
+								echo "${line:36:(-3)}"
 							fi
 							local regex="${LOG_REGEX} ${server_confirm_toggledownfall_fail[$id]}"
-							if [[ $line =~ $regex ]]; then
-								echo ${line:34:(-3)}
+							if [[ "$line" =~ $regex ]]; then
+								echo "${line:34:(-3)}"
 							fi
 						else
 							echo "Server \"${server_name[$id]}\" is not running."
@@ -2195,13 +2194,13 @@ main() {
 					save)
 						case "$3" in
 							on)
-								server_save_on $id
+								server_save_on "$id"
 								;;
 							off)
-								server_save_off $id
+								server_save_off "$id"
 								;;
 							all)
-								server_save_all $id
+								server_save_all "$id"
 								;;
 							*)
 								echo "Invalid command."
@@ -2212,8 +2211,8 @@ main() {
 						if [ -z "$3" ]; then
 							echo "Invalid command."
 						else
-							if server_is_running $id; then
-								server_eval $id "${*:3}"
+							if server_is_running "$id"; then
+								server_eval "$id" "${*:3}"
 								echo "Command sent."
 							else
 								echo "Server \"${server_name[$id]}\" is not running."
@@ -2224,18 +2223,18 @@ main() {
 						if [ -z "$3" ]; then
 							echo "Invalid command."
 						else
-							if server_is_running $id; then
-								server_eval $id "${*:3}"
+							if server_is_running "$id"; then
+								server_eval "$id" "${*:3}"
 								echo "Now watching logs (press Ctrl+C to exit):"
-								as_user ${server_user_name[$id]} "tail --follow --lines=0 --sleep-interval=0.1 ${server_log[$id]}"
+								as_user "${server_user_name[$id]}" "tail --follow --lines=0 --sleep-interval=0.1 ${server_log[$id]}"
 							else
 								echo "Server \"${server_name[$id]}\" is not running."
 							fi
 						fi
 						;;
 					console)
-						if server_is_running $id; then
-							as_user ${server_user_name[$1]} "screen -r ${server_screen_name[$1]}"
+						if server_is_running "$id"; then
+							as_user "${server_user_name[$1]}" "screen -r ${server_screen_name[$1]}"
 						else
 							echo "Server \"${server_name[$id]}\" is not running."
 						fi
