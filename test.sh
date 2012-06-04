@@ -38,8 +38,29 @@ tearDown() {
 	fi
 }
 
+
+# Utils
+# -----
+
+stdall() {
+	$1 "${@:2}" 2>&1
+}
+
+
 # Manager Tests
 # -------------
+
+test_invalid_server_names() {
+	local result
+	local expected_regex="^Invalid\ name"
+	local condition
+	
+	for name in "start" "stop" "restart" "server" "version" "jargroup" "all"; do
+		result="$(stdall $SCRIPT server create $name)"
+		assertTrue "Server name \"$name\" was accepted but should be invalid." "[[ '$result' =~ $expected_regex ]]"
+		assertFalse "Server directory was created when it should not have been." "[ -d \"$SERVER_STORAGE_PATH/$name\" ]"
+	done
+}
 
 test_create_server_without_any_jargroups() {
 	$SCRIPT server create example > /dev/null
@@ -52,8 +73,8 @@ test_create_server_with_jar_groups() {
 	$SCRIPT jargroup create minecraft "https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar" > /dev/null
 	$SCRIPT server create example > /dev/null
 	
-	assertTrue "Server was not created." '[ -d "$SERVER_STORAGE_PATH/example" ]'
-	assertTrue "Server jar was not linked." '[ -f "$SERVER_STORAGE_PATH/example/$DEFAULT_JAR" ]'
+	assertTrue "Server was not created." "[ -d \"$SERVER_STORAGE_PATH/example\" ]"
+	assertTrue "Server jar was not linked." "[ -f \"$SERVER_STORAGE_PATH/example/$DEFAULT_JAR\" ]"
 }
 
 
