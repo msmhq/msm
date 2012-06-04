@@ -98,7 +98,7 @@ debug() {
 # It must also not be one of a list of reserved names.
 is_valid_name() {
 	local valid="^[a-zA-Z0-9\_\-]+$"
-	local invalid="^start|stop|restart|version|server|jargroup|all$"
+	local invalid="^(start|stop|restart|version|server|jargroup|all)$"
 	
 	if [[ "$1" =~ $valid ]]; then
 		if [[ "$1" =~ $invalid ]]; then
