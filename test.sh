@@ -38,6 +38,12 @@ tearDown() {
 # Manager Tests
 # -------------
 
+test_create_server_without_any_jargroups() {
+	$SCRIPT server create example
+	
+	source "$MSM_CONF"
+	assertTrue "Server was not created." '[ -d "$SERVER_STORAGE_PATH/example" ]'
+}
 
 
 # Server Tests
