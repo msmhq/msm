@@ -1504,14 +1504,16 @@ init() {
 	
 	num_worlds=0
 	num_servers=0
-
-	local id=0
-	while IFS= read -r -d $'\0' path; do
-		local name="$(basename "$path")"
-		server_init "$id" "$name"
-		id="$(($id+1))"
-		num_servers="$id"
-	done < <(find "$SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
+	
+	if [ -d "$SERVER_STORAGE_PATH" ]; then
+		local id=0
+		while IFS= read -r -d $'\0' path; do
+			local name="$(basename "$path")"
+			server_init "$id" "$name"
+			id="$(($id+1))"
+			num_servers="$id"
+		done < <(find "$SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
+	fi
 }
 
 # Called if the script is interrupted before exiting naturally
