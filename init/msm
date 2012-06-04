@@ -19,14 +19,16 @@
 
 
 ### The configuration file
-CONFIG="/etc/msm.conf"
+
+# Get the MSM_CONF environment variable or use the default location
+CONF="${MSM_CONF:-/etc/msm.conf}"
 
 
 ### The Minecraft Server Manager version, use "msm version" to check yours.
 VERSION="0.2.4 Beta"
 
 
-### Config variables the user should need/want to change
+### Config variables the user should not need/want to change
 
 # Jar group file which contains the download target URL
 declare -r JARGROUP_TARGET="target.txt"
@@ -1433,7 +1435,7 @@ server_init() {
 # $2: The message to print to stderr if the variable is unset
 assert_is_set_in_config() {
     [[ ! ${!1} && ${!1-_} ]] && {
-        echoerr "Error: $1 must be set in $CONFIG"
+        echoerr "Error: $1 must be set in $CONF"
 		exit 1
     }
 }
@@ -1495,8 +1497,8 @@ init_ensure_settings() {
 }
 
 init() {
-	# Sourcing $CONFIG will override the previous defaults, with new values
-	source "$CONFIG"
+	# Sourcing $CONF will override the previous defaults, with new values
+	source "$CONF"
 	
 	init_ensure_settings
 	
