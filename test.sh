@@ -8,8 +8,11 @@ TMP_DIR="/tmp/msmtest"
 oneTimeSetUp() {
 	# Variables used in tests
 	SCRIPT="${MSM_SCRIPT:-${DIR}/init/msm}"
-	export MSM_CONF="${TMP_DIR}/msm.conf"
-	
+	export MSM_CONF="${TMP_DIR}/msm.conf"	
+}
+
+
+setUp() {
 	source "$DEFUALT_CONF"
 	
 	# Create the testing conf from the default one
@@ -39,7 +42,7 @@ tearDown() {
 # -------------
 
 test_create_server_without_any_jargroups() {
-	$SCRIPT server create example
+	$SCRIPT server create example > /dev/null
 	
 	source "$MSM_CONF"
 	assertTrue "Server was not created." '[ -d "$SERVER_STORAGE_PATH/example" ]'
