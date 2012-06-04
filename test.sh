@@ -50,15 +50,37 @@ stdall() {
 # Manager Tests
 # -------------
 
-test_invalid_server_names() {
+test_reserved_server_names() {
 	local result
 	local expected_regex="^Invalid\ name"
-	local condition
+	source "$MSM_CONF"
 	
 	for name in "start" "stop" "restart" "server" "version" "jargroup" "all"; do
 		result="$(stdall $SCRIPT server create $name)"
 		assertTrue "Server name \"$name\" was accepted but should be invalid." "[[ '$result' =~ $expected_regex ]]"
-		assertFalse "Server directory was created when it should not have been." "[ -d \"$SERVER_STORAGE_PATH/$name\" ]"
+		assertFalse "Server \"$name\" directory was created when it should not have been." "[ -d \"$SERVER_STORAGE_PATH/$name\" ]"
+	done
+}
+
+test_common_invalid_server_names() {
+	local result
+	local expected_regex="^Invalid\ name"
+	source "$MSM_CONF"
+	
+	for name in "name with spaces"; do
+		result="$(stdall $SCRIPT server create $name)"
+		assertFalse "Server \"$name\" directory was created when it should not have been." "[ -d \"$SERVER_STORAGE_PATH/$name\" ]"
+	done
+}
+
+test_valid_edge_case_server_names() {
+	local result
+	local expected_regex="^Invalid\ name"
+	source "$MSM_CONF"
+	
+	for name in "serverstart" "CapitalLetters" "0987654321" "name-with-dashes" "name_with_underscores" "Combination-of_different1Things2"; do
+		result="$(stdall $SCRIPT server create $name)"
+		assertTrue "Server \"$name\" directory was NOT created when it should not have been." "[ -d \"$SERVER_STORAGE_PATH/$name\" ]"
 	done
 }
 
