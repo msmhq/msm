@@ -9,6 +9,7 @@ before_install:
 
 # Override the default Travis python installation with nothing
 install:
+    - echo "No installation necessary"
     
 # Run the test script
-script: sudo ./test.sh
+script: sudo /bin/bash ./test.sh
