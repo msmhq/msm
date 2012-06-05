@@ -109,6 +109,13 @@ test_create_server_with_jar_groups() {
 }
 
 
+test_deleting_server_that_does_not_exist() {
+	local result="$(stdall $SCRIPT server delete example)"
+	local regex="^There\ is\ no\ server\ with\ the\ name"
+	
+	assertTrue "" "[[ \"$result\" =~ $regex ]]"
+}
+
 # Server Tests
 # ------------
 
