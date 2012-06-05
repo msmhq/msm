@@ -47,8 +47,25 @@ stdall() {
 }
 
 
-# Manager Tests
-# -------------
+# Global Command Tests
+# -----------------------
+
+### "msm start" tests
+
+### "msm stop" tests
+
+### "msm restart" tests
+
+### "msm version" tests
+
+
+
+# Server Management Tests
+# -----------------------
+
+### "msm server list" tests
+
+### "msm server create" tests
 
 test_reserved_server_names() {
 	local result
@@ -108,6 +125,9 @@ test_create_server_with_jar_groups() {
 	assertTrue "Server jar was not linked." "[ -f \"$SERVER_STORAGE_PATH/example/$DEFAULT_JAR\" ]"
 }
 
+### "msm server delete" tests
+
+### "msm server rename" tests
 
 test_deleting_server_that_does_not_exist() {
 	local result="$(stdall $SCRIPT server delete example)"
@@ -116,16 +136,107 @@ test_deleting_server_that_does_not_exist() {
 	assertTrue "" "[[ \"$result\" =~ $regex ]]"
 }
 
-# Server Tests
-# ------------
 
+# Individual Server Tests
+# -----------------------
 
+### "msm <server> start" tests
+
+### "msm <server> stop" tests
+
+### "msm <server> restart" tests
+
+### "msm <server> status" tests
+
+### "msm <server> connected" tests
+
+### "msm <server> worlds list" tests
+
+### "msm <server> worlds load" tests
+
+### "msm <server> worlds ram" tests
+
+### "msm <server> worlds todisk" tests
+
+### "msm <server> worlds backup" tests
+
+### "msm <server> worlds on" tests
+
+### "msm <server> worlds off" tests
+
+### "msm <server> worlds off" tests
+
+### "msm <server> logroll" tests
+
+### "msm <server> backup" tests
+
+### "msm <server> jar" tests
+
+### "msm <server> whitelist on" tests
+
+### "msm <server> whitelist off" tests
+
+### "msm <server> whitelist add" tests
+
+### "msm <server> whitelist remove" tests
+
+### "msm <server> whitelist list" tests
+
+### "msm <server> blacklist player add" tests
+
+### "msm <server> blacklist player remove" tests
+
+### "msm <server> blacklist ip add" tests
+
+### "msm <server> blacklist ip remove" tests
+
+### "msm <server> blacklist list" tests
+
+### "msm <server> operator add" tests
+
+### "msm <server> operator remove" tests
+
+### "msm <server> operator list" tests
+
+### "msm <server> gamemode" tests
+
+### "msm <server> kick" tests
+
+### "msm <server> say" tests
+
+### "msm <server> time set" tests
+
+### "msm <server> time add" tests
+
+### "msm <server> toggledownfall" tests
+
+### "msm <server> save on" tests
+
+### "msm <server> save off" tests
+
+### "msm <server> save all" tests
+
+### "msm <server> cmd" tests
+
+### "msm <server> cmdlog" tests
+
+### "msm <server> console" tests
 
 
 # Jargroup Tests
 # --------------
 
+### "msm jargroup list" test
 
+### "msm jargroup create" test
+
+### "msm jargroup delete" test
+
+### "msm jargroup rename" test
+
+### "msm jargroup changetarget" test
+
+### "msm jargroup getlatest" test
 
 
 # Perform tests
