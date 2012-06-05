@@ -4,12 +4,11 @@ language: python
 
 # Install shunit2
 before_install:
-    - sudo apt-get update
     - sudo apt-get install shunit2
 
-# Override the default Travis python installation with nothing
+# Create a minecraft user for testing
 install:
-    - echo "No installation necessary"
+    - sudo adduser --system minecraft
     
 # Run the test script
 script: sudo /bin/bash ./test.sh
