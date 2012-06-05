@@ -44,9 +44,18 @@ setUp() {
 	echo "DEBUG=\"true\"" >> "$MSM_CONF"
 	
 	source "$MSM_CONF"
+	
+	# Variables accessible by all tests, which are set by the stdall, stderr,
+	# stdout and quiet utility functions.
+	declare OUTPUT
+	declare EXIT_CODE
 }
 
 tearDown() {
+	# Clear the variables used in test functions
+	unset EXIT_CODE
+	unset OUTPUT
+	
 	# Remove the temporary testing directory
 	if [ -d "${TMP_DIR}" ]; then
 		rm -rf "${TMP_DIR}"
@@ -57,9 +66,48 @@ tearDown() {
 # Utils
 # -----
 
+reset_vars() {
+	unset OUTPUT
+	unset EXIT_CODE
+}
+
+# Ensure there is output in stderr
+expect_stderr() {
+	reset_vars
+	OUTPUT=$("$@" 2>&1 1>/dev/null)
+	EXIT_CODE=$?
+	assertNotNull "No stderr given when expected." "$OUTPUT"
+}
+
+# Ensure there is NO output in stderr
+expect_stderr_empty() {
+	reset_vars
+	OUTPUT=$("$@" 2>&1 1>/dev/null)
+	EXIT_CODE=$?
+	assertNull "$OUTPUT" "$OUTPUT"
+}
+
+# Ensure there is output in stdout
+expect_stdout() {
+	reset_vars
+	OUTPUT=$("$@")
+	EXIT_CODE=$?
+	assertNotNull "No stdout given when expected." "$OUTPUT"
+}
+
+# Ensure there is NO output in stdout
+expect_stdout_empty() {
+	reset_vars
+	OUTPUT=$("$@")
+	EXIT_CODE=$?
+	assertNull "$OUTPUT" "$OUTPUT"
+}
+
+# Execute a command silently (ignore stdout and stderr)
 quiet() {
+	reset_vars
 	"$@" >& /dev/null
-	return $?
+	EXIT_CODE=$?
 }
 
 
@@ -81,33 +129,38 @@ quiet() {
 
 ### "msm server list" tests
 
+test_listing_no_servers() {
+	expect_stderr_empty $SCRIPT server list
+	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
+}
+
 ### "msm server create" tests
 
 test_reserved_server_names() {
 	for name in "start" "stop" "restart" "server" "version" "jargroup" "all"; do
-		quiet $SCRIPT server create $name
-		assertEquals "Incorrect exit code when creating server name \"$name\"." $EX_INVALID_ARGUMENT $?
+		expect_stderr $SCRIPT server create $name
+		assertEquals "Incorrect exit code when creating server name \"$name\"." $EX_INVALID_ARGUMENT $EXIT_CODE
 		assertFalse "Server \"$name\" directory was created when it should not have been." "[ -d \"$SERVER_STORAGE_PATH/$name\" ]"
 	done
 }
 
 test_common_invalid_server_names() {
-	quiet $SCRIPT server create "name with spaces"
-	assertEquals "Incorrect exit code when creating server name \"name with spaces\"." $EX_INVALID_ARGUMENT $?
+	expect_stderr $SCRIPT server create "name with spaces"
+	assertEquals "Incorrect exit code when creating server name \"name with spaces\"." $EX_INVALID_ARGUMENT $EXIT_CODE
 	assertFalse "Server \"name with spaces\" directory was created when it should not have been." "[ -d \"$SERVER_STORAGE_PATH/$name\" ]"
 }
 
 test_valid_edge_case_server_names() {
 	for name in "serverstart" "CapitalLetters" "0987654321" "name-with-dashes" "name_with_underscores" "Combination-of_different1Things2"; do
-		quiet $SCRIPT server create $name
-		assertEquals "Incorrect exit code when creating server name \"$name\"." $EX_OK $?
+		expect_stderr_empty $SCRIPT server create $name
+		assertEquals "Incorrect exit code when creating server name \"$name\"." $EX_OK $EXIT_CODE
 		assertTrue "Server \"$name\" directory was NOT created when it should not have been." "[ -d \"$SERVER_STORAGE_PATH/$name\" ]"
 	done
 }
 
 test_create_server_without_any_jargroups() {
-	quiet $SCRIPT server create example
-	assertEquals "Incorrect exit code." $EX_OK $?
+	expect_stderr_empty $SCRIPT server create example
+	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
 	assertTrue "Server was not created." "[ -d \"$SERVER_STORAGE_PATH/example\" ]"
 }
 
@@ -116,9 +169,9 @@ test_creating_server_when_that_name_already_exists() {
 	# Create server "example"
 	quiet $SCRIPT server create example
 	# Create another server called "example", should be prevented
-	quiet $SCRIPT server create example
+	expect_stderr $SCRIPT server create example
 	
-	assertEquals "Incorrect exit code." $EX_DUPLICATE_NAME $?
+	assertEquals "Incorrect exit code." $EX_DUPLICATE_NAME $EXIT_CODE
 }
 
 # Assumes: test_creating_jargroup
@@ -127,9 +180,9 @@ test_create_server_with_jar_groups() {
 	# new servers.
 	quiet $SCRIPT jargroup create minecraft "https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar"
 	# Create a new server that will use the "minecraft" jar group.
-	quiet $SCRIPT server create example
+	expect_stderr_empty $SCRIPT server create example
 	
-	assertEquals "Incorrect exit code." $EX_OK $?
+	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
 	assertTrue "Server direcotry was not created." "[ -d \"$SERVER_STORAGE_PATH/example\" ]"
 	assertTrue "Server jar was not linked." "[ -f \"$SERVER_STORAGE_PATH/example/$DEFAULT_JAR\" ]"
 }
@@ -137,9 +190,9 @@ test_create_server_with_jar_groups() {
 ### "msm server delete" tests
 
 test_deleting_server_that_does_not_exist() {
-	quiet $SCRIPT server delete example
+	expect_stderr $SCRIPT server delete example
 	
-	assertEquals "Incorrect exit code." $EX_NAME_NOT_FOUND $?
+	assertEquals "Incorrect exit code." $EX_NAME_NOT_FOUND $EXIT_CODE
 }
 
 ### "msm server rename" tests

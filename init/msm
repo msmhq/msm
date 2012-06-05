@@ -677,7 +677,11 @@ jargroup_rename() {
 
 # Echos a list of servers in the SERVER_STORAGE_PATH
 server_list() {
-	ls -1 "$SERVER_STORAGE_PATH"
+	if [ -d "$SERVER_STORAGE_PATH" ]; then
+		ls -1 "$SERVER_STORAGE_PATH"
+	else
+		echo "[There are no servers]"
+	fi	
 }
 
 # Creates a new server
