@@ -1,5 +1,14 @@
+
+# Use python as its the simplest language which can run a test script
 language: python
+
+# Install shunit2
 before_install:
     - sudo apt-get update
     - sudo apt-get install shunit2
-script: ./test.sh
+
+# Override the default Travis python installation with nothing
+install:
+    
+# Run the test script
+script: sudo ./test.sh
