@@ -127,14 +127,14 @@ test_create_server_with_jar_groups() {
 
 ### "msm server delete" tests
 
-### "msm server rename" tests
-
 test_deleting_server_that_does_not_exist() {
 	local result="$(stdall $SCRIPT server delete example)"
 	local regex="^There\ is\ no\ server\ with\ the\ name"
 	
 	assertTrue "" "[[ \"$result\" =~ $regex ]]"
 }
+
+### "msm server rename" tests
 
 
 # Individual Server Tests
