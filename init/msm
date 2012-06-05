@@ -707,7 +707,11 @@ server_create() {
 			# to ensure it is recognised.
 			init
 			
-			server_set_jar "$(server_get_id "$1")" "minecraft"
+			# TODO: Handle server default setup stuff better than just using
+			#       the "minecraft" jar group. And make it configurable.
+			if [ -d "$JAR_STORAGE_PATH/minecraft" ]; then
+				server_set_jar "$(server_get_id "$1")" "minecraft"
+			fi
 		fi
 	else
 		return 1
