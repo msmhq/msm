@@ -739,14 +739,13 @@ server_delete() {
 # $2: The new name for the server
 server_rename() {
 	if is_valid_name "$1"; then
-		if server_is_running "$(server_get_id "$1")"; then
-			error_exit SERVER_RUNNING "Can only rename a stopped server."
-		else
-			if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
-				# If the server name is valid and exists
-		
-				# TODO: Check that the server is not running first, return if it is
-		
+		if [ -d "$SERVER_STORAGE_PATH/$1" ]; then
+			# If the server name is valid and exists
+			
+			local existing_id="$(server_get_id "$1")"
+			if server_is_running "$existing_id"; then
+				error_exit SERVER_RUNNING "Can only rename a stopped server."
+			else
 				if is_valid_name "$2"; then
 					# If the server name is valid
 					if [[ -e "$SERVER_STORAGE_PATH/$2" ]]; then
@@ -757,9 +756,9 @@ server_rename() {
 						echo "Renamed server \"$1\" to \"$2\"."
 					fi
 				fi
-			else
-				error_exit NAME_NOT_FOUND "There is no server with the name \"$1\"."
 			fi
+		else
+			error_exit NAME_NOT_FOUND "There is no server with the name \"$1\"."
 		fi
 	fi
 }
@@ -1728,9 +1727,13 @@ main() {
 			echo "No such command see: $0 help"
 			;;
 		*)	
-			if [[ "$1" == "all" ]] || [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
+			if [[ "$1" == "all" ]] || [[ -d "$SERVER_STORAGE_PATH/$1" ]]; then
 				
-				local id="$(server_get_id "$1")"
+				if [ -d "$SERVER_STORAGE_PATH/$1" ]; then
+					local id="$(server_get_id "$1")"
+				else
+					error_exit NAME_NOT_FOUND "There is no server with the name \"$1\"."
+				fi
 				
 				case "$2" in
 					start)
