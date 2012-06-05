@@ -1,0 +1,5 @@
+language: java
+before_install:
+    - sudo apt-get update
+    - sudo apt-get install shunit2
+script: ./test.sh
