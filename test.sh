@@ -88,7 +88,16 @@ test_create_server_without_any_jargroups() {
 	$SCRIPT server create example > /dev/null
 	
 	source "$MSM_CONF"
-	assertTrue "Server was not created." '[ -d "$SERVER_STORAGE_PATH/example" ]'
+	assertTrue "Server was not created." "[ -d \"$SERVER_STORAGE_PATH/example\" ]"
+}
+
+# Assumes: test_create_server_without_any_jargroups
+test_creating_server_when_that_name_already_exists() {
+	$SCRIPT server create example > /dev/null
+	local result="$(stdall $SCRIPT server create example)"
+	
+	source "$MSM_CONF"
+	assertTrue "Failed to prevent duplicating an existing server name." "[[ \"$result\" == \"A server with that name already exists.\" ]]"
 }
 
 test_create_server_with_jar_groups() {
