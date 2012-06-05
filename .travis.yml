@@ -1,4 +1,4 @@
-language: java
+language: python
 before_install:
     - sudo apt-get update
     - sudo apt-get install shunit2
