@@ -195,6 +195,14 @@ test_deleting_server_that_does_not_exist() {
 	assertEquals "Incorrect exit code." $EX_NAME_NOT_FOUND $EXIT_CODE
 }
 
+test_deleting_server_that_exists() {
+	quiet $SCRIPT server create example
+	expect_stderr_empty $SCRIPT server delete example <<< "y"
+	
+	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
+	assertFalse "Server directory was not removed." "[ -d \"$SERVER_STORAGE_PATH/example\" ]"
+}
+
 ### "msm server rename" tests
 
 
