@@ -718,7 +718,7 @@ server_create() {
 # $2: The server name to delete
 server_delete() {
 	if is_valid_name "$1"; then
-		if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
+		if [[ -d "$SERVER_STORAGE_PATH/$1" ]]; then
 			printf "Are you sure you want to delete this server and its worlds (note: backups are preserved) [y/N]: "
 
 			read answer
