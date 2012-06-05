@@ -4,6 +4,7 @@ DIR="${MSM_DIR:-$(pwd)}"
 DEFUALT_CONF="${MSM_DEFAULT_CONF:-${DIR}/msm.conf}"
 TESTS_DIR="${MSM_TESTS_DIR:-${DIR}/tests}"
 TMP_DIR="/tmp/msmtest"
+TEST_RAM="256"
 
 # Exit codes
 declare -r EX_OK=0
@@ -42,6 +43,8 @@ setUp() {
 	echo "LOG_ARCHIVE_PATH=\"${TMP_DIR}/archives/logs\"" >> "$MSM_CONF"
 	echo "BACKUP_ARCHIVE_PATH=\"${TMP_DIR}/archives/backups\"" >> "$MSM_CONF"
 	echo "DEBUG=\"true\"" >> "$MSM_CONF"
+	echo "DEFAULT_SCREEN_NAME=\"msmtest-{SERVER_NAME}\"" >> "$MSM_CONF"
+	echo "DEFAULT_INVOCATION=\"java -Xmx${TEST_RAM}M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:+AggressiveOpts -jar {JAR} nogui\"" >> "$MSM_CONF"
 	
 	source "$MSM_CONF"
 	
@@ -158,7 +161,7 @@ test_valid_edge_case_server_names() {
 	done
 }
 
-test_create_server_without_any_jargroups() {
+test_creating_server_without_any_jargroups() {
 	expect_stderr_empty $SCRIPT server create example
 	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
 	assertTrue "Server was not created." "[ -d \"$SERVER_STORAGE_PATH/example\" ]"
@@ -175,13 +178,13 @@ test_creating_server_when_that_name_already_exists() {
 }
 
 # Assumes: test_creating_jargroup
-test_create_server_with_jar_groups() {
+test_creating_server_with_jar_groups() {
 	# Create the "minecraft" jar group, which is used by default when creating
 	# new servers.
 	quiet $SCRIPT jargroup create minecraft "https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar"
 	# Create a new server that will use the "minecraft" jar group.
 	expect_stderr_empty $SCRIPT server create example
-	
+
 	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
 	assertTrue "Server direcotry was not created." "[ -d \"$SERVER_STORAGE_PATH/example\" ]"
 	assertTrue "Server jar was not linked." "[ -f \"$SERVER_STORAGE_PATH/example/$DEFAULT_JAR\" ]"
@@ -191,11 +194,10 @@ test_create_server_with_jar_groups() {
 
 test_deleting_server_that_does_not_exist() {
 	expect_stderr $SCRIPT server delete example
-	
 	assertEquals "Incorrect exit code." $EX_NAME_NOT_FOUND $EXIT_CODE
 }
 
-test_deleting_server_that_exists() {
+test_deleting_server_that_exists_and_is_stopped() {
 	quiet $SCRIPT server create example
 	expect_stderr_empty $SCRIPT server delete example <<< "y"
 	
@@ -204,6 +206,20 @@ test_deleting_server_that_exists() {
 }
 
 ### "msm server rename" tests
+
+test_renaming_server_that_does_not_exist() {
+	expect_stderr $SCRIPT server rename example example_new_name
+	assertEquals "Incorrect exit code." $EX_NAME_NOT_FOUND $EXIT_CODE
+}
+
+test_renaming_server_that_exists_and_is_stopped() {
+	quiet $SCRIPT server create example
+	expect_stderr_empty $SCRIPT server rename example example_new_name
+	
+	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
+	assertFalse "Original server name directory still exists." "[ -d \"$SERVER_STORAGE_PATH/example\" ]"
+	assertTrue "New server name directory was not created." "[ -d \"$SERVER_STORAGE_PATH/example_new_name\" ]"
+}
 
 
 # Individual Server Tests
