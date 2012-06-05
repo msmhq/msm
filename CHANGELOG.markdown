@@ -11,6 +11,19 @@ Maintainers:
 Change Log
 ----------
 
+### [0.2.5](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.4...0.2.5)
+
+* Added `test.sh`, a script which runs `shunit2` unit tests.
+* Added test coverage for all `msm server` commands, except coverage involving running servers.
+* Added option to override the configuration file used by the MSM script by specifying its path in the `MSM_CONF` environment variable.
+* Added Explanatory exit codes for the MSM script (currently 0 and 64-73).
+* Improved server creation to not require the "minecraft" jar group to be present.
+* Fixed issue [#14][#14] which prevented world names including spaces.
+* Fixed a bug listing servers when there were none.
+* Fixed a bug where server names containing reserved names anywhere where considered invalid.
+
+[#11]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/14
+
 ### [0.2.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.3...0.2.4)
 
 * Fixes issue [#11][#11]. Now running server's cannot be renamed, preventing not being able to stop a server renamed whilst running.
