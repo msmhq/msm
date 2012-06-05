@@ -66,8 +66,7 @@ as_user() {
 		if [ "$user" == "root" ]; then
 			su - "$1" -s /bin/bash -c "$2"
 		else
-			echoerr "This command must be executed as the user \"$1\" or \"root\"."
-			exit 1
+			error_exit INVALID_USER "This command must be executed as the user \"$1\" or \"root\"."
 		fi
 	fi
 }
@@ -80,6 +79,25 @@ as_user_stderr() {
 # Echo to stderr
 echoerr() {
 	echo "$@" 1>&2
+}
+
+# Exit's the script 
+error_exit() {
+	case "$1" in
+		INVALID_USER) code=64;;
+		INVALID_COMMAND) code=65;;
+		INVALID_ARGUMENT) code=66;;
+		SERVER_STOPPED) code=67;;
+		SERVER_RUNNING) code=68;;
+		NAME_NOT_FOUND) code=69;;
+		FILE_NOT_FOUND) code=70;;
+		DUPLICATE_NAME) code=71;;
+		LOGS_NOT_ROLLED) code=72;;
+		CONF_ERROR) code=73;;
+	esac
+	
+	echo "$(basename $0) Error $1 ($code): ${2:-"Unknown Error"}" 1>&2
+	exit "${code:-$1}"
 }
 
 # A function used to print debug messages to stdout. Prevents messages from
@@ -102,14 +120,12 @@ is_valid_name() {
 	
 	if [[ "$1" =~ $valid ]]; then
 		if [[ "$1" =~ $invalid ]]; then
-			echoerr "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"version\", \"jargroup\" or \"all\"."
-			return 1
+			error_exit INVALID_ARGUMENT "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"version\", \"jargroup\" or \"all\"."
 		else
 			return 0
 		fi
 	else
-		echoerr "Invalid name \"$1\": A name may only contain letters, numbers, dashes and unscores."
-		return 1
+		error_exit INVALID_ARGUMENT "Invalid name \"$1\": A name may only contain letters, numbers, dashes and unscores."
 	fi
 }
 
@@ -219,8 +235,7 @@ world_activate() {
 		if [ -d "${world_active_path[$1]}" ]; then
 			echo "World \"${world_name[$1]}\" is already activate."
 		else
-			echoerr "Error: Directory \"${world_inactive_path[$1]}\" could not be found."
-			return 1
+			error_exit DIR_NOT_FOUND "Directory \"${world_inactive_path[$1]}\" could not be found."
 		fi
 	fi
 }
@@ -229,8 +244,7 @@ world_activate() {
 # $1: The ID of the world
 world_deactivate() {
 	if server_is_running "${world_server_id[$1]}"; then
-		echoerr "Error: Worlds cannot be deactivated whilst the server is running."
-		return 1
+		exit_error 68 "Worlds cannot be deactivated whilst the server is running."
 	else
 		if [ -d "${world_active_path[$1]}" ]; then
 			echo -n "Moving world \"${world_name[$1]}\" to the inactive worldstorage directory... "
@@ -241,8 +255,7 @@ world_deactivate() {
 			if [ -d "${world_inactive_path[$1]}" ]; then
 				echo "World \"${world_name[$1]}\" is already deactivate."
 			else
-				echoerr "Error: Directory \"${world_active_path[$1]}\" could not be found."
-				return 1
+				exit_error DIR_NOT_FOUND "Directory \"${world_active_path[$1]}\" could not be found."
 			fi
 		fi
 	fi
@@ -265,7 +278,7 @@ server_get_id() {
 		i="$(( $i + 1 ))"
 	done
 	
-	return 1
+	error_exit NAME_NOT_FOUND "Could not find id for server name \"$1\"."
 }
 
 # Returns the ID of a server's world.
@@ -287,7 +300,7 @@ server_world_get_id() {
 		done
 	fi
 	
-	return 1
+	error_exit NAME_NOT_FOUND "Could not find id for world \"$2\" for server \"$1\"."
 }
 
 # Returns 0 if the server $1 is running and 1 if not
@@ -497,7 +510,7 @@ server_set_active() {
 			server_active[$1]="false"
 			;;
 		*)
-			return 1
+			error_exit INVALID_ARGUMENT "Invalid argument."
 			;;
 	esac
 }
@@ -521,21 +534,19 @@ jargroup_list() {
 # $1: The name for the jargroup
 jargroup_create() {
 	if is_valid_name "$1"; then
-		if [[ ! -e "$JAR_STORAGE_PATH/$1" ]]; then
+		if [[ ! -d "$JAR_STORAGE_PATH/$1" ]]; then
 			printf "Creating jar group... "
 			
 			local error="$(as_user_stderr "$USERNAME" "mkdir -p \"$JAR_STORAGE_PATH/$1\"")"
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
-				echo "Reason: $error"
-				return 1
+				error_exit FILE_NOT_FOUND "$error"
 			fi
 			
 			error="$(as_user "$USERNAME" "echo \"$2\" > \"$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET\"")"
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
-				echo "Reason: $error"
-				return 1
+				error_exit FILE_NOT_FOUND "$error"
 			fi
 			
 			echo "Done."
@@ -543,11 +554,8 @@ jargroup_create() {
 			# Download the latest version now
 			jargroup_getlatest "$1"
 		else
-			echo "A jar group with that name already exists."
-			return 1
+			error_exit DUPLICATE_NAME "A jar group with that name already exists."
 		fi
-	else
-		return 1
 	fi
 }
 
@@ -558,16 +566,15 @@ jargroup_create() {
 # $1: The jargroup name to download the latest version for
 jargroup_getlatest() {
 	if is_valid_name "$1"; then
-		if [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
-			if [[ -e "$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET" ]]; then
+		if [[ -d "$JAR_STORAGE_PATH/$1" ]]; then
+			if [[ -f "$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET" ]]; then
 				printf "Downloading latest version... "
 			
 				# Try and make 
 				local error="$(as_user_stderr "$USERNAME" "mkdir -p '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'")"
 				if [[ "$error" != "" ]]; then
 					echo "Failed."
-					echo "Reason: $error"
-					return 1
+					error_exit FILE_NOT_FOUND "$error"
 				fi
 			
 				as_user "$USERNAME" "wget --quiet --trust-server-names --no-check-certificate --input-file='$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET' --directory-prefix='$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'"
@@ -583,12 +590,12 @@ jargroup_getlatest() {
 					local most_recent_jar="$(get_latest_file "$JAR_STORAGE_PATH/$1")"
 					
 				
-					if [[ ! -e "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name" > /dev/null; then
+					if [[ ! -f "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name" > /dev/null; then
 						# There is not a previous version to do a comparison against, or
 						# The previous version is different:
 						# Add it to the group
 					
-						[[ -e "$most_recent_jar" ]]
+						[[ -f "$most_recent_jar" ]]
 						local was_previous="$?"
 					
 						as_user "$USERNAME" "mv '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name' '$JAR_STORAGE_PATH/$1/$new_name'"
@@ -613,15 +620,11 @@ jargroup_getlatest() {
 				# Clean up the temp download folder
 				as_user "$USERNAME" "rm -fr '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'"
 			else
-				echo "Target URL not found, use $0 jargroup seturl <download-url>"
-				return 1
+				error_exit FILE_NOT_FOUND "Target URL not found, use $0 jargroup seturl <download-url>"
 			fi
 		else
-			echo "There is no jar group with the name \"$1\"."
-			return 1
+			error_exit NAME_NOT_FOUND "There is no jar group with the name \"$1\"."
 		fi
-	else
-		return 1
 	fi
 }
 
@@ -629,7 +632,7 @@ jargroup_getlatest() {
 # $1: The name of the existing jargroup
 jargroup_delete() {
 	if is_valid_name "$1"; then
-		if [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
+		if [[ -d "$JAR_STORAGE_PATH/$1" ]]; then
 			printf "Are you sure you want to delete this jar group [y/N]: "
 		
 			read answer
@@ -640,11 +643,8 @@ jargroup_delete() {
 				echo "Jar group was NOT deleted."
 			fi
 		else
-			echo "There is no jar group with the name \"$1\"."
-			return 1
+			error_exit NAME_NOT_FOUND "There is no jar group with the name \"$1\"."
 		fi
-	else
-		return 1
 	fi
 }
 
@@ -653,28 +653,22 @@ jargroup_delete() {
 # $2: The new name
 jargroup_rename() {
 	if is_valid_name "$1"; then
-		if [[ -e "$JAR_STORAGE_PATH/$1" ]]; then
+		if [[ -d "$JAR_STORAGE_PATH/$1" ]]; then
 			# If the jar group name is valid,
 			# and there is no other jar group with the name $1
 		
 			if is_valid_name "$2"; then
 				if [[ -e "$JAR_STORAGE_PATH/$2" ]]; then
-					echo "Could not be renamed, there is already a jar group with the name \"$2\"."
-					return 1
+					error_exit DUPLICATE_NAME "Could not be renamed, there is already a jar group with the name \"$2\"."
 				else
 					# TODO: Update any symbolic links which point to a jar in this directory
 					as_user "$USERNAME" "mv '$JAR_STORAGE_PATH/$1' '$JAR_STORAGE_PATH/$2'"
 					echo "Renamed jar group \"$1\" to \"$2\"."
 				fi
-			else
-				return 1
 			fi
 		else
-			echo "There is no jar group with the name \"$1\"."
-			return 1
+			error_exit NAME_NOT_FOUND "There is no jar group with the name \"$1\"."
 		fi
-	else
-		return 1
 	fi
 }
 
@@ -690,9 +684,8 @@ server_list() {
 # $1: The server name to create
 server_create() {
 	if is_valid_name "$1"; then
-		if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
-			echo "A server with that name already exists."
-			return 1
+		if [[ -d "$SERVER_STORAGE_PATH/$1" ]]; then
+			error_exit DUPLICATE_NAME "A server with that name already exists."
 		else
 			printf "Creating server directory... "
 			as_user "$USERNAME" "mkdir -p '$SERVER_STORAGE_PATH/$1'"
@@ -713,8 +706,6 @@ server_create() {
 				server_set_jar "$(server_get_id "$1")" "minecraft"
 			fi
 		fi
-	else
-		return 1
 	fi
 }
 
@@ -734,11 +725,8 @@ server_delete() {
 				echo "Server was NOT deleted."
 			fi
 		else
-			echo "There is no server with the name \"$1\"."
-			return 1
+			error_exit NAME_NOT_FOUND "There is no server with the name \"$1\"."
 		fi
-	else
-		return 1
 	fi
 }
 
@@ -748,8 +736,7 @@ server_delete() {
 server_rename() {
 	if is_valid_name "$1"; then
 		if server_is_running "$(server_get_id "$1")"; then
-			echoerr "Error: Can only rename a stopped server."
-			return 1
+			error_exit SERVER_RUNNING "Can only rename a stopped server."
 		else
 			if [[ -e "$SERVER_STORAGE_PATH/$1" ]]; then
 				# If the server name is valid and exists
@@ -760,22 +747,16 @@ server_rename() {
 					# If the server name is valid
 					if [[ -e "$SERVER_STORAGE_PATH/$2" ]]; then
 						# and there is not already a server with the name $2
-						echoerr "Error: Could not be renamed, there is already a server with the name \"$2\"."
-						return 1
+						error_exit DUPLICATE_NAME "Could not be renamed, there is already a server with the name \"$2\"."
 					else
 						as_user "$USERNAME" "mv '$SERVER_STORAGE_PATH/$1' '$SERVER_STORAGE_PATH/$2'"
 						echo "Renamed server \"$1\" to \"$2\"."
 					fi
-				else
-					return 1
 				fi
 			else
-				echoerr "Error: There is no server with the name \"$1\"."
-				return 1
+				error_exit NAME_NOT_FOUND "There is no server with the name \"$1\"."
 			fi
 		fi
-	else
-		return 1
 	fi
 }
 
@@ -985,8 +966,8 @@ server_log_roll() {
 			as_user "${server_user_name[$1]}" "cp \"/dev/null\" \"${server_log[$1]}\""
 			as_user "${server_user_name[$1]}" "echo \"Previous logs can be found at \\\"${server_log_archive_path[$1]}\\\"\" > \"${server_log[$1]}\""
 		else
-			echoerr "Failed."
-			return 1
+			echo "Failed."
+			error_exit LOGS_NOT_ROLLED "Logs were not rolled."
 		fi
 	fi
 	
@@ -1016,7 +997,7 @@ server_backup() {
 # $2: The name of the jar group
 # $3: Optionally, a specific jar to use.
 server_set_jar() {
-	if [ -e "$JAR_STORAGE_PATH/$2" ]; then
+	if [ -d "$JAR_STORAGE_PATH/$2" ]; then
 		
 		if [ -z "$3" ]; then
 			# If a specific jar file is not mentioned
@@ -1029,8 +1010,7 @@ server_set_jar() {
 			local jar="$JAR_STORAGE_PATH/$2/$3"
 			
 			if [[ ! -e "$jar" ]]; then
-				echo "There is no jar named \"$3\" in jargroup \"$2\"."
-				return 1
+				error_exit NAME_NOT_FOUND "There is no jar named \"$3\" in jargroup \"$2\"."
 			fi
 		fi
 		
@@ -1039,7 +1019,7 @@ server_set_jar() {
 			echo "Server \"${server_name[$1]}\" is now using \"$jar\"."
 		fi
 	else
-		echo "There is no jargorup named \"$2\"."
+		error_exit NAME_NOT_FOUND "There is no jargorup named \"$2\"."
 	fi
 }
 
@@ -1220,8 +1200,7 @@ server_world_init() {
 		else
 			world_status[$2]="unknown"
 			
-			echoerr "Error: World cannot be found in either \"${world_active_path[$2]}\" or \"${world_inactive_path[$2]}\"."
-			return 1
+			error_exit NAME_NOT_FOUND "World cannot be found in either \"${world_active_path[$2]}\" or \"${world_inactive_path[$2]}\"."
 		fi
 	fi
 	
@@ -1439,8 +1418,7 @@ server_init() {
 # $2: The message to print to stderr if the variable is unset
 assert_is_set_in_config() {
     [[ ! ${!1} && ${!1-_} ]] && {
-        echoerr "Error: $1 must be set in $CONF"
-		exit 1
+        error_exit CONF_ERROR "$1 must be set in $CONF"
     }
 }
 
@@ -1605,7 +1583,7 @@ main() {
 				create)
 					if [ -z "$3" ]; then
 						# If a server name is not provided
-						echo "Invalid command."
+						error_exit INVALID_COMMAND "Invalid command."
 					else
 						# Create a new server
 						server_create "$3"
@@ -1614,7 +1592,7 @@ main() {
 				delete)
 					if [ -z "$3" ]; then
 						# If a server name is not provided
-						echo "Invalid command."
+						error_exit INVALID_COMMAND "Invalid command."
 					else
 						# Delete an existing server, with confirmation
 						server_delete "$3"
@@ -1623,7 +1601,7 @@ main() {
 				rename)
 					if [ -z "$3" ] || [ -z "$4" ]; then
 						# If a server name is not provided
-						echo "Invalid command."
+						error_exit INVALID_COMMAND "Invalid command."
 					else
 						# Rename an existing server
 						server_rename "$3" "$4"
@@ -1631,7 +1609,7 @@ main() {
 					;;
 				*)
 					# "server" is not a valid command
-					echo "Invalid command."
+					error_exit INVALID_COMMAND "Invalid command."
 					;;
 			esac
 			;;
@@ -1643,14 +1621,14 @@ main() {
 					;;
 				create)
 					if [ -z "$3" ] || [ -z "$4" ]; then
-						echo "Invlaid command."
+						error_exit INVALID_COMMAND "Invalid command."
 					else
 						jargroup_create "$3" "$4"
 					fi
 					;;
 				delete)
 					if [ -z "$3" ]; then
-						echo "Invalid command."
+						error_exit INVALID_COMMAND "Invalid command."
 					else
 						jargroup_delete "$3"
 					fi
@@ -1658,28 +1636,28 @@ main() {
 					;;
 				rename)
 					if [ -z "$3" ] || [ -z "$4" ]; then
-						echo "Invalid command."
+						error_exit INVALID_COMMAND "Invalid command."
 					else
 						jargroup_rename "$3" "$4"
 					fi
 					;;
 				changetarget)
 					if [ -z "$3" ] || [ -z "$4" ]; then
-						echo "Invalid command."
+						error_exit INVALID_COMMAND "Invalid command."
 					else
 						jargroup_settarget "$3" "$4"
 					fi
 					;;
 				getlatest)
 					if [ -z "$3" ]; then
-						echo "Invalid command."
+						error_exit INVALID_COMMAND "Invalid command."
 					else
 						jargroup_getlatest "$3"
 					fi
 					;;
 				*)
 					# "jargroup" is not a valid command
-					echo "Invalid command."
+					error_exit INVALID_COMMAND "Invalid command."
 					;;
 			esac
 			;;
@@ -1791,14 +1769,14 @@ main() {
 								;;
 							ram)
 								if [ -z "$4" ]; then
-									echo "Invalid command."
+									error_exit INVALID_COMMAND "Invalid command."
 								else
 									world_id="$(server_world_get_id "$id" "$4")"
 									
 									if [ ! -z "$world_id" ]; then
 										world_toggle_ramdisk_state "$world_id"
 									else
-										echo "Server \"${server_name[$id]}\" has no world with that name."
+										error_exit NAME_NOT_FOUND "Server \"${server_name[$id]}\" has no world with that name."
 									fi
 								fi
 								;;
@@ -1827,20 +1805,20 @@ main() {
 								;;
 							on)
 								if [ -z "$4" ]; then
-									echo "Invalid command."
+									error_exit INVALID_COMMAND "Invalid command."
 								else
 									world_activate "$(server_world_get_id "$id" "$4")"
 								fi
 								;;
 							off)
 								if [ -z "$4" ]; then
-									echo "Invalid command."
+									error_exit INVALID_COMMAND "Invalid command."
 								else
 									world_deactivate "$(server_world_get_id "$id" "$4")"
 								fi
 								;;
 							*)
-								echo "Invalid command."
+								error_exit INVALID_COMMAND "Invalid command."
 								;;
 						esac
 						;;
@@ -1866,7 +1844,7 @@ main() {
 						;;
 					jar)
 						if [ -z "$3" ]; then
-							echo "Invalid command."
+							error_exit INVALID_COMMAND "Invalid command."
 						else
 							server_set_jar "$id" "$3" "$4"
 						fi
@@ -1878,7 +1856,7 @@ main() {
 									server_eval "$id" "whitelist on"
 									echo "Whitelist enabled"
 								else
-									echo "Server \"${server_name[$id]}\" is not running."
+									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 								fi
 								;;
 							off)
@@ -1886,30 +1864,30 @@ main() {
 									server_eval "$id" "whitelist off"
 									echo "Whitelist disabled"
 								else
-									echo "Server \"${server_name[$id]}\" is not running."
+									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 								fi
 								;;
 							add)
 								if [ -z "$4" ]; then
-									echo "Invalid command."
+									error_exit INVALID_COMMAND "Invalid command."
 								else
 									if server_is_running "$id"; then
 										server_eval "$id" "whitelist add $4"
 										echo "Added \"$4\" to the whitelist."
 									else
-										echo "Server \"${server_name[$id]}\" is not running."
+										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 									fi
 								fi
 								;;
 							remove)
 								if [ -z "$4" ]; then
-									echo "Invalid command."
+									error_exit INVALID_COMMAND "Invalid command."
 								else
 									if server_is_running "$id"; then
 										server_eval "$id" "whitelist remove $4"
 										echo "Removed \"$4\" from the whitelist."
 									else
-										echo "Server \"${server_name[$id]}\" is not running."
+										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 									fi
 								fi
 								;;
@@ -1923,7 +1901,7 @@ main() {
 								fi
 								;;
 							*)
-								echo "Invalid command."
+								error_exit INVALID_COMMAND "Invalid command."
 								;;
 						esac
 						;;
@@ -1931,7 +1909,7 @@ main() {
 						case "$3" in
 							player)
 								if [ -z "$5" ]; then
-									echo "Invalid command."
+									error_exit INVALID_COMMAND "Invalid command."
 								else
 									case "$4" in
 										add)
@@ -1965,7 +1943,7 @@ main() {
 											fi
 											;;
 										*)
-											echo "Invalid command."
+											error_exit INVALID_COMMAND "Invalid command."
 											;;
 									esac
 								fi
@@ -2003,7 +1981,7 @@ main() {
 										fi
 										;;
 									*)
-										echo "Invalid command."
+										error_exit INVALID_COMMAND "Invalid command."
 										;;
 								esac
 								;;
@@ -2031,7 +2009,7 @@ main() {
 								fi
 								;;
 							*)
-								echo "Invalid command."
+								error_exit INVALID_COMMAND "Invalid command."
 								;;
 						esac
 						;;
@@ -2042,7 +2020,7 @@ main() {
 									server_eval "$id" "op $4"
 									echo "The player \"$4\" is now an operator for the server."
 								else
-									echo "Server \"${server_name[$id]}\" is not running."
+									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 								fi
 								;;
 							remove)
@@ -2050,7 +2028,7 @@ main() {
 									server_eval "$id" "deop $4"
 									echo "The player \"$4\" is no longer an operator for the server."
 								else
-									echo "Server \"${server_name[$id]}\" is not running."
+									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 								fi
 								;;
 							list)
@@ -2063,7 +2041,7 @@ main() {
 								fi
 								;;
 							*)
-								echo "Invalid command"
+								error_exit INVALID_COMMAND "Invalid command."
 								;;
 						esac
 						;;
@@ -2077,7 +2055,7 @@ main() {
 										case "$3" in
 											creative|1) local mode=1;;
 											survival|0) local mode=0;;
-											*) echoerr "Invalid mode"; exit 1;;
+											*) error_exit INVALID_COMMAND "Invalid mode";;
 										esac
 										
 										local line="$(server_eval_and_get_line "$id" "gamemode $4 $mode" "${server_confirm_gamemode[$id]}" "${server_confirm_gamemode_fail_no_user[$id]}" "${server_confirm_gamemode_fail_no_change[$id]}")"
@@ -2095,18 +2073,18 @@ main() {
 											echo "The player \"$4\" was already in mode \"$3\"."
 										fi
 									else
-										echo "Server \"${server_name[$id]}\" is not running."
+										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 									fi
 								fi
 								;;
 							*)
-								echo "Invalid command."
+								error_exit INVALID_COMMAND "Invalid command."
 								;;
 						esac
 						;;
 					kick)
 						if [ -z "$3" ]; then
-							echo "Invalid command."
+							error_exit INVALID_COMMAND "Invalid command."
 						else
 							if server_is_running "$id"; then
 								local line="$(server_eval_and_get_line "$id" "kick $3" "${server_confirm_kick[$id]}" "${server_confirm_kick_fail[$id]}")"
@@ -2120,19 +2098,19 @@ main() {
 									echo "The player \"$3\" is not connected."
 								fi
 							else
-								echo "Server \"${server_name[$id]}\" is not running."
+								error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 							fi
 						fi
 						;;
 					say)
 						if [ -z "$3" ]; then
-							echo "Invalid command."
+							error_exit INVALID_COMMAND "Invalid command."
 						else
 							if server_is_running "$id"; then
 								server_eval "$id" "say ${*:3}"
 								echo "Message sent to players."
 							else
-								echo "Server \"${server_name[$id]}\" is not running."
+								error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 							fi
 						fi
 						;;
@@ -2140,7 +2118,7 @@ main() {
 						case "$3" in
 							set)
 								if [ -z "$4" ]; then
-									echo "Invalid command."
+									error_exit INVALID_COMMAND "Invalid command."
 								else
 									if server_is_running "$id"; then
 										local line="$(server_eval_and_get_line "$id" "time set $4" "${server_confirm_time_set[$id]}" "${server_confirm_time_set_fail[$id]}")"
@@ -2151,16 +2129,16 @@ main() {
 										fi
 										local regex="${LOG_REGEX} ${server_confirm_time_set_fail[$id]}"
 										if [[ "$line" =~ $regex ]]; then
-											echo "Unable to convert \"$4\" to a time."
+											error_exit INVALID_ARGUMENT "Unable to convert \"$4\" to a time."
 										fi
 									else
-										echo "Server \"${server_name[$id]}\" is not running."
+										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 									fi
 								fi
 								;;
 							add)
 								if [ -z "$4" ]; then
-									echo "Invalid command."
+									error_exit INVALID_COMMAND "Invalid command."
 								else
 									if server_is_running "$id"; then
 										local line="$(server_eval_and_get_line "$id" "time add $4" "${server_confirm_time_add[$id]}" "${server_confirm_time_add_fail[$id]}")"
@@ -2171,15 +2149,15 @@ main() {
 										fi
 										local regex="${LOG_REGEX} ${server_confirm_time_add_fail[$id]}"
 										if [[ "$line" =~ $regex ]]; then
-											echo "Unable to convert \"$4\" to a time."
+											error_exit INVALID_ARGUMENT "Unable to convert \"$4\" to a time."
 										fi
 									else
-										echo "Server \"${server_name[$id]}\" is not running."
+										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 									fi
 								fi
 								;;
 							*)
-								echo "Invalid command."
+								error_exit INVALID_COMMAND "Invalid command."
 								;;
 						esac
 						;;
@@ -2196,7 +2174,7 @@ main() {
 								echo "${line:34:(-3)}"
 							fi
 						else
-							echo "Server \"${server_name[$id]}\" is not running."
+							error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 						fi
 						;;
 					save)
@@ -2211,32 +2189,32 @@ main() {
 								server_save_all "$id"
 								;;
 							*)
-								echo "Invalid command."
+								error_exit INVALID_COMMAND "Invalid command."
 								;;
 						esac
 						;;
 					cmd)
 						if [ -z "$3" ]; then
-							echo "Invalid command."
+							error_exit INVALID_COMMAND "Invalid command."
 						else
 							if server_is_running "$id"; then
 								server_eval "$id" "${*:3}"
 								echo "Command sent."
 							else
-								echo "Server \"${server_name[$id]}\" is not running."
+								error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 							fi
 						fi
 						;;
 					cmdlog)
 						if [ -z "$3" ]; then
-							echo "Invalid command."
+							error_exit INVALID_COMMAND "Invalid command."
 						else
 							if server_is_running "$id"; then
 								server_eval "$id" "${*:3}"
 								echo "Now watching logs (press Ctrl+C to exit):"
 								as_user "${server_user_name[$id]}" "tail --follow --lines=0 --sleep-interval=0.1 ${server_log[$id]}"
 							else
-								echo "Server \"${server_name[$id]}\" is not running."
+								error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 							fi
 						fi
 						;;
@@ -2244,15 +2222,15 @@ main() {
 						if server_is_running "$id"; then
 							as_user "${server_user_name[$1]}" "screen -r ${server_screen_name[$1]}"
 						else
-							echo "Server \"${server_name[$id]}\" is not running."
+							error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 						fi
 						;;
 					*)
-						echo "Invalid command."
+						error_exit INVALID_COMMAND "Invalid command."
 						;;
 				esac
 			else
-				echo "No server with that name."
+			 	error_exit NAME_NOT_FOUND "No server with that name."
 			fi
 			;;
 	esac
