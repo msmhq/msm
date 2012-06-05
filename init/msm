@@ -443,7 +443,7 @@ server_log_get_line() {
 				fi
 			done
 		fi
-	done < <(as_user "${server_user_name[$1]}" "tail --follow --lines=100 --sleep-interval=0.1 \"${server_log[$1]}\"")
+	done < <(as_user "${server_user_name[$1]}" "tail --pid=$$ --follow --lines=100 --sleep-interval=0.1 \"${server_log[$1]}\"")
 }
 
 # The same as server_log_get_line, but does not print the line to stdout
@@ -2219,7 +2219,7 @@ main() {
 							if server_is_running "$id"; then
 								server_eval "$id" "${*:3}"
 								echo "Now watching logs (press Ctrl+C to exit):"
-								as_user "${server_user_name[$id]}" "tail --follow --lines=0 --sleep-interval=0.1 ${server_log[$id]}"
+								as_user "${server_user_name[$id]}" "tail --pid=$$ --follow --lines=0 --sleep-interval=0.1 ${server_log[$id]}"
 							else
 								error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 							fi
