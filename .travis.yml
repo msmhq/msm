@@ -2,9 +2,15 @@
 # Use python as its the simplest language which can run a test script
 language: python
 
-# Install shunit2
 before_install:
+    # Print out the bash version
+    - sudo /bin/bash --version
+    # Install dependencies
     - sudo apt-get install shunit2
+    # Debug output the contents of this script which is causing errors
+    - echo -e "\n\n\n"
+    - sudo cat /etc/profile.d/phpenv.sh
+    - echo -e "\n\n\n"
 
 # Create a minecraft user for testing
 install:
