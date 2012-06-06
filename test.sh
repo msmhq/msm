@@ -30,7 +30,7 @@ setUp() {
 	source "$DEFUALT_CONF"
 	
 	# Create the testing conf from the default one
-	mkdir -p "$TMP_DIR" && chown "$USERNAME":"$USERNAME" "$TMP_DIR"
+	mkdir -p "$TMP_DIR" && chown "$USERNAME" "$TMP_DIR"
 	cp "$DEFUALT_CONF" "$MSM_CONF" && chown "$USERNAME":"$USERNAME" "$MSM_CONF"
 	
 	# Overwrite the directories to use for testin purposes
