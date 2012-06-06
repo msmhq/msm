@@ -4,6 +4,8 @@ A single init script which makes running multiple Minecraft/Bukkit servers easie
 
 See the [installation page][wiki-install] to get started, or [visit the wiki][wiki] for the full list of resources.
 
+[![Flattr this git repo](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=marcuswhybrow&url=https://github.com/marcuswhybrow/minecraft-server-manager&title=Minecraft%20Server%20Manager&language=en_GB&tags=github,minecraft,bukkit,init,init.d,linux,ubunut&category=software) 
+
 ## Features
 
 As well as starting, stopping and restarting MSM has the following features:
