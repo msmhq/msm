@@ -1,4 +1,4 @@
-# Minecraft Server Manager
+# Minecraft Server Manager [![Build Status](https://secure.travis-ci.org/marcuswhybrow/minecraft-server-manager.png?branch=master)](http://travis-ci.org/marcuswhybrow/minecraft-server-manager)
 
 A single init script which makes running multiple Minecraft/Bukkit servers easier for us admins.
 
