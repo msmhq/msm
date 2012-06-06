@@ -96,7 +96,7 @@ error_exit() {
 		CONF_ERROR) code=73;;
 	esac
 	
-	echo "$(basename $0) Error $1 ($code): ${2:-"Unknown Error"}" 1>&2
+	echo "${2:-"Unknown Error"}" 1>&2
 	exit "${code:-$1}"
 }
 
@@ -1586,7 +1586,7 @@ main() {
 				create)
 					if [ -z "$3" ]; then
 						# If a server name is not provided
-						error_exit INVALID_COMMAND "Invalid command."
+						error_exit INVALID_COMMAND "Usage: $0 server create <server-name>"
 					else
 						# Create a new server
 						server_create "$3"
@@ -1595,7 +1595,7 @@ main() {
 				delete)
 					if [ -z "$3" ]; then
 						# If a server name is not provided
-						error_exit INVALID_COMMAND "Invalid command."
+						error_exit INVALID_COMMAND "Usage: $0 server delete <server-name>"
 					else
 						# Delete an existing server, with confirmation
 						server_delete "$3"
@@ -1604,7 +1604,7 @@ main() {
 				rename)
 					if [ -z "$3" ] || [ -z "$4" ]; then
 						# If a server name is not provided
-						error_exit INVALID_COMMAND "Invalid command."
+						error_exit INVALID_COMMAND "Usage: $0 server rename <original-name> <new-name>"
 					else
 						# Rename an existing server
 						server_rename "$3" "$4"
@@ -1612,7 +1612,7 @@ main() {
 					;;
 				*)
 					# "server" is not a valid command
-					error_exit INVALID_COMMAND "Invalid command."
+					error_exit INVALID_COMMAND "Usage: $0 server list|create|delete|rename"
 					;;
 			esac
 			;;
@@ -1624,14 +1624,14 @@ main() {
 					;;
 				create)
 					if [ -z "$3" ] || [ -z "$4" ]; then
-						error_exit INVALID_COMMAND "Invalid command."
+						error_exit INVALID_COMMAND "Usage: $0 jargroup create <jargroup-name> <download-url>"
 					else
 						jargroup_create "$3" "$4"
 					fi
 					;;
 				delete)
 					if [ -z "$3" ]; then
-						error_exit INVALID_COMMAND "Invalid command."
+						error_exit INVALID_COMMAND "Usage: $0 jargroup delete <jargroup-name>"
 					else
 						jargroup_delete "$3"
 					fi
@@ -1639,28 +1639,28 @@ main() {
 					;;
 				rename)
 					if [ -z "$3" ] || [ -z "$4" ]; then
-						error_exit INVALID_COMMAND "Invalid command."
+						error_exit INVALID_COMMAND "Usage: $0 jargroup rename <original-name> <new-name>"
 					else
 						jargroup_rename "$3" "$4"
 					fi
 					;;
 				changetarget)
 					if [ -z "$3" ] || [ -z "$4" ]; then
-						error_exit INVALID_COMMAND "Invalid command."
+						error_exit INVALID_COMMAND "Usage: $0 jargroup changetarget <jargroup-name> <new-download-url>"
 					else
 						jargroup_settarget "$3" "$4"
 					fi
 					;;
 				getlatest)
 					if [ -z "$3" ]; then
-						error_exit INVALID_COMMAND "Invalid command."
+						error_exit INVALID_COMMAND "Usage: $0 jargroup getlatest <jargroup-name>"
 					else
 						jargroup_getlatest "$3"
 					fi
 					;;
 				*)
 					# "jargroup" is not a valid command
-					error_exit INVALID_COMMAND "Invalid command."
+					error_exit INVALID_COMMAND "Usage: $0 jargroup list|create|delete|rename|changetarget|getlatest"
 					;;
 			esac
 			;;
@@ -1724,7 +1724,7 @@ main() {
 			echo -e "  version                                       Prints the Minecraft Server Manager version installed8"
 			;;
 		"")
-			echo "No such command see: $0 help"
+			error_exit INVALID_COMMAND "No such command see: $0 help"
 			;;
 		*)	
 			if [[ "$1" == "all" ]] || [[ -d "$SERVER_STORAGE_PATH/$1" ]]; then
@@ -1776,7 +1776,7 @@ main() {
 								;;
 							ram)
 								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Invalid command."
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds ram <world-name>"
 								else
 									world_id="$(server_world_get_id "$id" "$4")"
 									
@@ -1812,20 +1812,20 @@ main() {
 								;;
 							on)
 								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Invalid command."
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds on <world-name>"
 								else
 									world_activate "$(server_world_get_id "$id" "$4")"
 								fi
 								;;
 							off)
 								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Invalid command."
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds off <world-name>"
 								else
 									world_deactivate "$(server_world_get_id "$id" "$4")"
 								fi
 								;;
 							*)
-								error_exit INVALID_COMMAND "Invalid command."
+								error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds list|load|ram|todisk|backup|on|off"
 								;;
 						esac
 						;;
@@ -1851,7 +1851,7 @@ main() {
 						;;
 					jar)
 						if [ -z "$3" ]; then
-							error_exit INVALID_COMMAND "Invalid command."
+							error_exit INVALID_COMMAND "Usage: $0 <server-name> jar <jargroup-name> [jar-file-name]"
 						else
 							server_set_jar "$id" "$3" "$4"
 						fi
@@ -1876,7 +1876,7 @@ main() {
 								;;
 							add)
 								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Invalid command."
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist add <player-name>"
 								else
 									if server_is_running "$id"; then
 										server_eval "$id" "whitelist add $4"
@@ -1888,7 +1888,7 @@ main() {
 								;;
 							remove)
 								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Invalid command."
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist remove <player-name>"
 								else
 									if server_is_running "$id"; then
 										server_eval "$id" "whitelist remove $4"
@@ -1908,18 +1908,18 @@ main() {
 								fi
 								;;
 							*)
-								error_exit INVALID_COMMAND "Invalid command."
+								error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist on|off|add|remove|list"
 								;;
 						esac
 						;;
 					blacklist|bl)
 						case "$3" in
 							player)
-								if [ -z "$5" ]; then
-									error_exit INVALID_COMMAND "Invalid command."
-								else
-									case "$4" in
-										add)
+								case "$4" in
+									add)
+										if [ -z "$5" ]; then
+											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player add <player-name>"
+										else
 											for player in ${*:5}; do
 											 	server_eval "$id" "ban $player"
 											done
@@ -1933,8 +1933,12 @@ main() {
 											else
 												echo "Blacklisted \"$5\"."
 											fi
-											;;
-										remove)
+										fi
+										;;
+									remove)
+										if [ -z "$5" ]; then
+											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player remove <player-name>"
+										else
 											for player in ${*:5}; do
 											 	server_eval "$id" "pardon $player"
 											done
@@ -1948,47 +1952,55 @@ main() {
 											else
 												echo "Removed \"$5\" from the blacklist."
 											fi
-											;;
-										*)
-											error_exit INVALID_COMMAND "Invalid command."
-											;;
-									esac
-								fi
+										fi
+										;;
+									*)
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player add|remove"
+										;;
+								esac
 								;;
 							ip)
 								case "$4" in
 									add)
-										for address in ${*:5}; do
-										 	server_eval "$id" "ban-ip $address"
-										done
-										if [[ $# > 5 ]]; then
-											echo -n "Blacklisted the following ip addresses: "
-											echo -n "$5"
-											for player in ${*:6}; do
-											 	echo -n ", $address"
-											done
-											echo "."
+										if [ -z "$5" ]; then
+											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip add <ip-address>"
 										else
-											echo "Blacklisted \"$5\"."
+											for address in ${*:5}; do
+											 	server_eval "$id" "ban-ip $address"
+											done
+											if [[ $# > 5 ]]; then
+												echo -n "Blacklisted the following ip addresses: "
+												echo -n "$5"
+												for player in ${*:6}; do
+												 	echo -n ", $address"
+												done
+												echo "."
+											else
+												echo "Blacklisted \"$5\"."
+											fi
 										fi
 										;;
 									remove)
-										for address in ${*:5}; do
-										 	server_eval "$id" "pardon-ip $address"
-										done
-										if [[ $# > 5 ]]; then
-											echo -n "Removed the following ip addresses from the blacklist: "
-											echo -n "$5"
-											for player in ${*:6}; do
-											 	echo -n ", $address"
-											done
-											echo "."
+										if [ -z "$5" ]; then
+											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip remove <ip-address>"
 										else
-											echo "Removed \"$5\" from the ip blacklist."
+											for address in ${*:5}; do
+											 	server_eval "$id" "pardon-ip $address"
+											done
+											if [[ $# > 5 ]]; then
+												echo -n "Removed the following ip addresses from the blacklist: "
+												echo -n "$5"
+												for player in ${*:6}; do
+												 	echo -n ", $address"
+												done
+												echo "."
+											else
+												echo "Removed \"$5\" from the ip blacklist."
+											fi
 										fi
 										;;
 									*)
-										error_exit INVALID_COMMAND "Invalid command."
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip add|remove"
 										;;
 								esac
 								;;
@@ -2016,26 +2028,34 @@ main() {
 								fi
 								;;
 							*)
-								error_exit INVALID_COMMAND "Invalid command."
+								error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip player|ip|list"
 								;;
 						esac
 						;;
 					operator|op)
 						case "$3" in
 							add)
-								if server_is_running "$id"; then
-									server_eval "$id" "op $4"
-									echo "The player \"$4\" is now an operator for the server."
+								if [ -z "$4" ]; then
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> operator add <player-name>"
 								else
-									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+									if server_is_running "$id"; then
+										server_eval "$id" "op $4"
+										echo "The player \"$4\" is now an operator for the server."
+									else
+										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+									fi
 								fi
 								;;
 							remove)
-								if server_is_running "$id"; then
-									server_eval "$id" "deop $4"
-									echo "The player \"$4\" is no longer an operator for the server."
+								if [ -z "$4" ]; then
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> operator remove <player-name>"
 								else
-									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+									if server_is_running "$id"; then
+										server_eval "$id" "deop $4"
+										echo "The player \"$4\" is no longer an operator for the server."
+									else
+										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+									fi
 								fi
 								;;
 							list)
@@ -2048,7 +2068,7 @@ main() {
 								fi
 								;;
 							*)
-								error_exit INVALID_COMMAND "Invalid command."
+								error_exit INVALID_COMMAND "Usage: $0 <server-name> operator add|remove|list"
 								;;
 						esac
 						;;
@@ -2056,13 +2076,13 @@ main() {
 						case "$3" in
 							survival|creative|0|1)
 								if [ -z "$4" ]; then
-									echo "Invalid command."
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> gamemode survival|creative <player-name>"
 								else
 									if server_is_running "$id"; then
 										case "$3" in
 											creative|1) local mode=1;;
 											survival|0) local mode=0;;
-											*) error_exit INVALID_COMMAND "Invalid mode";;
+											*) error_exit INVALID_ARGUMENT "Invalid gamemode type \"$3\" options are \"survival\", \"creative\", \"0\" or \"1\".";;
 										esac
 										
 										local line="$(server_eval_and_get_line "$id" "gamemode $4 $mode" "${server_confirm_gamemode[$id]}" "${server_confirm_gamemode_fail_no_user[$id]}" "${server_confirm_gamemode_fail_no_change[$id]}")"
@@ -2085,13 +2105,13 @@ main() {
 								fi
 								;;
 							*)
-								error_exit INVALID_COMMAND "Invalid command."
+								error_exit INVALID_COMMAND "Usage: $0 <server-name> gamemode survival|creative"
 								;;
 						esac
 						;;
 					kick)
 						if [ -z "$3" ]; then
-							error_exit INVALID_COMMAND "Invalid command."
+							error_exit INVALID_COMMAND "Usage: $0 <server-name> kick <player-name>"
 						else
 							if server_is_running "$id"; then
 								local line="$(server_eval_and_get_line "$id" "kick $3" "${server_confirm_kick[$id]}" "${server_confirm_kick_fail[$id]}")"
@@ -2111,7 +2131,7 @@ main() {
 						;;
 					say)
 						if [ -z "$3" ]; then
-							error_exit INVALID_COMMAND "Invalid command."
+							error_exit INVALID_COMMAND "Usage: $0 <server-name> say <message>"
 						else
 							if server_is_running "$id"; then
 								server_eval "$id" "say ${*:3}"
@@ -2125,7 +2145,7 @@ main() {
 						case "$3" in
 							set)
 								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Invalid command."
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> time set <time-string>"
 								else
 									if server_is_running "$id"; then
 										local line="$(server_eval_and_get_line "$id" "time set $4" "${server_confirm_time_set[$id]}" "${server_confirm_time_set_fail[$id]}")"
@@ -2145,7 +2165,7 @@ main() {
 								;;
 							add)
 								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Invalid command."
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> time add <time-string>"
 								else
 									if server_is_running "$id"; then
 										local line="$(server_eval_and_get_line "$id" "time add $4" "${server_confirm_time_add[$id]}" "${server_confirm_time_add_fail[$id]}")"
@@ -2164,7 +2184,7 @@ main() {
 								fi
 								;;
 							*)
-								error_exit INVALID_COMMAND "Invalid command."
+								error_exit INVALID_COMMAND "Usage: $0 <server-name> time set|add"
 								;;
 						esac
 						;;
@@ -2186,23 +2206,15 @@ main() {
 						;;
 					save)
 						case "$3" in
-							on)
-								server_save_on "$id"
-								;;
-							off)
-								server_save_off "$id"
-								;;
-							all)
-								server_save_all "$id"
-								;;
-							*)
-								error_exit INVALID_COMMAND "Invalid command."
-								;;
+							on) server_save_on "$id";;
+							off) server_save_off "$id";;
+							all) server_save_all "$id";;
+							*) error_exit INVALID_COMMAND "Usage: $0 <server-name> save on|off|all";;
 						esac
 						;;
 					cmd)
 						if [ -z "$3" ]; then
-							error_exit INVALID_COMMAND "Invalid command."
+							error_exit INVALID_COMMAND "Usage: $0 <server-name> cmd <command-string>"
 						else
 							if server_is_running "$id"; then
 								server_eval "$id" "${*:3}"
@@ -2214,7 +2226,7 @@ main() {
 						;;
 					cmdlog)
 						if [ -z "$3" ]; then
-							error_exit INVALID_COMMAND "Invalid command."
+							error_exit INVALID_COMMAND "Usage: $0 <server-name> cmdlog <command-string>"
 						else
 							if server_is_running "$id"; then
 								server_eval "$id" "${*:3}"
@@ -2233,7 +2245,7 @@ main() {
 						fi
 						;;
 					*)
-						error_exit INVALID_COMMAND "Invalid command."
+						error_exit INVALID_COMMAND "Invalid command. See \"$0 help\" for more information."
 						;;
 				esac
 			else
