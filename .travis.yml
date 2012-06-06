@@ -9,6 +9,7 @@ before_install:
     - sudo apt-get install shunit2
     # Debug output the contents of this script which is causing errors
     - echo -e "\n\n\n"
+    - sudo ls -lah /etc/profile.d
     - sudo cat /etc/profile.d/phpenv.sh
     - echo -e "\n\n\n"
 
