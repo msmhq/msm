@@ -11,6 +11,17 @@ Maintainers:
 Change Log
 ----------
 
+### [0.2.6](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.5...0.2.6)
+
+* Added the "all" keyword which can be used to execute a command for all servers. Closes #16
+* Added [Travis CI integration][travis] for per commit unit testing.
+* Improved command error messages to give specific command errors. Closes issue #10.
+* Fixed issue [#15][#15] which left a "tail" command process running after certain commands.
+
+[#15]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/15
+
+[travis]: http://travis-ci.org/#!/marcuswhybrow/minecraft-server-manager
+
 ### [0.2.5](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.4...0.2.5)
 
 * Added `test.sh`, a script which runs `shunit2` unit tests.
