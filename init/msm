@@ -1728,526 +1728,540 @@ main() {
 			;;
 		*)	
 			if [[ "$1" == "all" ]] || [[ -d "$SERVER_STORAGE_PATH/$1" ]]; then
-				
-				if [ -d "$SERVER_STORAGE_PATH/$1" ]; then
-					local id="$(server_get_id "$1")"
-				else
-					error_exit NAME_NOT_FOUND "There is no server with the name \"$1\"."
-				fi
-				
-				case "$2" in
-					start)
-						server_set_active "$id" "active"
-						server_start "$id"
-						;;
-					stop)
-						server_set_active "$id" "inactive"
-						if [[ "$3" != "now" ]]; then
-							server_stop "$id"
-						else
-							server_stop_now "$id"
-						fi
-						;;
-					restart)
-						server_set_active "$1" "active"
-						if [[ "$3" != "now" ]]; then
-							server_restart "$id"
-						else
-							server_restart_now "$id"
-						fi
-						;;
-					status)
-						if server_is_running "$id"; then
-							echo "Server \"${server_name[$id]}\" is running."
-						else
-							echo "Server \"${server_name[$id]}\" is stopped."
-						fi
-						;;
-					connected)
-						server_connected "$id"
-						;;
-					worlds)
-						case "$3" in
-							list)
-								server_worlds_list "$id"
-								;;
-							load)
-								server_ensure_links "$id"
-								;;
-							ram)
-								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds ram <world-name>"
-								else
-									world_id="$(server_world_get_id "$id" "$4")"
-									
-									if [ ! -z "$world_id" ]; then
-										world_toggle_ramdisk_state "$world_id"
+				command_server() {
+					if [ -d "$SERVER_STORAGE_PATH/$1" ]; then
+						local id="$(server_get_id "$1")"
+					else
+						error_exit NAME_NOT_FOUND "There is no server with the name \"$1\"."
+					fi
+					
+					case "$2" in
+						start)
+							server_set_active "$id" "active"
+							server_start "$id"
+							;;
+						stop)
+							server_set_active "$id" "inactive"
+							if [[ "$3" != "now" ]]; then
+								server_stop "$id"
+							else
+								server_stop_now "$id"
+							fi
+							;;
+						restart)
+							server_set_active "$1" "active"
+							if [[ "$3" != "now" ]]; then
+								server_restart "$id"
+							else
+								server_restart_now "$id"
+							fi
+							;;
+						status)
+							if server_is_running "$id"; then
+								echo "Server \"${server_name[$id]}\" is running."
+							else
+								echo "Server \"${server_name[$id]}\" is stopped."
+							fi
+							;;
+						connected)
+							server_connected "$id"
+							;;
+						worlds)
+							case "$3" in
+								list)
+									server_worlds_list "$id"
+									;;
+								load)
+									server_ensure_links "$id"
+									;;
+								ram)
+									if [ -z "$4" ]; then
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds ram <world-name>"
 									else
-										error_exit NAME_NOT_FOUND "Server \"${server_name[$id]}\" has no world with that name."
+										world_id="$(server_world_get_id "$id" "$4")"
+
+										if [ ! -z "$world_id" ]; then
+											world_toggle_ramdisk_state "$world_id"
+										else
+											error_exit NAME_NOT_FOUND "Server \"${server_name[$id]}\" has no world with that name."
+										fi
 									fi
-								fi
-								;;
-							todisk)
-								server_save_off "$id"
-								server_save_all "$id"
-								server_worlds_to_disk "$id"
-								server_save_on "$id"
-								;;
-							backup)
-								if server_is_running "$id"; then
-									server_eval "$id" "say ${server_world_backup_started[$id]}"
+									;;
+								todisk)
 									server_save_off "$id"
 									server_save_all "$id"
-								fi
-								
-								server_worlds_to_disk "$id"
-								server_worlds_backup "$id"
-								
-								if server_is_running "$id"; then
+									server_worlds_to_disk "$id"
 									server_save_on "$id"
-									server_eval "$id" "say ${server_world_backup_finished[$id]}"
-								fi
-								
-								echo "Backup took $SECONDS seconds".
-								;;
-							on)
-								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds on <world-name>"
-								else
-									world_activate "$(server_world_get_id "$id" "$4")"
-								fi
-								;;
-							off)
-								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds off <world-name>"
-								else
-									world_deactivate "$(server_world_get_id "$id" "$4")"
-								fi
-								;;
-							*)
-								error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds list|load|ram|todisk|backup|on|off"
-								;;
-						esac
-						;;
-					logroll)
-						server_log_roll "$id"
-						;;
-					backup)
-						if server_is_running "$id"; then
-							server_eval "$id" "say ${server_complete_backup_started[$id]}"
-							server_save_off "$id"
-							server_save_all "$id"
-						fi
-						
-						server_worlds_to_disk "$id"
-						server_backup "$id"
-						
-						if server_is_running "$id"; then
-							server_save_on "$id"
-							server_eval "$id" "say ${server_complete_backup_finished[$id]}"
-						fi
-						
-						echo "Backup took $SECONDS seconds".
-						;;
-					jar)
-						if [ -z "$3" ]; then
-							error_exit INVALID_COMMAND "Usage: $0 <server-name> jar <jargroup-name> [jar-file-name]"
-						else
-							server_set_jar "$id" "$3" "$4"
-						fi
-						;;
-					whitelist|wl)
-						case "$3" in
-							on)
+									;;
+								backup)
+									if server_is_running "$id"; then
+										server_eval "$id" "say ${server_world_backup_started[$id]}"
+										server_save_off "$id"
+										server_save_all "$id"
+									fi
+
+									server_worlds_to_disk "$id"
+									server_worlds_backup "$id"
+
+									if server_is_running "$id"; then
+										server_save_on "$id"
+										server_eval "$id" "say ${server_world_backup_finished[$id]}"
+									fi
+
+									echo "Backup took $SECONDS seconds".
+									;;
+								on)
+									if [ -z "$4" ]; then
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds on <world-name>"
+									else
+										world_activate "$(server_world_get_id "$id" "$4")"
+									fi
+									;;
+								off)
+									if [ -z "$4" ]; then
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds off <world-name>"
+									else
+										world_deactivate "$(server_world_get_id "$id" "$4")"
+									fi
+									;;
+								*)
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds list|load|ram|todisk|backup|on|off"
+									;;
+							esac
+							;;
+						logroll)
+							server_log_roll "$id"
+							;;
+						backup)
+							if server_is_running "$id"; then
+								server_eval "$id" "say ${server_complete_backup_started[$id]}"
+								server_save_off "$id"
+								server_save_all "$id"
+							fi
+
+							server_worlds_to_disk "$id"
+							server_backup "$id"
+
+							if server_is_running "$id"; then
+								server_save_on "$id"
+								server_eval "$id" "say ${server_complete_backup_finished[$id]}"
+							fi
+
+							echo "Backup took $SECONDS seconds".
+							;;
+						jar)
+							if [ -z "$3" ]; then
+								error_exit INVALID_COMMAND "Usage: $0 <server-name> jar <jargroup-name> [jar-file-name]"
+							else
+								server_set_jar "$id" "$3" "$4"
+							fi
+							;;
+						whitelist|wl)
+							case "$3" in
+								on)
+									if server_is_running "$id"; then
+										server_eval "$id" "whitelist on"
+										echo "Whitelist enabled"
+									else
+										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+									fi
+									;;
+								off)
+									if server_is_running "$id"; then
+										server_eval "$id" "whitelist off"
+										echo "Whitelist disabled"
+									else
+										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+									fi
+									;;
+								add)
+									if [ -z "$4" ]; then
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist add <player-name>"
+									else
+										if server_is_running "$id"; then
+											server_eval "$id" "whitelist add $4"
+											echo "Added \"$4\" to the whitelist."
+										else
+											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+										fi
+									fi
+									;;
+								remove)
+									if [ -z "$4" ]; then
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist remove <player-name>"
+									else
+										if server_is_running "$id"; then
+											server_eval "$id" "whitelist remove $4"
+											echo "Removed \"$4\" from the whitelist."
+										else
+											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+										fi
+									fi
+									;;
+								list)
+									local players="$(cat "${server_whitelist[$id]}")"
+
+									if [ -z "$players" ]; then
+										echo "No players are whitelisted."
+									else
+										echo "$players"
+									fi
+									;;
+								*)
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist on|off|add|remove|list"
+									;;
+							esac
+							;;
+						blacklist|bl)
+							case "$3" in
+								player)
+									case "$4" in
+										add)
+											if [ -z "$5" ]; then
+												error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player add <player-name>"
+											else
+												for player in ${*:5}; do
+												 	server_eval "$id" "ban $player"
+												done
+												if [[ $# -gt 5 ]]; then
+													echo -n "Blacklisted the following players: "
+													echo -n "$5"
+													for player in ${*:6}; do
+													 	echo -n ", $player"
+													done
+													echo "."
+												else
+													echo "Blacklisted \"$5\"."
+												fi
+											fi
+											;;
+										remove)
+											if [ -z "$5" ]; then
+												error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player remove <player-name>"
+											else
+												for player in ${*:5}; do
+												 	server_eval "$id" "pardon $player"
+												done
+												if [[ $# -gt 5 ]]; then
+													echo -n "Removed the following players from the blacklist: "
+													echo -n "$5"
+													for player in ${*:6}; do
+													 	echo -n ", $player"
+													done
+													echo "."
+												else
+													echo "Removed \"$5\" from the blacklist."
+												fi
+											fi
+											;;
+										*)
+											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player add|remove"
+											;;
+									esac
+									;;
+								ip)
+									case "$4" in
+										add)
+											if [ -z "$5" ]; then
+												error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip add <ip-address>"
+											else
+												for address in ${*:5}; do
+												 	server_eval "$id" "ban-ip $address"
+												done
+												if [[ $# > 5 ]]; then
+													echo -n "Blacklisted the following ip addresses: "
+													echo -n "$5"
+													for player in ${*:6}; do
+													 	echo -n ", $address"
+													done
+													echo "."
+												else
+													echo "Blacklisted \"$5\"."
+												fi
+											fi
+											;;
+										remove)
+											if [ -z "$5" ]; then
+												error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip remove <ip-address>"
+											else
+												for address in ${*:5}; do
+												 	server_eval "$id" "pardon-ip $address"
+												done
+												if [[ $# > 5 ]]; then
+													echo -n "Removed the following ip addresses from the blacklist: "
+													echo -n "$5"
+													for player in ${*:6}; do
+													 	echo -n ", $address"
+													done
+													echo "."
+												else
+													echo "Removed \"$5\" from the ip blacklist."
+												fi
+											fi
+											;;
+										*)
+											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip add|remove"
+											;;
+									esac
+									;;
+								list)
+									local players="$(cat "${server_banned_players[$id]}")"
+
+									local ips="$(cat "${server_banned_ips[$id]}")"
+
+									if [[ -z "$players" && -z "$ips" ]]; then
+										echo "The blacklist is empty."
+									else
+										if [[ ! -z "$players" ]]; then
+											echo "Players:"
+											for name in $players; do
+												echo "    $name"
+											done
+										fi
+
+										if [[ ! -z "$ips" ]]; then
+											echo "IP Addresses:"
+											for address in $ips; do
+												echo "    $address"
+											done
+										fi
+									fi
+									;;
+								*)
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip player|ip|list"
+									;;
+							esac
+							;;
+						operator|op)
+							case "$3" in
+								add)
+									if [ -z "$4" ]; then
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> operator add <player-name>"
+									else
+										if server_is_running "$id"; then
+											server_eval "$id" "op $4"
+											echo "The player \"$4\" is now an operator for the server."
+										else
+											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+										fi
+									fi
+									;;
+								remove)
+									if [ -z "$4" ]; then
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> operator remove <player-name>"
+									else
+										if server_is_running "$id"; then
+											server_eval "$id" "deop $4"
+											echo "The player \"$4\" is no longer an operator for the server."
+										else
+											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+										fi
+									fi
+									;;
+								list)
+									local players="$(cat "${server_ops[$id]}")"
+
+									if [ -z "$players" ]; then
+										echo "No players are operators."
+									else
+										echo "$players"
+									fi
+									;;
+								*)
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> operator add|remove|list"
+									;;
+							esac
+							;;
+						gamemode|gm)
+							case "$3" in
+								survival|creative|0|1)
+									if [ -z "$4" ]; then
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> gamemode survival|creative <player-name>"
+									else
+										if server_is_running "$id"; then
+											case "$3" in
+												creative|1) local mode=1;;
+												survival|0) local mode=0;;
+												*) error_exit INVALID_ARGUMENT "Invalid gamemode type \"$3\" options are \"survival\", \"creative\", \"0\" or \"1\".";;
+											esac
+
+											local line="$(server_eval_and_get_line "$id" "gamemode $4 $mode" "${server_confirm_gamemode[$id]}" "${server_confirm_gamemode_fail_no_user[$id]}" "${server_confirm_gamemode_fail_no_change[$id]}")"
+
+											local regex="${LOG_REGEX} ${server_confirm_gamemode[$id]}"
+											if [[ "$line" =~ $regex ]]; then
+												echo "Changed game mode of \"$4\" to \"$3\"."
+											fi
+											local regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_user[$id]}"
+											if [[ "$line" =~ $regex ]]; then
+												echo "The player \"$4\" was not found to be logged on."
+											fi
+											local regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_change[$id]}"
+											if [[ "$line" =~ $regex ]]; then
+												echo "The player \"$4\" was already in mode \"$3\"."
+											fi
+										else
+											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+										fi
+									fi
+									;;
+								*)
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> gamemode survival|creative"
+									;;
+							esac
+							;;
+						kick)
+							if [ -z "$3" ]; then
+								error_exit INVALID_COMMAND "Usage: $0 <server-name> kick <player-name>"
+							else
 								if server_is_running "$id"; then
-									server_eval "$id" "whitelist on"
-									echo "Whitelist enabled"
+									local line="$(server_eval_and_get_line "$id" "kick $3" "${server_confirm_kick[$id]}" "${server_confirm_kick_fail[$id]}")"
+
+									local regex="${LOG_REGEX} ${server_confirm_kick[$id]}"
+									if [[ "$line" =~ $regex ]]; then
+										echo "Kicked \"$3\" from game."
+									fi
+									local regex="${LOG_REGEX} ${server_confirm_kick_fail[$id]}"
+									if [[ "$line" =~ $regex ]]; then
+										echo "The player \"$3\" is not connected."
+									fi
 								else
 									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 								fi
-								;;
-							off)
+							fi
+							;;
+						say)
+							if [ -z "$3" ]; then
+								error_exit INVALID_COMMAND "Usage: $0 <server-name> say <message>"
+							else
 								if server_is_running "$id"; then
-									server_eval "$id" "whitelist off"
-									echo "Whitelist disabled"
+									server_eval "$id" "say ${*:3}"
+									echo "Message sent to players."
 								else
 									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 								fi
-								;;
-							add)
-								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist add <player-name>"
-								else
-									if server_is_running "$id"; then
-										server_eval "$id" "whitelist add $4"
-										echo "Added \"$4\" to the whitelist."
+							fi
+							;;
+						time)
+							case "$3" in
+								set)
+									if [ -z "$4" ]; then
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> time set <time-string>"
 									else
-										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-									fi
-								fi
-								;;
-							remove)
-								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist remove <player-name>"
-								else
-									if server_is_running "$id"; then
-										server_eval "$id" "whitelist remove $4"
-										echo "Removed \"$4\" from the whitelist."
-									else
-										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-									fi
-								fi
-								;;
-							list)
-								local players="$(cat "${server_whitelist[$id]}")"
+										if server_is_running "$id"; then
+											local line="$(server_eval_and_get_line "$id" "time set $4" "${server_confirm_time_set[$id]}" "${server_confirm_time_set_fail[$id]}")"
 
-								if [ -z "$players" ]; then
-									echo "No players are whitelisted."
-								else
-									echo "$players"
-								fi
-								;;
-							*)
-								error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist on|off|add|remove|list"
-								;;
-						esac
-						;;
-					blacklist|bl)
-						case "$3" in
-							player)
-								case "$4" in
-									add)
-										if [ -z "$5" ]; then
-											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player add <player-name>"
-										else
-											for player in ${*:5}; do
-											 	server_eval "$id" "ban $player"
-											done
-											if [[ $# -gt 5 ]]; then
-												echo -n "Blacklisted the following players: "
-												echo -n "$5"
-												for player in ${*:6}; do
-												 	echo -n ", $player"
-												done
-												echo "."
-											else
-												echo "Blacklisted \"$5\"."
+											local regex="${LOG_REGEX} ${server_confirm_time_set[$id]}"
+											if [[ "$line" =~ $regex ]]; then
+												echo "Set time to \"$4\"."
 											fi
-										fi
-										;;
-									remove)
-										if [ -z "$5" ]; then
-											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player remove <player-name>"
-										else
-											for player in ${*:5}; do
-											 	server_eval "$id" "pardon $player"
-											done
-											if [[ $# -gt 5 ]]; then
-												echo -n "Removed the following players from the blacklist: "
-												echo -n "$5"
-												for player in ${*:6}; do
-												 	echo -n ", $player"
-												done
-												echo "."
-											else
-												echo "Removed \"$5\" from the blacklist."
+											local regex="${LOG_REGEX} ${server_confirm_time_set_fail[$id]}"
+											if [[ "$line" =~ $regex ]]; then
+												error_exit INVALID_ARGUMENT "Unable to convert \"$4\" to a time."
 											fi
-										fi
-										;;
-									*)
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player add|remove"
-										;;
-								esac
-								;;
-							ip)
-								case "$4" in
-									add)
-										if [ -z "$5" ]; then
-											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip add <ip-address>"
 										else
-											for address in ${*:5}; do
-											 	server_eval "$id" "ban-ip $address"
-											done
-											if [[ $# > 5 ]]; then
-												echo -n "Blacklisted the following ip addresses: "
-												echo -n "$5"
-												for player in ${*:6}; do
-												 	echo -n ", $address"
-												done
-												echo "."
-											else
-												echo "Blacklisted \"$5\"."
-											fi
+											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 										fi
-										;;
-									remove)
-										if [ -z "$5" ]; then
-											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip remove <ip-address>"
-										else
-											for address in ${*:5}; do
-											 	server_eval "$id" "pardon-ip $address"
-											done
-											if [[ $# > 5 ]]; then
-												echo -n "Removed the following ip addresses from the blacklist: "
-												echo -n "$5"
-												for player in ${*:6}; do
-												 	echo -n ", $address"
-												done
-												echo "."
-											else
-												echo "Removed \"$5\" from the ip blacklist."
-											fi
-										fi
-										;;
-									*)
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip add|remove"
-										;;
-								esac
-								;;
-							list)
-								local players="$(cat "${server_banned_players[$id]}")"
-								
-								local ips="$(cat "${server_banned_ips[$id]}")"
-
-								if [[ -z "$players" && -z "$ips" ]]; then
-									echo "The blacklist is empty."
-								else
-									if [[ ! -z "$players" ]]; then
-										echo "Players:"
-										for name in $players; do
-											echo "    $name"
-										done
 									fi
-									
-									if [[ ! -z "$ips" ]]; then
-										echo "IP Addresses:"
-										for address in $ips; do
-											echo "    $address"
-										done
-									fi
-								fi
-								;;
-							*)
-								error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip player|ip|list"
-								;;
-						esac
-						;;
-					operator|op)
-						case "$3" in
-							add)
-								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> operator add <player-name>"
-								else
-									if server_is_running "$id"; then
-										server_eval "$id" "op $4"
-										echo "The player \"$4\" is now an operator for the server."
+									;;
+								add)
+									if [ -z "$4" ]; then
+										error_exit INVALID_COMMAND "Usage: $0 <server-name> time add <time-string>"
 									else
-										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-									fi
-								fi
-								;;
-							remove)
-								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> operator remove <player-name>"
-								else
-									if server_is_running "$id"; then
-										server_eval "$id" "deop $4"
-										echo "The player \"$4\" is no longer an operator for the server."
-									else
-										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-									fi
-								fi
-								;;
-							list)
-								local players="$(cat "${server_ops[$id]}")"
+										if server_is_running "$id"; then
+											local line="$(server_eval_and_get_line "$id" "time add $4" "${server_confirm_time_add[$id]}" "${server_confirm_time_add_fail[$id]}")"
 
-								if [ -z "$players" ]; then
-									echo "No players are operators."
-								else
-									echo "$players"
-								fi
-								;;
-							*)
-								error_exit INVALID_COMMAND "Usage: $0 <server-name> operator add|remove|list"
-								;;
-						esac
-						;;
-					gamemode|gm)
-						case "$3" in
-							survival|creative|0|1)
-								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> gamemode survival|creative <player-name>"
-								else
-									if server_is_running "$id"; then
-										case "$3" in
-											creative|1) local mode=1;;
-											survival|0) local mode=0;;
-											*) error_exit INVALID_ARGUMENT "Invalid gamemode type \"$3\" options are \"survival\", \"creative\", \"0\" or \"1\".";;
-										esac
-										
-										local line="$(server_eval_and_get_line "$id" "gamemode $4 $mode" "${server_confirm_gamemode[$id]}" "${server_confirm_gamemode_fail_no_user[$id]}" "${server_confirm_gamemode_fail_no_change[$id]}")"
-
-										local regex="${LOG_REGEX} ${server_confirm_gamemode[$id]}"
-										if [[ "$line" =~ $regex ]]; then
-											echo "Changed game mode of \"$4\" to \"$3\"."
+											local regex="${LOG_REGEX} ${server_confirm_time_add[$id]}"
+											if [[ "$line" =~ $regex ]]; then
+												echo "Added \"$4\" to time."
+											fi
+											local regex="${LOG_REGEX} ${server_confirm_time_add_fail[$id]}"
+											if [[ "$line" =~ $regex ]]; then
+												error_exit INVALID_ARGUMENT "Unable to convert \"$4\" to a time."
+											fi
+										else
+											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 										fi
-										local regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_user[$id]}"
-										if [[ "$line" =~ $regex ]]; then
-											echo "The player \"$4\" was not found to be logged on."
-										fi
-										local regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_change[$id]}"
-										if [[ "$line" =~ $regex ]]; then
-											echo "The player \"$4\" was already in mode \"$3\"."
-										fi
-									else
-										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 									fi
-								fi
-								;;
-							*)
-								error_exit INVALID_COMMAND "Usage: $0 <server-name> gamemode survival|creative"
-								;;
-						esac
-						;;
-					kick)
-						if [ -z "$3" ]; then
-							error_exit INVALID_COMMAND "Usage: $0 <server-name> kick <player-name>"
-						else
+									;;
+								*)
+									error_exit INVALID_COMMAND "Usage: $0 <server-name> time set|add"
+									;;
+							esac
+							;;
+						toggledownfall|tdf)
 							if server_is_running "$id"; then
-								local line="$(server_eval_and_get_line "$id" "kick $3" "${server_confirm_kick[$id]}" "${server_confirm_kick_fail[$id]}")"
-								
-								local regex="${LOG_REGEX} ${server_confirm_kick[$id]}"
+								local line="$(server_eval_and_get_line "$id" "toggledownfall $3" "${server_confirm_toggledownfall[$id]}" "${server_confirm_toggledownfall_fail[$id]}")"
+
+								local regex="${LOG_REGEX} ${server_confirm_toggledownfall[$id]}"
 								if [[ "$line" =~ $regex ]]; then
-									echo "Kicked \"$3\" from game."
+									echo "${line:36:(-3)}"
 								fi
-								local regex="${LOG_REGEX} ${server_confirm_kick_fail[$id]}"
+								local regex="${LOG_REGEX} ${server_confirm_toggledownfall_fail[$id]}"
 								if [[ "$line" =~ $regex ]]; then
-									echo "The player \"$3\" is not connected."
+									echo "${line:34:(-3)}"
 								fi
 							else
 								error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 							fi
-						fi
-						;;
-					say)
-						if [ -z "$3" ]; then
-							error_exit INVALID_COMMAND "Usage: $0 <server-name> say <message>"
-						else
-							if server_is_running "$id"; then
-								server_eval "$id" "say ${*:3}"
-								echo "Message sent to players."
+							;;
+						save)
+							case "$3" in
+								on) server_save_on "$id";;
+								off) server_save_off "$id";;
+								all) server_save_all "$id";;
+								*) error_exit INVALID_COMMAND "Usage: $0 <server-name> save on|off|all";;
+							esac
+							;;
+						cmd)
+							if [ -z "$3" ]; then
+								error_exit INVALID_COMMAND "Usage: $0 <server-name> cmd <command-string>"
 							else
-								error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-							fi
-						fi
-						;;
-					time)
-						case "$3" in
-							set)
-								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> time set <time-string>"
+								if server_is_running "$id"; then
+									server_eval "$id" "${*:3}"
+									echo "Command sent."
 								else
-									if server_is_running "$id"; then
-										local line="$(server_eval_and_get_line "$id" "time set $4" "${server_confirm_time_set[$id]}" "${server_confirm_time_set_fail[$id]}")"
-										
-										local regex="${LOG_REGEX} ${server_confirm_time_set[$id]}"
-										if [[ "$line" =~ $regex ]]; then
-											echo "Set time to \"$4\"."
-										fi
-										local regex="${LOG_REGEX} ${server_confirm_time_set_fail[$id]}"
-										if [[ "$line" =~ $regex ]]; then
-											error_exit INVALID_ARGUMENT "Unable to convert \"$4\" to a time."
-										fi
-									else
-										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-									fi
+									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 								fi
-								;;
-							add)
-								if [ -z "$4" ]; then
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> time add <time-string>"
+							fi
+							;;
+						cmdlog)
+							if [ -z "$3" ]; then
+								error_exit INVALID_COMMAND "Usage: $0 <server-name> cmdlog <command-string>"
+							else
+								if server_is_running "$id"; then
+									server_eval "$id" "${*:3}"
+									echo "Now watching logs (press Ctrl+C to exit):"
+									as_user "${server_user_name[$id]}" "tail --pid=$$ --follow --lines=0 --sleep-interval=0.1 ${server_log[$id]}"
 								else
-									if server_is_running "$id"; then
-										local line="$(server_eval_and_get_line "$id" "time add $4" "${server_confirm_time_add[$id]}" "${server_confirm_time_add_fail[$id]}")"
-										
-										local regex="${LOG_REGEX} ${server_confirm_time_add[$id]}"
-										if [[ "$line" =~ $regex ]]; then
-											echo "Added \"$4\" to time."
-										fi
-										local regex="${LOG_REGEX} ${server_confirm_time_add_fail[$id]}"
-										if [[ "$line" =~ $regex ]]; then
-											error_exit INVALID_ARGUMENT "Unable to convert \"$4\" to a time."
-										fi
-									else
-										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-									fi
+									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 								fi
-								;;
-							*)
-								error_exit INVALID_COMMAND "Usage: $0 <server-name> time set|add"
-								;;
-						esac
-						;;
-					toggledownfall|tdf)
-						if server_is_running "$id"; then
-							local line="$(server_eval_and_get_line "$id" "toggledownfall $3" "${server_confirm_toggledownfall[$id]}" "${server_confirm_toggledownfall_fail[$id]}")"
-							
-							local regex="${LOG_REGEX} ${server_confirm_toggledownfall[$id]}"
-							if [[ "$line" =~ $regex ]]; then
-								echo "${line:36:(-3)}"
 							fi
-							local regex="${LOG_REGEX} ${server_confirm_toggledownfall_fail[$id]}"
-							if [[ "$line" =~ $regex ]]; then
-								echo "${line:34:(-3)}"
-							fi
-						else
-							error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-						fi
-						;;
-					save)
-						case "$3" in
-							on) server_save_on "$id";;
-							off) server_save_off "$id";;
-							all) server_save_all "$id";;
-							*) error_exit INVALID_COMMAND "Usage: $0 <server-name> save on|off|all";;
-						esac
-						;;
-					cmd)
-						if [ -z "$3" ]; then
-							error_exit INVALID_COMMAND "Usage: $0 <server-name> cmd <command-string>"
-						else
+							;;
+						console)
 							if server_is_running "$id"; then
-								server_eval "$id" "${*:3}"
-								echo "Command sent."
+								as_user "${server_user_name[$1]}" "screen -r ${server_screen_name[$1]}"
 							else
 								error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
 							fi
-						fi
-						;;
-					cmdlog)
-						if [ -z "$3" ]; then
-							error_exit INVALID_COMMAND "Usage: $0 <server-name> cmdlog <command-string>"
-						else
-							if server_is_running "$id"; then
-								server_eval "$id" "${*:3}"
-								echo "Now watching logs (press Ctrl+C to exit):"
-								as_user "${server_user_name[$id]}" "tail --pid=$$ --follow --lines=0 --sleep-interval=0.1 ${server_log[$id]}"
-							else
-								error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-							fi
-						fi
-						;;
-					console)
-						if server_is_running "$id"; then
-							as_user "${server_user_name[$1]}" "screen -r ${server_screen_name[$1]}"
-						else
-							error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-						fi
-						;;
-					*)
-						error_exit INVALID_COMMAND "Invalid command. See \"$0 help\" for more information."
-						;;
-				esac
+							;;
+						*)
+							error_exit INVALID_COMMAND "Invalid command. See \"$0 help\" for more information."
+							;;
+					esac
+				}
+
+				if [[ "$1" == "all" ]]; then
+					# Execute the command for all server names
+					while IFS= read -r -d $'\0' path; do
+						local name="$(basename "$path")"
+						args="${@:2}"
+						echo "Calling $0 \"$name\" \"$args\""
+						command_server "$name" $args
+					done < <(find "$SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
+				else
+					# Execute the command for a single server
+					command_server "$@"
+				fi
 			else
 			 	error_exit NAME_NOT_FOUND "No server with that name."
 			fi

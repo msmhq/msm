@@ -64,7 +64,7 @@ __init_server() {
 
 _msm() {
 	__init
-
+	
 	local base current options
 	COMPREPLY=()
 	
@@ -74,7 +74,7 @@ _msm() {
 		if [ -d "$SERVER_STORAGE_PATH" ]; then
 			local servers="$(ls -1 "$SERVER_STORAGE_PATH")"
 		fi
-		options="help start stop restart version server jargroup $servers"
+		options="help start stop restart version server jargroup all $servers"
 	else
 		case "${COMP_WORDS[1]}" in
 			stop|restart)
@@ -112,7 +112,7 @@ _msm() {
 				# Server options
 				
 				local server_path="$SERVER_STORAGE_PATH/${COMP_WORDS[1]}"
-				if [ -e "$server_path" ]; then
+				if [[ "${COMP_WORDS[1]}" == "all" ]] || [ -e "$server_path" ]; then
 					# If the server exists
 					
 					__init_server "${COMP_WORDS[1]}"
