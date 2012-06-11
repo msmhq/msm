@@ -1270,8 +1270,8 @@ server_load_config() {
 				COMPLETE_BACKUP_FINISHED) server_complete_backup_finished[$1]="$value";;
 				CONFIRM_SAVE_ON) server_confirm_save_on[$1]="$value";;
 				CONFIRM_SAVE_OFF) server_confirm_save_off[$1]="$value";;
-				CONFIRM_SAVE_ALL) server_confrim_save_all[$1]="$value";;
-				CONFIRM_START) server_confrim_start[$1]="$value";;
+				CONFIRM_SAVE_ALL) server_confirm_save_all[$1]="$value";;
+				CONFIRM_START) server_confirm_start[$1]="$value";;
 				CONFIRM_WHITELIST_LIST) server_confirm_whitelist_list[$1]="$value";;
 				CONFIRM_KICK) server_confirm_kick[$1]="$value";;
 				CONFIRM_KICK_FAIL) server_confirm_kick_fail[$1]="$value";;
