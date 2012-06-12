@@ -555,9 +555,6 @@ jargroup_create() {
 			fi
 			
 			echo "Done."
-			
-			# Download the latest version now
-			jargroup_getlatest "$1"
 		else
 			error_exit DUPLICATE_NAME "A jar group with that name already exists."
 		fi
