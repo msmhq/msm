@@ -150,14 +150,14 @@ test_reserved_server_names() {
 test_common_invalid_server_names() {
 	expect_stderr $SCRIPT server create "name with spaces"
 	assertEquals "Incorrect exit code when creating server name \"name with spaces\"." $EX_INVALID_ARGUMENT $EXIT_CODE
-	assertFalse "Server \"name with spaces\" directory was created when it should not have been." "[ -d \"$SERVER_STORAGE_PATH/$name\" ]"
+	assertFalse "Server \"name with spaces\" directory was created when it should not have been." "[ -d \"$SERVER_STORAGE_PATH/name with spaces\" ]"
 }
 
 test_valid_edge_case_server_names() {
 	for name in "serverstart" "CapitalLetters" "0987654321" "name-with-dashes" "name_with_underscores" "Combination-of_different1Things2"; do
 		expect_stderr_empty $SCRIPT server create $name
 		assertEquals "Incorrect exit code when creating server name \"$name\"." $EX_OK $EXIT_CODE
-		assertTrue "Server \"$name\" directory was NOT created when it should not have been." "[ -d \"$SERVER_STORAGE_PATH/$name\" ]"
+		assertTrue "Server \"$name\" directory was NOT created when it should have been." "[ -d \"$SERVER_STORAGE_PATH/$name\" ]"
 	done
 }
 
@@ -311,13 +311,63 @@ test_renaming_server_that_exists_and_is_stopped() {
 # Jargroup Tests
 # --------------
 
-### "msm jargroup list" test
-
 ### "msm jargroup create" test
 
-# test_creating_jargroup() {
-# 	
-# }
+test_reserved_jargroup_names() {
+	for name in "start" "stop" "restart" "server" "version" "jargroup" "all"; do
+		expect_stderr $SCRIPT jargroup create "$name" https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar
+		assertEquals "Incorrect exit code when creating jar group name \"$name\"." $EX_INVALID_ARGUMENT $EXIT_CODE
+		assertFalse "Jar group \"$name\" directory was created when it should not have been." "[ -d \"$JAR_STORAGE_PATH/$name\" ]"
+	done
+}
+
+test_common_invalid_jargroups_names() {
+	expect_stderr $SCRIPT jargroup create "name with spaces" https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar
+	assertEquals "Incorrect exit code when creating jar group name \"name with spaces\"." $EX_INVALID_ARGUMENT $EXIT_CODE
+	assertFalse "Jar group \"name with spaces\" directory was created when it should not have been." "[ -d \"$JAR_STORAGE_PATH/name with spaces\" ]"
+}
+
+test_valid_edge_case_jargroup_names() {
+	for name in "serverstart" "CapitalLetters" "0987654321" "name-with-dashes" "name_with_underscores" "Combination-of_different1Things2"; do
+		expect_stderr_empty $SCRIPT jargroup create $name https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar
+		assertEquals "Incorrect exit code when creating jar group name \"$name\"." $EX_OK $EXIT_CODE
+		assertTrue "Jar group \"$name\" directory was NOT created when it should have been." "[ -d \"$JAR_STORAGE_PATH/$name\" ]"
+	done
+}
+
+test_creating_jargroup() {
+	expect_stderr_empty $SCRIPT jargroup create minecraft https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar
+	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
+}
+
+# Assumes: test_creating_jargroup
+test_creating_jargroup_when_that_name_already_exists() {
+	quiet $SCRIPT jargroup create minecraft https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar
+	expect_stderr $SCRIPT jargroup create minecraft https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar
+	assertEquals "Incorrect exit code." $EX_DUPLICATE_NAME $EXIT_CODE
+}
+
+### "msm jargroup list" test
+
+test_listing_no_jargroups() {
+	expect_stderr_empty $SCRIPT jargroup list
+	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
+}
+
+# Assumes: test_creating_jargroup
+test_listing_one_jargroup() {
+	quiet $SCRIPT jargroup create minecraft https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar
+	expect_stderr_empty $SCRIPT jargroup list
+	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
+}
+
+# Assumes: test_creating_jargroup
+test_listing_multiple_jargroups() {
+	quiet $SCRIPT jargroup create minecraft https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar
+	quiet $SCRIPT jargroup create craftbukkit http://dl.bukkit.org/latest-rb/craftbukkit.jar
+	expect_stderr_empty $SCRIPT jargroup list
+	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
+}
 
 ### "msm jargroup delete" test
 
