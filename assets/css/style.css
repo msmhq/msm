@@ -1,0 +1,124 @@
+body {
+  padding-top: 90px;
+  background: #fff url(../img/grass-bg-small.png) repeat-x top center;
+}
+
+.masthead {
+  padding-bottom: 50px;
+  border-bottom: 1px solid #e5e5e5;
+}
+.masthead h1,
+.masthead p {
+  text-align: center;
+}
+.masthead h1 {
+  font-size: 81px;
+  margin-bottom: 18px;
+  line-height: 1;
+}
+.masthead p {
+  font-size: 30px;
+  line-height: 36px;
+  margin-bottom: 18px;
+  font-weight: 300;
+}
+.masthead .btn-large {
+  font-size: 20px;
+  padding: 14px 24px;
+}
+.masthead .btn-large small {
+  font-size: 14px;
+  color: #888;
+  position: relative;
+  top: -1px;
+}
+.masthead .introducing {
+  color: #999;
+  margin-bottom: 5px;
+  font-size: 18px;
+  line-height: 30px;
+}
+.masthead .buttons {
+  margin-top: 30px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.masthead #view-button,
+.masthead #download-button {
+  display: inline-block;
+  vertical-align: top;
+}
+.masthead #view-button {
+  margin-right: 10px;
+}
+
+
+.quick-links {
+  margin-bottom: 50px;
+  text-align: center;
+}
+
+
+
+.quick-links {
+  list-style: none;
+  margin: 0;
+  text-align: center;
+  margin: 5px 20px;
+}
+.quick-links li {
+  display: inline;
+  vertical-align: top;
+}
+.quick-links li.text {
+  position: relative;
+  top: -5px;
+  margin-right: 20px;
+}
+
+
+
+.features {
+  margin-bottom: 50px;
+  margin-top: 50px;
+}
+.features h1 {
+  text-align: center;
+  font-weight: 300;
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+.byline {
+  text-align: center;
+  color: #999;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 24px;
+  margin-bottom: 20px;
+}
+.features h2 {
+  font-size: 22px;
+  font-weight: 300;
+}
+.feature-icon {
+  float: left;
+  margin: 7px 10px 0 0;
+  opacity: 0.8;
+}
+.features .row {
+  margin-bottom: 9px;
+}
+.features .github-btn {
+  display: inline;
+  vertical-align: top;
+  position: relative;
+  top: -2px;
+}
+
+
+
+.footer {
+  margin-top: 45px;
+  padding: 35px 0 36px;
+  border-top: 1px solid #e5e5e5;
+}

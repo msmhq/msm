@@ -1,83 +1,136 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Minecraft Server Manager by marcuswhybrow</title>
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <script src="javascripts/respond.js"></script>
+    <title>marcuswhybrow on github</title>
+    <meta name="description" content="">
+    <meta name="author" content="Marcus Whybrow">
+    
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+    
     <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script type="text/javascript" src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <!--[if lt IE 8]>
-    <link rel="stylesheet" href="stylesheets/ie.css">
-    <![endif]-->
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-
+    <script type="text/javascript" src="assets/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="assets/js/bootstrap.min.js"></script>
   </head>
   <body>
-      <div id="header">
-        <nav>
-          <li class="fork"><a href="https://github.com/marcuswhybrow/minecraft-server-manager">View On GitHub</a></li>
-          <li class="downloads"><a href="https://github.com/marcuswhybrow/minecraft-server-manager/zipball/master">ZIP</a></li>
-          <li class="downloads"><a href="https://github.com/marcuswhybrow/minecraft-server-manager/tarball/master">TAR</a></li>
-          <li class="title">DOWNLOADS</li>
-        </nav>
-      </div><!-- end header -->
-
-    <div class="wrapper">
-
-      <section>
-        <div id="title">
-          <h1>Minecraft Server Manager</h1>
-          <p>An init script for managing multiple Minecraft servers</p>
-          <hr>
-          <span class="credits left">Project maintained by <a href="https://github.com/marcuswhybrow">marcuswhybrow</a></span>
-          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></span>
-        </div>
-
-        <h1>Minecraft Server Manager</h1>
-
-<p>A single init script which makes running multiple Minecraft/Bukkit servers easier for us admins.</p>
-
-<h2>Features</h2>
-
-<ul>
-<li>One script handles multiple servers, run two or more servers on one machine.</li>
-<li>Can create and start new servers with a single command, downloads the jars for you.</li>
-<li>Start, stop and restart your servers.</li>
-<li>Periodically makes <a href="http://wiki.sk89q.com/wiki/WorldEdit/Snapshots">WorldEdit snapshot</a> compatible backups of your worlds.</li>
-<li>Backup the entire server folder for complete protection.</li>
-<li>Load world's into RAM for faster access (reduces lag).</li>
-<li>Easily configurable, through a single file</li>
-<li>Per server configuration of invocation, in-game messages and timings.</li>
-<li>Apply server commands to one, multiple, or all servers in one go (useful for whitelisting a player on all servers.)</li>
-</ul><h2>Upcomming features</h2>
-
-<ul>
-<li>
-<strong>Restore:</strong> Roll-back to an old world or whole server backup automatically.</li>
-<li>
-<strong>QuickBackup:</strong> If you store your backups non-locally (maybe on a NAS), QuickBackup optionally creates a backup locally for speed, and then moves it after your players are building again!</li>
-</ul><h2>Acknowledgements</h2>
-
-<p>This code grew out of an old version of <a href="https://github.com/Ahtenus/minecraft-init">Ahtenus' Minecraft Init Script</a>.</p>
-      </section>
-
+    
+    <div class="masthead container">
+      <!-- <p class="introducing">Introducing...</p> -->
+      <h1>Minecraft Server Manager</h1>
+      <p>A comprehsive start up script for Minecraft and Bukkit servers.</p>
+    
+      <div class="buttons">
+        <a id="view-button" href="https://github.com/marcuswhybrow/minecraft-server-manager" class="btn btn-primary btn-large">View project on GitHub</a>
+        <a id="download-button" href="https://github.com/marcuswhybrow/minecraft-server-manager/zipball/latest" class="btn btn-large">Download Project <small>(0.2.6)</small></a>
+      </div>
+      
+      <ul class="quick-links">
+        <li>
+          <iframe class="github-btn" src="http://markdotto.github.com/github-buttons/github-btn.html?user=marcuswhybrow&amp;repo=minecraft-server-manager&amp;type=watch&amp;count=true" allowtransparency="true" frameborder="0" scrolling="0" width="100px" height="20px"></iframe>
+        </li>
+        <li>
+          <iframe class="github-btn" src="http://markdotto.github.com/github-buttons/github-btn.html?user=marcuswhybrow&amp;repo=minecraft-server-manager&amp;type=fork&amp;count=true" allowtransparency="true" frameborder="0" scrolling="0" width="100px" height="20px"></iframe>
+        </li>
+        <li class="text"><a href="https://github.com/marcuswhybrow/minecraft-server-manager/wiki">Read the docs</a></li>
+        <li class="text"><a href="https://github.com/marcuswhybrow/minecraft-server-manager/wiki/Installation">Installation guide</a></li>
+      </ul>
+      
     </div>
-    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
-              <script type="text/javascript">
-            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-          </script>
-          <script type="text/javascript">
-            try {
-              var pageTracker = _gat._getTracker("UA-32173106-1");
-            pageTracker._trackPageview();
-            } catch(err) {}
-          </script>
+    
+    <div class="features container">
+      <h1>Designed by admins, for admins.</h1>
+      <p class="byline">Reasons while you'll love MSM</p>
+      
+      <div class="row">
+        <div class="span4">
+          <img class="feature-icon" src="assets/img/glyphicons/glyphicons_043_group.png">
+          <h2>Built to be improved</h2>
+          <p>Like you, I want to modify my startup script when necessary. MSM was born out of this process, and will continue to be improved in this way.</p>
+        </div>
+        
+        <div class="span4">
+          <img class="feature-icon" src="assets/img/glyphicons/glyphicons_342_hdd.png">
+          <h2>World and server backups</h2>
+          <p>Periodically create <a href="http://wiki.sk89q.com/wiki/WorldEdit/Snapshots">WorldEdit compatible snapshots</a> and then restore regions in-game to protect against griefers. Or backup the entire server directory for complete protection.</p>
+        </div>
+        
+        <div class="span4">
+          <img class="feature-icon" src="assets/img/glyphicons/glyphicons_319_sort.png">
+          <h2>Works with all Debian systems</h2>
+          <p>As long as you have an <code>/etc/init.d</code> directory your good to go. MSM is only a single script written in bash, which automatically starts up and shuts down your Minecraft servers.</p>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="span4">
+          <img class="feature-icon" src="assets/img/glyphicons/glyphicons_181_download_alt.png">
+          <h2>Automatic jar updates</h2>
+          <p>Group jar files according to where they where downloaded from. Make sure your server is always using the latest version, by automatically downloading new files.</p>
+        </div>
+        
+        <div class="span4">
+          <img class="feature-icon" src="assets/img/glyphicons/glyphicons_119_adjust.png">
+          <h2>Easily configurable</h2>
+          <p>Configure how MSM operates in the <code>/etc/msm.conf</code> file. Sensible defaults mean you won't need to alter much, but allow changing anything you can think of. </p>
+        </div>
+        
+        <div class="span4">
+          <img class="feature-icon" src="assets/img/glyphicons/glyphicons_082_roundabout.png">
+          <h2>Responsive commands</h2>
+          <p>MSM watches a server's log file to determine exactly when a command has finished, making restarting, backing up and other non-instant actions return control as soon as possible.</p>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="span4">
+          <img class="feature-icon" src="assets/img/glyphicons/glyphicons_355_announcement.png">
+          <h2>Player notifications</h2>
+          <p>Keep your players informed with specifc, dynamic and configurable in-game broadcasts. Warn players that a server is shutting before actually issuing the command.</p>
+        </div>
+        
+        <div class="span4">
+          <img class="feature-icon" src="assets/img/glyphicons/glyphicons_269_keyboard_wired.png">
+          <h2>Easy to get to grips with</h2>
+          <p>As well as <a href="https://github.com/marcuswhybrow/minecraft-server-manager/wiki">detailed documentation</a>, and <a href="https://github.com/marcuswhybrow/minecraft-server-manager/issues">issue submissions</a>, bash completion makes remembering what to type a thing of the past. Just hit tab!</p>
+        </div>
+        
+        <div class="span4">
+          <img class="feature-icon" src="assets/img/glyphicons/glyphicons_118_embed_close.png">
+          <h2>Beautiful code</h2>
+          <p>Readable code means less bugs, easier fixes, simpler updates, and lowers the learning curve for new contributors to the project. Why not <iframe class="github-btn" src="http://markdotto.github.com/github-buttons/github-btn.html?user=marcuswhybrow&amp;repo=minecraft-server-manager&amp;type=fork&amp;count=false" allowtransparency="true" frameborder="0" scrolling="0" width="55px" height="20px"></iframe> the code and start today.</p>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="span3">
+          <h2>Cron support</h2>
+          <p>Out of the box cron script provided for backups, logrolls and more.</p>
+        </div>
+        
+        <div class="span3">
+          <h2>Continuous Integration</h2>
+          <p>Each version is <a href="http://travis-ci.org/#!/marcuswhybrow/minecraft-server-manager">checked</a> against shunit2 unit tests by <a href="http://travis-ci.org">travis-ci.org</a>.</p>
+        </div>
+        
+        <div class="span3">
+          <h2>Open Source</h2>
+          <p>Built for and maintained by the community thanks to <a href="https://github.com/">GitHub</a></p>
+        </div>
+        
+        <div class="span3">
+          <h2>Upcomming Features</h2>
+          <p><em>QuickBackup</em> and easy rollback features are in the pipeline. Stay tuned.</p>
+        </div>
+      </div>
+    </div>
+    
+    <footer class="footer container">
+      <p>Icons from <a href="http://glyphicons.com">Glyphicons Free</a>, licensed under <a href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
+    </footer>
 
   </body>
 </html>
