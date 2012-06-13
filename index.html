@@ -17,9 +17,10 @@
     <script type="text/javascript" src="assets/js/bootstrap.min.js"></script>
     <script type="text/javascript">
       $(function() {
-        var milestonesUrl = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/milestones";
+        var milestonesUrl = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/milestones?callback=?";
         
-        $.getJSON(milestonesUrl, function(milestones) {
+        $.getJSON(milestonesUrl, function(result) {
+          var milestones = result.data;
           
           $.each(milestones, function(i, milestone) {
             var closedIssues = milestone.closed_issues;
