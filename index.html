@@ -27,7 +27,8 @@
             var milestonePercentage = closedIssues / totalIssues * 100;
             
             var $div = $("<div>").addClass("milestone");
-            $("<h2>").text(milestone.title).appendTo($div);
+            var $link =$("<a>").attr("href", "https://github.com/marcuswhybrow/minecraft-server-manager/issues?state=open&milestone=" + milestone.number).appendTo($div);
+            $("<h2>").text(milestone.title).appendTo($link);
             $("<p>").text(milestone.description).appendTo($div);
             var $progress = $("<div>").addClass("progress").appendTo($div);
             var $bar = $("<div>").addClass("bar").css("width", milestonePercentage + "%").appendTo($progress);
