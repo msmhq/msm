@@ -28,7 +28,10 @@
             var milestonePercentage = closedIssues / totalIssues * 100;
             
             var $div = $("<div>").addClass("milestone");
-            var $link =$("<a>").attr("href", "https://github.com/marcuswhybrow/minecraft-server-manager/issues?state=open&milestone=" + milestone.number).appendTo($div);
+            var $link =$("<a>")
+                  .attr("href", "https://github.com/marcuswhybrow/minecraft-server-manager/issues?state=open&milestone=" + milestone.number)
+                  .addClass("ga-track")
+                  .appendTo($div);
             $("<h2>").text(milestone.title).appendTo($link);
             $("<p>").text(milestone.description).appendTo($div);
             var $progress = $("<div>").addClass("progress").appendTo($div);
@@ -37,8 +40,13 @@
           });
           
           $(".milestones").slideDown();
-          
-          $('.player').tooltip();
+        });
+        
+        $('.player').tooltip();
+        
+        $('a.ga-track').live('click', function() {
+          var $this = $(this);
+          _gaq.push(['_trackEvent', 'External Link', $this.text(), $this.attr('href')]);
         });
       });
       
@@ -62,8 +70,8 @@
         <p>A comprehensive start up script for Minecraft and Bukkit servers.</p>
     
         <div class="buttons">
-          <a id="view-button" href="https://github.com/marcuswhybrow/minecraft-server-manager" class="btn btn-primary btn-large">View project on GitHub</a>
-          <a id="download-button" href="https://github.com/marcuswhybrow/minecraft-server-manager/zipball/latest" class="btn btn-large">Download Project <small>(0.2.6)</small></a>
+          <a id="view-button" href="https://github.com/marcuswhybrow/minecraft-server-manager" class="btn btn-primary btn-large" onclick="_gaq.push(['_trackEvent', 'Masthead Actions', 'Github Project', 'View project on GitHub']);">View project on GitHub</a>
+          <a id="download-button" href="https://github.com/marcuswhybrow/minecraft-server-manager/zipball/latest" class="btn btn-large" onclick="_gaq.push(['_trackEvent', 'Masthead Actions', 'Download', 'Download 0.2.6']);">Download Project <small>(0.2.6)</small></a>
         </div>
       
         <ul class="quick-links">
@@ -73,15 +81,15 @@
           <li>
             <iframe class="github-btn" src="http://markdotto.github.com/github-buttons/github-btn.html?user=marcuswhybrow&amp;repo=minecraft-server-manager&amp;type=fork&amp;count=true" allowtransparency="true" frameborder="0" scrolling="0" width="100px" height="20px"></iframe>
           </li>
-          <li class="text"><a href="https://github.com/marcuswhybrow/minecraft-server-manager/wiki">Read the docs</a></li>
-          <li class="text"><a href="https://github.com/marcuswhybrow/minecraft-server-manager/wiki/Installation">Installation guide</a></li>
+          <li class="text ga-track"><a href="https://github.com/marcuswhybrow/minecraft-server-manager/wiki">Read the docs</a></li>
+          <li class="text ga-track"><a href="https://github.com/marcuswhybrow/minecraft-server-manager/wiki/Installation">Installation guide</a></li>
         </ul>
         
         <div class="players">
           <div class="player player-craftysaurus" title="visit my website">
             <iframe src="http://marcuswhybrow.github.com/minecraft-widgets/skin.html?playername=craftysaurus&amp;scale=2" allowtransparency="true" frameborder="0" scrolling="0" width="32" height="64"></iframe>
             <div class="shadow"></div>
-            <a class="link" href="http://marcuswhybrow.net/"></a>
+            <a class="link" href="http://marcuswhybrow.net/" onclick="_gaq.push(['_trackEvent', 'Masthead Actions', 'Created by craftysaurus']);"></a>
           </div>
           <p class="created-by">Created by craftysaurus</p>
         </div>
@@ -101,7 +109,7 @@
           <div class="span4">
             <img class="feature-icon" src="assets/img/glyphicons/glyphicons_342_hdd.png">
             <h2>World and server backups</h2>
-            <p>Periodically create <a href="http://wiki.sk89q.com/wiki/WorldEdit/Snapshots">WorldEdit compatible snapshots</a> and then restore regions in-game to protect against griefers. Or backup the entire server directory for complete protection.</p>
+            <p>Periodically create <a class="ga-track" href="http://wiki.sk89q.com/wiki/WorldEdit/Snapshots">WorldEdit compatible snapshots</a> and then restore regions in-game to protect against griefers. Or backup the entire server directory for complete protection.</p>
           </div>
         
           <div class="span4">
@@ -141,7 +149,7 @@
           <div class="span4">
             <img class="feature-icon" src="assets/img/glyphicons/glyphicons_269_keyboard_wired.png">
             <h2>Easy to get to grips with</h2>
-            <p>As well as <a href="https://github.com/marcuswhybrow/minecraft-server-manager/wiki">detailed documentation</a>, and <a href="https://github.com/marcuswhybrow/minecraft-server-manager/issues">issue submissions</a>, bash completion makes remembering what to type a thing of the past. Just hit tab!</p>
+            <p>As well as <a class="ga-track" href="https://github.com/marcuswhybrow/minecraft-server-manager/wiki">detailed documentation</a>, and <a class="ga-track" href="https://github.com/marcuswhybrow/minecraft-server-manager/issues">issue submissions</a>, bash completion makes remembering what to type a thing of the past. Just hit tab!</p>
           </div>
         
           <div class="span4">
@@ -159,12 +167,12 @@
         
           <div class="span3">
             <h2>Continuous Integration</h2>
-            <p>Each version is <a href="http://travis-ci.org/#!/marcuswhybrow/minecraft-server-manager">checked</a> against shunit2 unit tests by <a href="http://travis-ci.org">travis-ci.org</a>.</p>
+            <p>Each version is <a class="ga-track" href="http://travis-ci.org/#!/marcuswhybrow/minecraft-server-manager">checked</a> against shunit2 unit tests by <a class="ga-track" href="http://travis-ci.org">travis-ci.org</a>.</p>
           </div>
         
           <div class="span3">
             <h2>Open Source</h2>
-            <p>Built for and maintained by the community thanks to <a href="https://github.com/">GitHub</a></p>
+            <p>Built for and maintained by the community thanks to <a class="ga-track" href="https://github.com/">GitHub</a></p>
           </div>
         
           <div class="span3">
@@ -179,9 +187,9 @@
       </div>
     
       <footer class="footer">
-        <p>Code licensed under the <a href="http://www.gnu.org/copyleft/gpl.html" target="_blank">General Public Licence v3</a>. Documentation licensed under <a href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
-        <p>You may have noticed this design approach is a shamless reworking of <a href="http://twitter.github.com/bootstrap/">Twitter's Bootstrap</a> github page.</p>
-        <p>Icons from <a href="http://glyphicons.com">Glyphicons Free</a>, licensed under <a href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
+        <p>Code licensed under the <a class="ga-track" href="http://www.gnu.org/copyleft/gpl.html" target="_blank">General Public Licence v3</a>. Documentation licensed under <a class="ga-track" href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
+        <p>You may have noticed this design approach is a shamless reworking of <a class="ga-track" href="http://twitter.github.com/bootstrap/">Twitter's Bootstrap</a> github page.</p>
+        <p>Icons from <a class="ga-track" href="http://glyphicons.com">Glyphicons Free</a>, licensed under <a class="ga-track" href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
       </footer>
     </div>
 
