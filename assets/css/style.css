@@ -189,7 +189,15 @@ body {
   left: -9px;
   
   background: -webkit-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 50%);
+  background:    -moz-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 50%);
+  background:     -ms-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 50%);
+  background:      -o-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 50%);
+  background:         radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 50%);
 }
 .players .player:hover .shadow {
   background: -webkit-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 50%);
+  background:    -moz-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 50%);
+  background:     -ms-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 50%);
+  background:      -o-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 50%);
+  background:         radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 50%);
 }
