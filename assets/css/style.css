@@ -164,20 +164,35 @@ body {
 .players .player {
   position: relative;
   width: 32px;
-  height: 64px;
+  height: 79px; /* 64 + 15 */
 }
 .players .player .link {
   display: block;
   z-index: 200;
   position: absolute;
   left: 0;
-  top: 0;
+  top: 15px; /* The 15 added to .players .player height */
   right: 0;
   bottom: 0;
 }
 .players .player iframe {
-  position: relative;
+  position: absolute;
   z-index: 100;
+  bottom: 0;
+  left: 0;
+  
+  -webkit-transition: all 0.05s linear;
+     -moz-transition: all 0.05s linear;
+      -ms-transition: all 0.05s linear;
+       -o-transition: all 0.05s linear;
+          transition: all 0.05s linear;
+}
+.players .player:hover iframe {
+  -webkit-transform: translate(0, -10px);
+     -moz-transform: translate(0, -10px);
+      -ms-transform: translate(0, -10px);
+       -o-transform: translate(0, -10px);
+          transform: translate(0, -10px);
 }
 .players .player .shadow {
   z-index: 50;
