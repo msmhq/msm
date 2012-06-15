@@ -6,6 +6,7 @@ body {
 .masthead {
   padding-bottom: 50px;
   border-bottom: 1px solid #e5e5e5;
+  position: relative;
 }
 .masthead h1,
 .masthead p {
@@ -141,4 +142,54 @@ body {
 }
 .milestones h2 {
   font-weight: 300;
+}
+
+
+
+.players {
+  position: absolute;
+  bottom: -20px;
+  padding-left: 20px;
+}
+.players .created-by {
+  position: absolute;
+  font-size: 13px;
+  width: 300px;
+  bottom: -1px;
+  left: 62px;
+  text-align: left;
+  color: #ccc;
+  text-transform: lowercase;
+}
+.players .player {
+  position: relative;
+  width: 32px;
+  height: 64px;
+}
+.players .player .link {
+  display: block;
+  z-index: 200;
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+.players .player iframe {
+  position: relative;
+  z-index: 100;
+}
+.players .player .shadow {
+  z-index: 50;
+  width: 50px;
+  height: 15px;
+  
+  position: absolute;
+  bottom: -7px;
+  left: -9px;
+  
+  background: -webkit-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 50%);
+}
+.players .player:hover .shadow {
+  background: -webkit-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 50%);
 }
