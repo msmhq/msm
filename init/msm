@@ -519,14 +519,18 @@ server_set_active() {
 
 # Lists the jar files grouped by jar groups.
 jargroup_list() {
-	for group in $(ls -1 "$JAR_STORAGE_PATH"); do
-		echo "${group}:"
-		for jar in $(ls -1r "$JAR_STORAGE_PATH/$group"); do
-			if [[ "$jar" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}- ]]; then
-				echo "    $jar"
-			fi
-		done
-	done
+	if [ -d "$JAR_STORAGE_PATH" ]; then
+		while IFS= read -r -d $'\0' group_path; do
+			echo "${group}:"
+			local group_name="$(basename "${group_path}")"
+			while IFS= read -r -d $'\0' jar_path; do
+				local jar_name="$(basename "${jar_path}")"
+				if [[ "$jar_name" =~ \.jar$ ]]; then
+					echo "${jar_name}"
+				fi
+			done < <(find "$JAR_STORAGE_PATH/$group_name" -mindepth 1 -maxdepth 1 -type d -print0)
+		done < <(find "$JAR_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
+	fi
 }
 
 # Creates a new jargroup
