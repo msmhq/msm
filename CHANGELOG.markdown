@@ -11,6 +11,10 @@ Maintainers:
 Change Log
 ----------
 
+### [0.2.7](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.6...0.2.7)
+
+* Refactored commands such that they are now registered using a function, rather than one huge swith/case statement.
+
 ### [0.2.6](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.5...0.2.6)
 
 * Added the "all" keyword which can be used to execute a command for all servers. Closes #16
