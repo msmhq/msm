@@ -197,6 +197,7 @@ test_deleting_server_that_does_not_exist() {
 	assertEquals "Incorrect exit code." $EX_NAME_NOT_FOUND $EXIT_CODE
 }
 
+# Assumes: test_creating_server_without_any_jargroups
 test_deleting_server_that_exists_and_is_stopped() {
 	quiet $SCRIPT server create example
 	expect_stderr_empty $SCRIPT server delete example <<< "y"
@@ -212,6 +213,7 @@ test_renaming_server_that_does_not_exist() {
 	assertEquals "Incorrect exit code." $EX_NAME_NOT_FOUND $EXIT_CODE
 }
 
+# Assumes: test_creating_server_without_any_jargroups
 test_renaming_server_that_exists_and_is_stopped() {
 	quiet $SCRIPT server create example
 	expect_stderr_empty $SCRIPT server rename example example_new_name

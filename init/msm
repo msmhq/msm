@@ -114,6 +114,7 @@ debug() {
 # It must only contain upper or lower case letters, digits, dashes or
 # underscores.
 # It must also not be one of a list of reserved names.
+# $1: The name to check
 is_valid_name() {
 	local valid="^[a-zA-Z0-9\_\-]+$"
 	local invalid="^(start|stop|restart|version|server|jargroup|all)$"
@@ -268,14 +269,11 @@ world_deactivate() {
 # config information for that server
 # $1: The name of the server
 server_get_id() {
-	local i=0
-	while [[ "$i" -lt "$num_servers" ]]; do
+	for ((i=0; i<$num_servers; i++)); do
 		if [[ "${server_name[$i]}" == "$1" ]]; then
 			echo "$i"
 			return 0
 		fi
-		
-		i="$(( $i + 1 ))"
 	done
 	
 	error_exit NAME_NOT_FOUND "Could not find id for server name \"$1\"."
@@ -285,6 +283,7 @@ server_get_id() {
 # $1: The ID of the server
 # $2: The name of the world
 server_world_get_id() {
+	debug "server_world_get_id($1, $2)"
 	if [ -d "${server_world_storage[$1]}/$2" ] || [ -d "${server_world_storage_inactive[$1]}/$2" ]; then
 		# If the directory exists
 		
@@ -300,7 +299,7 @@ server_world_get_id() {
 		done
 	fi
 	
-	error_exit NAME_NOT_FOUND "Could not find id for world \"$2\" for server \"$1\"."
+	error_exit NAME_NOT_FOUND "Could not find id for world \"$2\" for server \"${server_name[$1]}\"."
 }
 
 # Returns 0 if the server $1 is running and 1 if not
@@ -718,14 +717,14 @@ server_create() {
 }
 
 # Deletes an existing server
-# $2: The server name to delete
+# $1: The server name to delete
 server_delete() {
 	if is_valid_name "$1"; then
 		if [[ -d "$SERVER_STORAGE_PATH/$1" ]]; then
 			printf "Are you sure you want to delete this server and its worlds (note: backups are preserved) [y/N]: "
 
 			read answer
-			if [[ "$answer" =~ ^y|Y|yes$ ]]; then
+			if [[ "$answer" =~ ^(y|Y|yes)$ ]]; then
 				# TODO: stop the server if running first
 				as_user "$USERNAME" "rm -rf '$SERVER_STORAGE_PATH/$1'"
 				echo "Server deleted."
@@ -1184,6 +1183,728 @@ manager_stop_all_servers_now() {
 }
 
 
+### Command Functions
+
+# Starts all servers
+command_start() {
+	# Required start option, for debian init.d scripts
+	for ((server=0; server<${num_servers}; server++)); do
+		# Only starts active servers
+		if "${server_active[$server]}"; then
+			if server_is_running "$server"; then
+				echo "[ACTIVE] Server \"${server_name[$server]}\" already started."
+			else
+				echo "[ACTIVE] Server \"${server_name[$server]}\" starting:"
+				server_start "$server"
+			fi
+		else
+			if server_is_running "$server"; then
+				echo "[INACTIVE] Server \"${server_name[$server]}\" already started. It should not be running! Use \"$0 ${server_name[$server]} stop\" to stop this server."
+			else
+				echo "[INACTIVE] Server \"${server_name[$server]}\" leaving stopped, as this server is inactive."
+			fi
+		fi
+	done
+}
+
+# Stops all servers after a delay
+command_stop() {
+	manager_stop_all_servers "stop"
+}
+
+# Stops all servers without delay
+command_stop_now() {
+	manager_stop_all_servers_now
+}
+
+# Restarts all servers
+command_restart() {
+	echo "Stopping servers:"
+	command_stop
+	
+	echo "Starting servers:"
+	command_start
+}
+
+# Restarts all servers without delay
+command_restart_now() {
+	echo "Stopping servers:"
+	command_stop_now
+	
+	echo "Starting servers:"
+	command_start
+}
+
+# Displays the MSM version
+command_version() {
+	echo "Minecraft Server Manager $VERSION"
+}
+
+# Displays a list of servers
+command_server_list() {
+	server_list
+}
+
+# Creates a new server with name $1
+# $1: The new (valid) server name
+command_server_create() {
+	server_create "$1"
+}
+
+# Deletes an existing server with name $1
+# $1: The name of the existing server
+command_server_delete() {
+	server_delete "$1"
+}
+
+# Renames an existing server
+# $1: The existing server name
+# $2: The new (valid) server name
+command_server_rename() {
+	server_rename "$1" "$2"
+}
+
+# Displays a list of all jar's in jar groups
+command_jargroup_list() {
+	jargroup_list
+}
+
+# Creates a new jar group
+# $1: The new (valid) jar group name
+# $2: The URL to use as the jar group target
+command_jargroup_create() {
+	jargroup_create "$1" "$2"
+}
+
+# Deletes and existing jar group
+# $1: The name of a jar group to delete
+command_jargroup_delete() {
+	jargroup_delete "$1"
+}
+
+# Renames an existing jar group
+# $1: The name of the existing jar group
+# $2: The new (valid) name for the jar group
+command_jargroup_rename() {
+	jargroup_rename "$1" "$2"
+}
+
+# Changes a jar group's target url for automatic downloads
+# $1: The jar group name
+# $2: The new URL to use
+command_jargroup_changetarget() {
+	jargroup_settarget "$1" "$2"
+}
+
+# Downloads the latest jar for a jar group
+# $1: The name of the jar group
+command_jargroup_getlatest() {
+	jargroup_getlatest "$1"
+}
+
+# Displays a list of possible commands and help strings
+command_help() {
+	# Outputs a list of all commands
+	echo -e "Usage: $0 command:"
+	echo -e
+	echo -e "--Setup Commands------------------------------------------------"
+	echo -e "  server list                                   List servers"
+	echo -e "  server create <name>                          Creates a new Minecraft server"
+	echo -e "  server delete <name>                          Deletes an existing Minecraft server"
+	echo -e "  server rename <name> <new-name>               Renames an existing Minecraft server"
+	echo -e
+	echo -e "--Server Mangement Commands-------------------------------------"
+	echo -e "  <server> start                                Starts a server"
+	echo -e "  <server> stop [now]                           Stops a server after warning players, or right now"
+	echo -e "  <server> restart [now]                        Restarts a server after warning players, or right now"
+	echo -e "  <server> status                               Show the running/stopped status of a server"
+	echo -e "  <server> connected                            List a servers connected players"
+	echo -e "  <server> worlds list                          Lists the worlds a server has"
+	echo -e "  <server> worlds load                          Creates links to worlds in storage for a server"
+	echo -e "  <server> worlds ram <world>                   Toggles a world's \"in RAM\" status"
+	echo -e "  <server> worlds todisk                        Synchronises any \"in RAM\" worlds to disk a server has"
+	echo -e "  <server> worlds backup                        Makes a backup of all worlds a server has"
+	echo -e "  <server> worlds on|off <world>                Activate or deactivate a world, inactive worlds are not backed up"
+	echo -e "  <server> logroll                              Move a server log to a gziped archive, to reduce lag"
+	echo -e "  <server> backup                               Makes a backup of an entire server directory"
+	echo -e "  <server> jar <jargroup> [<file>]              Sets a server's jar file"
+	echo -e
+	echo -e "--Server Pass Through Commands----------------------------------"
+	echo -e "  <server> wl on|off                            Enables/disables server whitelist checking"
+	echo -e "  <server> wl add|remove <player>               Add/remove a player to/from a server's whitelist"
+	echo -e "  <server> wl list                              List the players whitelisted for a server"
+	echo -e "  <server> bl player add|remove <player>        Ban/pardon a player from/for a server"
+	echo -e "  <server> bl ip add|remove <ip address>        Ban/pardon an IP address from/for a server"
+	echo -e "  <server> bl list                              Lists the banned players and IP address for a server"
+	echo -e "  <server> op add|remove <player>               Add/remove operator status for a player on a server"
+	echo -e "  <server> op list                              Lists the operator players for a server"
+	echo -e "  <server> gm survival|creative <player>        Change the game mode for a player on a server"
+	echo -e "  <server> kick <player>                        Forcibly disconnect a player from a server"
+	echo -e "  <server> say <message>                        Broadcast a (pink) message to all players on a server"
+	echo -e "  <server> time set|add <number>                Set/increment time on a server (0-24000)"
+	echo -e "  <server> toggledownfall                       Toggles rain and snow on a server"
+	echo -e "  <server> save on|off                          Enable/disable writing world changes to file"
+	echo -e "  <server> save all                             Force the writing of all non-saved world changes to file"
+	echo -e "  <server> cmd <command>                        Send a command string to the server and return"
+	echo -e "  <server> cmdlog <command>                     Same as 'cmd' but shows log output afterwards (Ctrl+C to exit)"
+	echo -e
+	echo -e "--Jar Commands--------------------------------------------------"
+	echo -e "  jargroup list                                 List the stored jar files."
+	echo -e "  jargroup create <name> <download-url>         Create a new jar group, with a URL for new downloads"
+	echo -e "  jargroup delete <name>                        Delete a jar group"
+	echo -e "  jargroup rename <name> <new-name>             Rename a jar group"
+	echo -e "  jargroup changeurl <name> <download-url>      Change the download URL for a jar group"
+	echo -e "  jargroup getlatest <name>                     Download the latest jar file for a jar group"
+	echo -e
+	echo -e "--Global Commands-----------------------------------------------"
+	echo -e "  start                                         Starts all active servers"
+	echo -e "  stop [now]                                    Stops all running servers"
+	echo -e "  restart [now]                                 Restarts all active servers"
+	echo -e "  version                                       Prints the Minecraft Server Manager version installed8"
+}
+
+# Starts an individual server
+# $1: The server ID
+command_server_start() {
+	server_set_active "$1" "active"
+	server_start "$1"
+}
+
+# Stops an individual server after a delay
+# $1: The server ID
+command_server_stop() {
+	server_set_active "$1" "inactive"
+	server_stop "$1"
+}
+
+# Stops an individual server without delay
+# $1: The server ID
+command_server_stop_now() {
+	server_set_active "$1" "inactive"
+	server_stop_now "$1"
+}
+
+# Restarts an individual server after a delay
+# $1: The server ID
+command_server_restart() {
+	server_set_active "$1" "active"
+	server_restart "$1"
+}
+
+# Restarts an individual server without delay
+# $1: The server ID
+command_server_restart_now() {
+	server_set_active "$1" "active"
+	server_restart_now "$1"
+}
+
+# Displays the running/stopped status of an individual server
+# $1: The server ID
+command_server_status() {
+	if server_is_running "$1"; then
+		echo "Server \"${server_name[$1]}\" is running."
+	else
+		echo "Server \"${server_name[$1]}\" is stopped."
+	fi
+}
+
+# Displays a list of connected players for an individual server
+# $1: The server ID
+command_server_connected() {
+	server_connected "$1"
+}
+
+# Displays a list of worlds for an individual server
+# $1: The server ID
+command_server_worlds_list() {
+	server_worlds_list "$1"
+}
+
+# Creates symlinks for all active worlds so they can be used by the Minecraft
+# server when running
+# $1: The server ID
+command_server_worlds_load() {
+	server_ensure_links "$1"
+}
+
+# Toggles a world's inram status
+# $1: The server ID
+# $2: The world ID
+command_server_worlds_ram() {
+	world_toggle_ramdisk_state "$2"
+}
+
+# Synchronises all inram worlds back to disk for an individual server
+# $1: The server ID
+command_server_worlds_todisk() {
+	server_save_off "$1"
+	server_save_all "$1"
+	server_worlds_to_disk "$1"
+	server_save_on "$1"
+}
+
+# Makes a backup of all worlds for an individual server
+# $1: The server ID
+command_server_worlds_backup() {
+	if server_is_running "$1"; then
+		server_eval "$1" "say ${server_world_backup_started[$1]}"
+		server_save_off "$1"
+		server_save_all "$1"
+	fi
+
+	server_worlds_to_disk "$1"
+	server_worlds_backup "$1"
+
+	if server_is_running "$1"; then
+		server_save_on "$1"
+		server_eval "$1" "say ${server_world_backup_finished[$1]}"
+	fi
+
+	echo "Backup took $SECONDS seconds".
+}
+
+# Enables a world to be used by its server
+# $1: The server ID
+# $2: The world ID
+command_server_worlds_on() {
+	world_activate "$2"
+}
+
+# Disables a world from being used by its server, also prevents it from being
+# backed up with the other worlds.
+# $1: The server ID
+# $2: The world ID
+command_server_worlds_off() {
+	world_deactivate "$2"
+}
+
+# Moves an individual server's log text to another file, leaving it empty
+# $1: The server ID
+command_server_logroll() {
+	server_log_roll "$1"
+}
+
+# Makes a backup of an entire server directory
+# $1: The server ID
+command_server_backup() {
+	if server_is_running "$1"; then
+		server_eval "$1" "say ${server_complete_backup_started[$1]}"
+		server_save_off "$1"
+		server_save_all "$1"
+	fi
+
+	server_worlds_to_disk "$1"
+	server_backup "$1"
+
+	if server_is_running "$1"; then
+		server_save_on "$1"
+		server_eval "$1" "say ${server_complete_backup_finished[$1]}"
+	fi
+
+	echo "Backup took $SECONDS seconds".
+}
+
+# Sets an individual server's jar file to use when starting up
+# $1: The server ID
+# $2: The jar group name
+# $3: Optionally a specific jar file name which exists within that jargroup, if
+#     not provided the latest version will be used.
+command_server_jar() {
+	server_set_jar "$1" "$2" "$3"
+}
+
+# Turns a server's whitelist protection on
+# $1: The server ID
+command_server_whitelist_on() {
+	if server_is_running "$1"; then
+		server_eval "$1" "whitelist on"
+		echo "Whitelist enabled"
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Turns a server's whitelist protection off
+# $1: The server ID
+command_server_whitelist_off() {
+	if server_is_running "$1"; then
+		server_eval "$1" "whitelist off"
+		echo "Whitelist disabled"
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Adds a player name to a server's whitelist
+# $1: The server ID
+# $2: The player name
+command_server_whitelist_add() {
+	# TODO: Support whitelisting multiple players (see blacklist player add)
+	if server_is_running "$1"; then
+		server_eval "$1" "whitelist add $2"
+		echo "Added \"$2\" to the whitelist."
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Removes a player name from a server's whitelist
+# $1: The server ID
+# $2: The player name
+command_server_whitelist_remove() {
+	# TODO: Support multiple player names
+	if server_is_running "$1"; then
+		server_eval "$1" "whitelist remove $2"
+		echo "Removed \"$2\" from the whitelist."
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Displays a list of whitelisted players for an individual server
+# $1: The server ID
+command_server_whitelist_list() {
+	# TODO: Protect against no whitelist file
+	local players="$(cat "${server_whitelist[$1]}")"
+
+	if [ -z "$players" ]; then
+		echo "No players are whitelisted."
+	else
+		echo "$players"
+	fi
+}
+
+# Adds player names to a server's ban list
+# $1: The server ID
+# $2->: The player names
+command_server_blacklist_player_add() {
+	for player in "${@:2}"; do
+	 	server_eval "$1" "ban $player"
+	done
+	
+	if [[ $# -gt 2 ]]; then
+		echo -n "Blacklisted the following players: "
+		echo -n "$2"
+		for player in "${@:3}"; do
+		 	echo -n ", $player"
+		done
+		echo "."
+	else
+		echo "Blacklisted \"$2\"."
+	fi
+}
+
+# Removes player names from a server's ban list
+# $1: The server ID
+# $2->: The player names
+command_server_blacklist_player_remove() {
+	for player in "${@:2}"; do
+	 	server_eval "$1" "pardon $player"
+	done
+	
+	if [[ $# -gt 2 ]]; then
+		echo -n "Removed the following players from the blacklist: "
+		echo -n "$2"
+		for player in "${@:3}"; do
+		 	echo -n ", $player"
+		done
+		echo "."
+	else
+		echo "Removed \"$2\" from the blacklist."
+	fi
+}
+
+# Adds ip addresses to a server's ban list
+# $1: The server ID
+# $2->: The ip addresses
+command_server_blacklist_ip_add() {
+	for address in "${@:2}"; do
+	 	server_eval "$1" "ban-ip $address"
+	done
+	
+	if [[ $# -gt 2 ]]; then
+		echo -n "Blacklisted the following ip addresses: "
+		echo -n "$2"
+		for player in "${@:3}"; do
+		 	echo -n ", $address"
+		done
+		echo "."
+	else
+		echo "Blacklisted \"$2\"."
+	fi
+}
+
+# Removes ip addresses to a server's ban list
+# $1: The server ID
+# $2->: The ip addresses
+command_server_blacklist_ip_remove() {
+	for address in "${@:2}"; do
+	 	server_eval "$1" "pardon-ip $address"
+	done
+	
+	if [[ $# -gt 2 ]]; then
+		echo -n "Removed the following ip addresses from the blacklist: "
+		echo -n "$2"
+		for player in "${@:3}"; do
+		 	echo -n ", $address"
+		done
+		echo "."
+	else
+		echo "Removed \"$2\" from the ip blacklist."
+	fi
+}
+
+# Displays a server's banned player names and ip addresses
+# $1: The server ID
+command_server_blacklist_list() {
+	# TODO: Protect against non-existent files
+	
+	local players="$(cat "${server_banned_players[$1]}")"
+	local ips="$(cat "${server_banned_ips[$1]}")"
+
+	if [[ -z "$players" && -z "$ips" ]]; then
+		echo "The blacklist is empty."
+	else
+		if [[ ! -z "$players" ]]; then
+			echo "Players:"
+			for name in $players; do
+				echo "    $name"
+			done
+		fi
+
+		if [[ ! -z "$ips" ]]; then
+			echo "IP Addresses:"
+			for address in $ips; do
+				echo "    $address"
+			done
+		fi
+	fi
+}
+
+# Adds a player name to a server's list of operators
+# $1: The server ID
+# $2: The player name
+command_server_operator_add() {
+	# TODO: Support multiple player names
+	if server_is_running "$1"; then
+		server_eval "$1" "op $2"
+		echo "The player \"$2\" is now an operator for the server."
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Removes a player name to a server's list of operators
+# $1: The server ID
+# $2: The player name
+command_server_operator_remove() {
+	# TODO: Support multiple player names
+	if server_is_running "$id"; then
+		server_eval "$id" "deop $4"
+		echo "The player \"$4\" is no longer an operator for the server."
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+	fi
+}
+
+# Displays a list of operators for an individual server
+# $1: The server ID
+command_server_operator_list() {
+	# TODO: Protect against non-existent files
+	local players="$(cat "${server_ops[$1]}")"
+
+	if [ -z "$players" ]; then
+		echo "No players are operators."
+	else
+		echo "$players"
+	fi
+}
+
+# Sets the game mode for
+# $1: The server ID
+# $2: The game mode
+# $3: The player name
+command_server_gamemode() {
+	# TODO: Support multiple player names
+	if server_is_running "$1"; then
+		local mode line regex
+		case "$2" in
+			creative|1) mode=1;;
+			survival|0) mode=0;;
+			*) error_exit INVALID_ARGUMENT "Invalid gamemode type \"$2\" options are \"survival\", \"creative\", \"0\" or \"1\".";;
+		esac
+
+		line="$(server_eval_and_get_line "$1" "gamemode $3 $mode" "${server_confirm_gamemode[$1]}" "${server_confirm_gamemode_fail_no_user[$1]}" "${server_confirm_gamemode_fail_no_change[$1]}")"
+
+		regex="${LOG_REGEX} ${server_confirm_gamemode[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "Changed game mode of \"$3\" to \"$2\"."
+		fi
+		regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_user[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "The player \"$3\" was not found to be logged on."
+		fi
+		regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_change[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "The player \"$3\" was already in mode \"$2\"."
+		fi
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Kicks a connected player from a server
+# $1: The server ID
+# $2: The player name
+command_server_kick() {
+	# TODO: Support multiple player names
+	if server_is_running "$1"; then
+		local line regex
+		line="$(server_eval_and_get_line "$1" "kick $2" "${server_confirm_kick[$1]}" "${server_confirm_kick_fail[$1]}")"
+
+		regex="${LOG_REGEX} ${server_confirm_kick[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "Kicked \"$2\" from game."
+		fi
+		regex="${LOG_REGEX} ${server_confirm_kick_fail[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "The player \"$2\" is not connected."
+		fi
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Broadcasts a message to all connected players for a server
+# $1: The server ID
+# $2->: Words of the message, will be concatinated with spaces
+command_server_say() {
+	if server_is_running "$1"; then
+		server_eval "$1" "say ${*:2}"
+		echo "Message sent to players."
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Sets the time on an individual server
+# $1: The server ID
+# $2: The time
+command_server_time_set() {
+	if server_is_running "$1"; then
+		local line regex
+		line="$(server_eval_and_get_line "$1" "time set $2" "${server_confirm_time_set[$1]}" "${server_confirm_time_set_fail[$1]}")"
+
+		regex="${LOG_REGEX} ${server_confirm_time_set[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "Set time to \"$1\"."
+		fi
+		regex="${LOG_REGEX} ${server_confirm_time_set_fail[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			error_exit INVALID_ARGUMENT "Unable to convert \"$1\" to a time."
+		fi
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Increments the time on an individual server
+# $1: The server ID
+# $2: The time to add
+command_server_time_add() {
+	if server_is_running "$1"; then
+		local line regex
+		line="$(server_eval_and_get_line "$1" "time add $2" "${server_confirm_time_add[$1]}" "${server_confirm_time_add_fail[$1]}")"
+
+		regex="${LOG_REGEX} ${server_confirm_time_add[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "Added \"$2\" to time."
+		fi
+		regex="${LOG_REGEX} ${server_confirm_time_add_fail[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			error_exit INVALID_ARGUMENT "Unable to convert \"$2\" to a time."
+		fi
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Toggles the downfall of rain and snow on an individual server
+# $1: The server ID
+command_server_toggledownfall() {
+	if server_is_running "$1"; then
+		local line regex
+		line="$(server_eval_and_get_line "$id" "toggledownfall" "${server_confirm_toggledownfall[$1]}" "${server_confirm_toggledownfall_fail[$1]}")"
+
+		regex="${LOG_REGEX} ${server_confirm_toggledownfall[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "${line:36:(-3)}"
+		fi
+		regex="${LOG_REGEX} ${server_confirm_toggledownfall_fail[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "${line:34:(-3)}"
+		fi
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Turns world saving on for an individual server
+# $1: The server ID
+command_server_save_on() {
+	server_save_on "$1"
+}
+
+# Turns world saving off for an individual server
+# $1: The server ID
+command_server_save_off() {
+	server_save_off "$1"
+}
+
+# Forces the saving of all pending world saves
+# $1: The server ID
+command_server_save_all() {
+	server_save_all "$1"
+}
+
+# Sends a command string to the server to be executed
+# $1: The server ID
+# $2->: A command, separate arguments are concatinated with spaces
+command_server_cmd() {
+	if server_is_running "$1"; then
+		server_eval "$1" "${*:2}"
+		echo "Command sent."
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Sends a command string to the server to be executed, and then tails the
+# server logs to watch fro results.
+# $1: The server ID
+# $2->: A command, separate arguments are concatinated with spaces
+command_server_cmdlog() {
+	if server_is_running "$1"; then
+		server_eval "$1" "${*:2}"
+		echo "Now watching logs (press Ctrl+C to exit):"
+		as_user "${server_user_name[$1]}" "tail --pid=$$ --follow --lines=0 --sleep-interval=0.1 ${server_log[$1]}"
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+# Resumes a server's screen session (requires ssh-ed in as server user, using
+# the `su` command will not work.)
+# $1: The server ID
+command_server_console() {
+	if server_is_running "$1"; then
+		as_user "${server_user_name[$1]}" "screen -r ${server_screen_name[$1]}"
+	else
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
+	fi
+}
+
+
 ### Main Functions
 
 # Initialises a server's world
@@ -1530,747 +2251,354 @@ interrupt() {
 	exit
 }
 
+COMMAND_COUNT=0
+
+# Adds a command to the list, allowing it to be called from the command line.
+# $1: The command signature, a coded string describing the structure of the
+#     command.
+# $2: The handler function to call, if this command is identified.
+register_command() {
+	# Here we build a regular expression which will match any user input
+	# that could be passed to the given handler function. It is derrived
+	# automatically from the given command signature.
+	
+	local regex="^"
+	
+	# Iterate over each element in the command signature
+	for word in $1; do
+		# Variables are denoted by angle brackets (e.g. "<variable>") and can
+		# at this stage be accepted as any non-zero string
+		if [[ "$word" =~ ^\<.*\>$ ]]; then
+			regex="${regex}.+ "
+			continue
+		fi
+		
+		# Sometimes different worlds may be used to call the same command, in
+		# these cases, the different words may be written contiguously,
+		# separated by the pipe character (i.e. "|") and any of the options
+		# provided will be allowed as a match.
+		if [[ "$word" =~ \| ]]; then
+			regex="${regex}($word) "
+			continue
+		fi
+		
+		# Anything else found in the command signature will be taken to mean
+		# a fixed string, which must be provided to match this command.
+		regex="${regex}$word "
+	done
+	
+	regex="${regex:0:(-1)}$"
+	
+	# Sets the global command varibales in order to register this command
+	COMMAND_SIGNATURE[$COMMAND_COUNT]="$1"
+	COMMAND_REGEX[$COMMAND_COUNT]="$regex"
+	COMMAND_HANDLER[$COMMAND_COUNT]="$2"
+	
+	COMMAND_COUNT=$(( $COMMAND_COUNT + 1 ))
+}
+
+# Match and call a command from user input
+# $*: User input
+call_command() {
+	for ((i=0; i<$COMMAND_COUNT; i++)); do
+		if [[ "$*" =~ ${COMMAND_REGEX[$i]} ]]; then
+			unset args
+			local word_offset=1
+			local args
+			local arg_offset=0
+			local sid=-1
+			local wid=-1
+
+			# Helper function to build the argument list
+			# $1: The argument to push onto the list
+			push_arg() {
+				args[$arg_offset]="$1"
+				arg_offset="$(( $arg_offset + 1 ))"
+			}
+			
+			# The following loop builds a set of arguments to pass to the
+			# matched command handler function. Rather than passing all args
+			# given to the script, to the handler (which may contain constant
+			# strings), it only includes variables.
+			for word in ${COMMAND_SIGNATURE[$i]}; do
+				# Whether a positional argument is a varibale or not is
+				# determined by the respective element in the command signature
+				# given when registering.
+				#
+				# This case statement handles each possible type of signature
+				# token, and pushes the respective user input onto the stack of
+				# arguments.
+				case "$word" in
+					# The "<string>" token expects any type of string argument,
+					# accepting spaces, limited to one argument.
+					"<string>")
+						# Do no checks, just push the argument onto the stack
+						push_arg "${!word_offset}"
+						;;
+					
+					
+					# The "<strings>" token must only be placed at the end of a
+					# commadn signature, and allows an arbitrary amount of
+					# arguments to be passed to the command handler function.
+					"<strings>")
+						# Put all remaining user input onto the argument stack
+						for input_arg in "${@:$word_offset}"; do
+							push_arg "$input_arg"
+						done
+						# Break from analysing the rest of the input
+						break
+						;;
+					
+					
+					# The "<name>" token is similar to "<string>" but adds an
+					# extra assurance that the string is a valid name, as used
+					# for creating servers and other things.
+					"<name>")
+						# Check the argument is a valid name and then add push it onto the argument stack
+						local specified_name="${!word_offset}"
+
+						if is_valid_name "$specified_name"; then
+							push_arg "$specified_name"
+						fi
+						;;
+					
+					
+					# The "<name:server>" token improves on "<name>" by also
+					# checking that the server exists, and passing the argument
+					# on as the server id, instead of the server name to
+					# command handler functions.
+					"<name:server>")
+						local specified_name="${!word_offset}"
+						if [[ "$specified_name" == "all" ]]; then
+							# Do for all servers
+							sid="server:all"
+						else
+							if is_valid_name "$specified_name"; then
+								if [ -d "$SERVER_STORAGE_PATH/$specified_name" ]; then
+									sid="$(server_get_id "$specified_name")"
+								fi
+							fi
+
+							if [[ "$sid" -eq "-1" ]]; then
+								error_exit NAME_NOT_FOUND "There is no server with the name \"$specified_name\"."
+							fi
+						fi
+
+						push_arg "$sid"
+						;;
+						
+					
+					# The "<name:world>" token also improves upon "<name>" by
+					# ensuring that the world actually exists, and passes the
+					# argument on to command handlers as the world ID, rather
+					# than the original world name input by the user.
+					"<name:world>")
+						local specified_name="${!word_offset}"
+
+						if [[ "$sid" -eq "-1" ]]; then
+							# Server id not set yet
+							exit_error 1 "Ill-defined command $*. Please file an issue by opening the following link: https://github.com/marcuswhybrow/minecraft-server-manager/issues"
+						fi
+
+						if [[ "$sid" -eq "-2" ]]; then
+							if [[ "$specified_name" == "all" ]]; then
+								wid="world:all"
+							else
+								exit_error INVALID_ARGUMENT "When specifying \"all\" servers, \"all\" worlds must be specified also."
+							fi
+						fi
+
+						if [[ "$sid" -ge "0" ]]; then
+							if is_valid_name "$specified_name"; then
+								if [ -d "${server_world_active_path[$sid]}/$specified_name" ] || [ -d "${server_world_inactive_path[$sid]}/$specified_name" ]; then
+									wid="$(server_world_get_id "$sid" "$specified_name")"
+								fi
+							fi
+
+							if [ -z "$wid" ]; then
+								error_exit NAME_NOT_FOUND "There is no world with the name \"$specified_name\"."
+							fi
+
+							push_arg "$wid"
+						fi
+						;;
+				esac
+
+				word_offset=$(( $word_offset + 1 ))
+			done
+
+			# The argument list for the call to the command handler has been
+			# built. But there are several ways to call a handler. Either just
+			# once, or multiple times based upon if multiple servers or worlds
+			# were specified.
+			
+
+			# This code block calls the handler for all possible servers and
+			# all possible worlds.
+			if [[ "$sid" == "server:all" ]] && [[ "$wid" == "world:all" ]]; then
+				for ((j=0; j<$num_worlds; j++)); do
+					# Replace server and world id placeholders with actual id's
+					local replaced_args
+					for k in ${!args[@]}; do
+						replaced_args[$k]="${args[$k]//server:all/${world_server_id[$j]}}"
+						replaced_args[$k]="${args[$k]//world:all/$j}"
+					done
+					
+					# Call the function with the specific replaced args
+					${COMMAND_HANDLER[$i]} "${replaced_args[@]}"
+				done
+				
+				# Prevent the default singular call later on.
+				return
+			fi
+			
+			# This calls the handler for all possible servers, and preserves 
+			# all other arguments.
+			if [[ "$sid" == "server:all" ]]; then
+				for ((j=0; j<$num_servers; j++)); do
+					local replaced_args
+					for k in ${!args[@]}; do
+						replaced_args[$k]="${args[$k]//server\:all/$j}"
+					done
+					
+					${COMMAND_HANDLER[$i]} "${replaced_args[@]}"
+				done
+				
+				return
+			fi
+			
+			# This calls the handlers for all possible worlds for a specific
+			# server.
+			if [[ "$sid" != "server:all" ]] && [[ "$wid" == "world:all" ]]; then
+				for ((j=${server_world_offset[$sid]}; j<${server_num_worlds[$sid]}; j++)); do
+					local replaced_args
+					for k in ${!args[@]}; do
+						replaced_args[$k]="${args[$k]//world:all/$j}"
+					done
+					
+					${COMMAND_HANDLER[$i]} "${replaced_args[@]}"
+				done
+				
+				return
+			fi
+			
+			# Otherwise it's a simple single call of the handler.
+			${COMMAND_HANDLER[$i]} "${args[@]}"
+			return
+		fi
+	done
+	
+	echo "No such command. See $0 help"
+}
+
 # The main function which starts the script
 main() {
-	# Initialise variables that represent system state
+	# Initialises variables that represent system state
 	init
 	
 	# Trap interrupts to the script by calling the interrupt function
 	trap interrupt EXIT
 	
-	case "$1" in
-		start)
-			# Required start option, for debian init.d scripts
-			for ((server=0; server<${num_servers}; server++)); do
-				# Only starts active servers
-				if "${server_active[$server]}"; then
-					if server_is_running "$server"; then
-						echo "[ACTIVE] Server \"${server_name[$server]}\" already started."
-					else
-						echo "[ACTIVE] Server \"${server_name[$server]}\" starting:"
-						server_start "$server"
-					fi
-				else
-					if server_is_running "$server"; then
-						echo "[INACTIVE] Server \"${server_name[$server]}\" already started. It should not be running! Use \"$0 ${server_name[$server]} stop\" to stop this server."
-					else
-						echo "[INACTIVE] Server \"${server_name[$server]}\" leaving stopped, as this server is inactive."
-					fi
-				fi
-			done
-			;;
-		stop)
-			if [ "$2" != "now" ]; then
-				# If the the now flag is not specified
-				manager_stop_all_servers "stop"
-			else
-				# If the now flag is specified
-				manager_stop_all_servers_now
-			fi
-			;;
-		restart)
-			# Required restart option, for debian init.d scripts
-			
-			# Stop any running servers, now if specified
-			echo "Stopping servers:"
-			main "stop" "$2"
-			
-			echo "Starting servers:"
-			main "start"
-			;;
-		version)
-			echo "Minecraft Server Manager $VERSION"
-			;;
-		server)
-			case "$2" in
-				list)
-					# Lists the existing servers
-					server_list
-					;;
-				create)
-					if [ -z "$3" ]; then
-						# If a server name is not provided
-						error_exit INVALID_COMMAND "Usage: $0 server create <server-name>"
-					else
-						# Create a new server
-						server_create "$3"
-					fi
-					;;
-				delete)
-					if [ -z "$3" ]; then
-						# If a server name is not provided
-						error_exit INVALID_COMMAND "Usage: $0 server delete <server-name>"
-					else
-						# Delete an existing server, with confirmation
-						server_delete "$3"
-					fi
-					;;
-				rename)
-					if [ -z "$3" ] || [ -z "$4" ]; then
-						# If a server name is not provided
-						error_exit INVALID_COMMAND "Usage: $0 server rename <original-name> <new-name>"
-					else
-						# Rename an existing server
-						server_rename "$3" "$4"
-					fi
-					;;
-				*)
-					# "server" is not a valid command
-					error_exit INVALID_COMMAND "Usage: $0 server list|create|delete|rename"
-					;;
-			esac
-			;;
-		jargroup)
-			case "$2" in
-				list)
-					# Lists the jars grouped by jargroup
-					jargroup_list
-					;;
-				create)
-					if [ -z "$3" ] || [ -z "$4" ]; then
-						error_exit INVALID_COMMAND "Usage: $0 jargroup create <jargroup-name> <download-url>"
-					else
-						jargroup_create "$3" "$4"
-					fi
-					;;
-				delete)
-					if [ -z "$3" ]; then
-						error_exit INVALID_COMMAND "Usage: $0 jargroup delete <jargroup-name>"
-					else
-						jargroup_delete "$3"
-					fi
-
-					;;
-				rename)
-					if [ -z "$3" ] || [ -z "$4" ]; then
-						error_exit INVALID_COMMAND "Usage: $0 jargroup rename <original-name> <new-name>"
-					else
-						jargroup_rename "$3" "$4"
-					fi
-					;;
-				changetarget)
-					if [ -z "$3" ] || [ -z "$4" ]; then
-						error_exit INVALID_COMMAND "Usage: $0 jargroup changetarget <jargroup-name> <new-download-url>"
-					else
-						jargroup_settarget "$3" "$4"
-					fi
-					;;
-				getlatest)
-					if [ -z "$3" ]; then
-						error_exit INVALID_COMMAND "Usage: $0 jargroup getlatest <jargroup-name>"
-					else
-						jargroup_getlatest "$3"
-					fi
-					;;
-				*)
-					# "jargroup" is not a valid command
-					error_exit INVALID_COMMAND "Usage: $0 jargroup list|create|delete|rename|changetarget|getlatest"
-					;;
-			esac
-			;;
-		help)
-			# Outputs a list of all commands
-			echo -e "Usage: $0 command:"
-			echo -e
-			echo -e "--Setup Commands------------------------------------------------"
-			echo -e "  server list                                   List servers"
-			echo -e "  server create <name>                          Creates a new Minecraft server"
-			echo -e "  server delete <name>                          Deletes an existing Minecraft server"
-			echo -e "  server rename <name> <new-name>               Renames an existing Minecraft server"
-			echo -e
-			echo -e "--Server Mangement Commands-------------------------------------"
-			echo -e "  <server> start                                Starts a server"
-			echo -e "  <server> stop [now]                           Stops a server after warning players, or right now"
-			echo -e "  <server> restart [now]                        Restarts a server after warning players, or right now"
-			echo -e "  <server> status                               Show the running/stopped status of a server"
-			echo -e "  <server> connected                            List a servers connected players"
-			echo -e "  <server> worlds list                          Lists the worlds a server has"
-			echo -e "  <server> worlds load                          Creates links to worlds in storage for a server"
-			echo -e "  <server> worlds ram <world>                   Toggles a world's \"in RAM\" status"
-			echo -e "  <server> worlds todisk                        Synchronises any \"in RAM\" worlds to disk a server has"
-			echo -e "  <server> worlds backup                        Makes a backup of all worlds a server has"
-			echo -e "  <server> worlds on|off <world>                Activate or deactivate a world, inactive worlds are not backed up"
-			echo -e "  <server> logroll                              Move a server log to a gziped archive, to reduce lag"
-			echo -e "  <server> backup                               Makes a backup of an entire server directory"
-			echo -e "  <server> jar <jargroup> [<file>]              Sets a server's jar file"
-			echo -e
-			echo -e "--Server Pass Through Commands----------------------------------"
-			echo -e "  <server> wl on|off                            Enables/disables server whitelist checking"
-			echo -e "  <server> wl add|remove <player>               Add/remove a player to/from a server's whitelist"
-			echo -e "  <server> wl list                              List the players whitelisted for a server"
-			echo -e "  <server> bl player add|remove <player>        Ban/pardon a player from/for a server"
-			echo -e "  <server> bl ip add|remove <ip address>        Ban/pardon an IP address from/for a server"
-			echo -e "  <server> bl list                              Lists the banned players and IP address for a server"
-			echo -e "  <server> op add|remove <player>               Add/remove operator status for a player on a server"
-			echo -e "  <server> op list                              Lists the operator players for a server"
-			echo -e "  <server> gm survival|creative <player>        Change the game mode for a player on a server"
-			echo -e "  <server> kick <player>                        Forcibly disconnect a player from a server"
-			echo -e "  <server> say <message>                        Broadcast a (pink) message to all players on a server"
-			echo -e "  <server> time set|add <number>                Set/increment time on a server (0-24000)"
-			echo -e "  <server> toggledownfall                       Toggles rain and snow on a server"
-			echo -e "  <server> save on|off                          Enable/disable writing world changes to file"
-			echo -e "  <server> save all                             Force the writing of all non-saved world changes to file"
-			echo -e "  <server> cmd <command>                        Send a command string to the server and return"
-			echo -e "  <server> cmdlog <command>                     Same as 'cmd' but shows log output afterwards (Ctrl+C to exit)"
-			echo -e
-			echo -e "--Jar Commands--------------------------------------------------"
-			echo -e "  jargroup list                                 List the stored jar files."
-			echo -e "  jargroup create <name> <download-url>         Create a new jar group, with a URL for new downloads"
-			echo -e "  jargroup delete <name>                        Delete a jar group"
-			echo -e "  jargroup rename <name> <new-name>             Rename a jar group"
-			echo -e "  jargroup changeurl <name> <download-url>      Change the download URL for a jar group"
-			echo -e "  jargroup getlatest <name>                     Download the latest jar file for a jar group"
-			echo -e
-			echo -e "--Global Commands-----------------------------------------------"
-			echo -e "  start                                         Starts all active servers"
-			echo -e "  stop [now]                                    Stops all running servers"
-			echo -e "  restart [now]                                 Restarts all active servers"
-			echo -e "  version                                       Prints the Minecraft Server Manager version installed8"
-			;;
-		"")
-			error_exit INVALID_COMMAND "No such command see: $0 help"
-			;;
-		*)	
-			if [[ "$1" == "all" ]] || [[ -d "$SERVER_STORAGE_PATH/$1" ]]; then
-				command_server() {
-					if [ -d "$SERVER_STORAGE_PATH/$1" ]; then
-						local id="$(server_get_id "$1")"
-					else
-						error_exit NAME_NOT_FOUND "There is no server with the name \"$1\"."
-					fi
-					
-					case "$2" in
-						start)
-							server_set_active "$id" "active"
-							server_start "$id"
-							;;
-						stop)
-							server_set_active "$id" "inactive"
-							if [[ "$3" != "now" ]]; then
-								server_stop "$id"
-							else
-								server_stop_now "$id"
-							fi
-							;;
-						restart)
-							server_set_active "$1" "active"
-							if [[ "$3" != "now" ]]; then
-								server_restart "$id"
-							else
-								server_restart_now "$id"
-							fi
-							;;
-						status)
-							if server_is_running "$id"; then
-								echo "Server \"${server_name[$id]}\" is running."
-							else
-								echo "Server \"${server_name[$id]}\" is stopped."
-							fi
-							;;
-						connected)
-							server_connected "$id"
-							;;
-						worlds)
-							case "$3" in
-								list)
-									server_worlds_list "$id"
-									;;
-								load)
-									server_ensure_links "$id"
-									;;
-								ram)
-									if [ -z "$4" ]; then
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds ram <world-name>"
-									else
-										world_id="$(server_world_get_id "$id" "$4")"
-
-										if [ ! -z "$world_id" ]; then
-											world_toggle_ramdisk_state "$world_id"
-										else
-											error_exit NAME_NOT_FOUND "Server \"${server_name[$id]}\" has no world with that name."
-										fi
-									fi
-									;;
-								todisk)
-									server_save_off "$id"
-									server_save_all "$id"
-									server_worlds_to_disk "$id"
-									server_save_on "$id"
-									;;
-								backup)
-									if server_is_running "$id"; then
-										server_eval "$id" "say ${server_world_backup_started[$id]}"
-										server_save_off "$id"
-										server_save_all "$id"
-									fi
-
-									server_worlds_to_disk "$id"
-									server_worlds_backup "$id"
-
-									if server_is_running "$id"; then
-										server_save_on "$id"
-										server_eval "$id" "say ${server_world_backup_finished[$id]}"
-									fi
-
-									echo "Backup took $SECONDS seconds".
-									;;
-								on)
-									if [ -z "$4" ]; then
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds on <world-name>"
-									else
-										world_activate "$(server_world_get_id "$id" "$4")"
-									fi
-									;;
-								off)
-									if [ -z "$4" ]; then
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds off <world-name>"
-									else
-										world_deactivate "$(server_world_get_id "$id" "$4")"
-									fi
-									;;
-								*)
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> worlds list|load|ram|todisk|backup|on|off"
-									;;
-							esac
-							;;
-						logroll)
-							server_log_roll "$id"
-							;;
-						backup)
-							if server_is_running "$id"; then
-								server_eval "$id" "say ${server_complete_backup_started[$id]}"
-								server_save_off "$id"
-								server_save_all "$id"
-							fi
-
-							server_worlds_to_disk "$id"
-							server_backup "$id"
-
-							if server_is_running "$id"; then
-								server_save_on "$id"
-								server_eval "$id" "say ${server_complete_backup_finished[$id]}"
-							fi
-
-							echo "Backup took $SECONDS seconds".
-							;;
-						jar)
-							if [ -z "$3" ]; then
-								error_exit INVALID_COMMAND "Usage: $0 <server-name> jar <jargroup-name> [jar-file-name]"
-							else
-								server_set_jar "$id" "$3" "$4"
-							fi
-							;;
-						whitelist|wl)
-							case "$3" in
-								on)
-									if server_is_running "$id"; then
-										server_eval "$id" "whitelist on"
-										echo "Whitelist enabled"
-									else
-										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-									fi
-									;;
-								off)
-									if server_is_running "$id"; then
-										server_eval "$id" "whitelist off"
-										echo "Whitelist disabled"
-									else
-										error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-									fi
-									;;
-								add)
-									if [ -z "$4" ]; then
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist add <player-name>"
-									else
-										if server_is_running "$id"; then
-											server_eval "$id" "whitelist add $4"
-											echo "Added \"$4\" to the whitelist."
-										else
-											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-										fi
-									fi
-									;;
-								remove)
-									if [ -z "$4" ]; then
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist remove <player-name>"
-									else
-										if server_is_running "$id"; then
-											server_eval "$id" "whitelist remove $4"
-											echo "Removed \"$4\" from the whitelist."
-										else
-											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-										fi
-									fi
-									;;
-								list)
-									local players="$(cat "${server_whitelist[$id]}")"
-
-									if [ -z "$players" ]; then
-										echo "No players are whitelisted."
-									else
-										echo "$players"
-									fi
-									;;
-								*)
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> whitelist on|off|add|remove|list"
-									;;
-							esac
-							;;
-						blacklist|bl)
-							case "$3" in
-								player)
-									case "$4" in
-										add)
-											if [ -z "$5" ]; then
-												error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player add <player-name>"
-											else
-												for player in ${*:5}; do
-												 	server_eval "$id" "ban $player"
-												done
-												if [[ $# -gt 5 ]]; then
-													echo -n "Blacklisted the following players: "
-													echo -n "$5"
-													for player in ${*:6}; do
-													 	echo -n ", $player"
-													done
-													echo "."
-												else
-													echo "Blacklisted \"$5\"."
-												fi
-											fi
-											;;
-										remove)
-											if [ -z "$5" ]; then
-												error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player remove <player-name>"
-											else
-												for player in ${*:5}; do
-												 	server_eval "$id" "pardon $player"
-												done
-												if [[ $# -gt 5 ]]; then
-													echo -n "Removed the following players from the blacklist: "
-													echo -n "$5"
-													for player in ${*:6}; do
-													 	echo -n ", $player"
-													done
-													echo "."
-												else
-													echo "Removed \"$5\" from the blacklist."
-												fi
-											fi
-											;;
-										*)
-											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist player add|remove"
-											;;
-									esac
-									;;
-								ip)
-									case "$4" in
-										add)
-											if [ -z "$5" ]; then
-												error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip add <ip-address>"
-											else
-												for address in ${*:5}; do
-												 	server_eval "$id" "ban-ip $address"
-												done
-												if [[ $# > 5 ]]; then
-													echo -n "Blacklisted the following ip addresses: "
-													echo -n "$5"
-													for player in ${*:6}; do
-													 	echo -n ", $address"
-													done
-													echo "."
-												else
-													echo "Blacklisted \"$5\"."
-												fi
-											fi
-											;;
-										remove)
-											if [ -z "$5" ]; then
-												error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip remove <ip-address>"
-											else
-												for address in ${*:5}; do
-												 	server_eval "$id" "pardon-ip $address"
-												done
-												if [[ $# > 5 ]]; then
-													echo -n "Removed the following ip addresses from the blacklist: "
-													echo -n "$5"
-													for player in ${*:6}; do
-													 	echo -n ", $address"
-													done
-													echo "."
-												else
-													echo "Removed \"$5\" from the ip blacklist."
-												fi
-											fi
-											;;
-										*)
-											error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip add|remove"
-											;;
-									esac
-									;;
-								list)
-									local players="$(cat "${server_banned_players[$id]}")"
-
-									local ips="$(cat "${server_banned_ips[$id]}")"
-
-									if [[ -z "$players" && -z "$ips" ]]; then
-										echo "The blacklist is empty."
-									else
-										if [[ ! -z "$players" ]]; then
-											echo "Players:"
-											for name in $players; do
-												echo "    $name"
-											done
-										fi
-
-										if [[ ! -z "$ips" ]]; then
-											echo "IP Addresses:"
-											for address in $ips; do
-												echo "    $address"
-											done
-										fi
-									fi
-									;;
-								*)
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> blacklist ip player|ip|list"
-									;;
-							esac
-							;;
-						operator|op)
-							case "$3" in
-								add)
-									if [ -z "$4" ]; then
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> operator add <player-name>"
-									else
-										if server_is_running "$id"; then
-											server_eval "$id" "op $4"
-											echo "The player \"$4\" is now an operator for the server."
-										else
-											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-										fi
-									fi
-									;;
-								remove)
-									if [ -z "$4" ]; then
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> operator remove <player-name>"
-									else
-										if server_is_running "$id"; then
-											server_eval "$id" "deop $4"
-											echo "The player \"$4\" is no longer an operator for the server."
-										else
-											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-										fi
-									fi
-									;;
-								list)
-									local players="$(cat "${server_ops[$id]}")"
-
-									if [ -z "$players" ]; then
-										echo "No players are operators."
-									else
-										echo "$players"
-									fi
-									;;
-								*)
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> operator add|remove|list"
-									;;
-							esac
-							;;
-						gamemode|gm)
-							case "$3" in
-								survival|creative|0|1)
-									if [ -z "$4" ]; then
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> gamemode survival|creative <player-name>"
-									else
-										if server_is_running "$id"; then
-											case "$3" in
-												creative|1) local mode=1;;
-												survival|0) local mode=0;;
-												*) error_exit INVALID_ARGUMENT "Invalid gamemode type \"$3\" options are \"survival\", \"creative\", \"0\" or \"1\".";;
-											esac
-
-											local line="$(server_eval_and_get_line "$id" "gamemode $4 $mode" "${server_confirm_gamemode[$id]}" "${server_confirm_gamemode_fail_no_user[$id]}" "${server_confirm_gamemode_fail_no_change[$id]}")"
-
-											local regex="${LOG_REGEX} ${server_confirm_gamemode[$id]}"
-											if [[ "$line" =~ $regex ]]; then
-												echo "Changed game mode of \"$4\" to \"$3\"."
-											fi
-											local regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_user[$id]}"
-											if [[ "$line" =~ $regex ]]; then
-												echo "The player \"$4\" was not found to be logged on."
-											fi
-											local regex="${LOG_REGEX} ${server_confirm_gamemode_fail_no_change[$id]}"
-											if [[ "$line" =~ $regex ]]; then
-												echo "The player \"$4\" was already in mode \"$3\"."
-											fi
-										else
-											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-										fi
-									fi
-									;;
-								*)
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> gamemode survival|creative"
-									;;
-							esac
-							;;
-						kick)
-							if [ -z "$3" ]; then
-								error_exit INVALID_COMMAND "Usage: $0 <server-name> kick <player-name>"
-							else
-								if server_is_running "$id"; then
-									local line="$(server_eval_and_get_line "$id" "kick $3" "${server_confirm_kick[$id]}" "${server_confirm_kick_fail[$id]}")"
-
-									local regex="${LOG_REGEX} ${server_confirm_kick[$id]}"
-									if [[ "$line" =~ $regex ]]; then
-										echo "Kicked \"$3\" from game."
-									fi
-									local regex="${LOG_REGEX} ${server_confirm_kick_fail[$id]}"
-									if [[ "$line" =~ $regex ]]; then
-										echo "The player \"$3\" is not connected."
-									fi
-								else
-									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-								fi
-							fi
-							;;
-						say)
-							if [ -z "$3" ]; then
-								error_exit INVALID_COMMAND "Usage: $0 <server-name> say <message>"
-							else
-								if server_is_running "$id"; then
-									server_eval "$id" "say ${*:3}"
-									echo "Message sent to players."
-								else
-									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-								fi
-							fi
-							;;
-						time)
-							case "$3" in
-								set)
-									if [ -z "$4" ]; then
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> time set <time-string>"
-									else
-										if server_is_running "$id"; then
-											local line="$(server_eval_and_get_line "$id" "time set $4" "${server_confirm_time_set[$id]}" "${server_confirm_time_set_fail[$id]}")"
-
-											local regex="${LOG_REGEX} ${server_confirm_time_set[$id]}"
-											if [[ "$line" =~ $regex ]]; then
-												echo "Set time to \"$4\"."
-											fi
-											local regex="${LOG_REGEX} ${server_confirm_time_set_fail[$id]}"
-											if [[ "$line" =~ $regex ]]; then
-												error_exit INVALID_ARGUMENT "Unable to convert \"$4\" to a time."
-											fi
-										else
-											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-										fi
-									fi
-									;;
-								add)
-									if [ -z "$4" ]; then
-										error_exit INVALID_COMMAND "Usage: $0 <server-name> time add <time-string>"
-									else
-										if server_is_running "$id"; then
-											local line="$(server_eval_and_get_line "$id" "time add $4" "${server_confirm_time_add[$id]}" "${server_confirm_time_add_fail[$id]}")"
-
-											local regex="${LOG_REGEX} ${server_confirm_time_add[$id]}"
-											if [[ "$line" =~ $regex ]]; then
-												echo "Added \"$4\" to time."
-											fi
-											local regex="${LOG_REGEX} ${server_confirm_time_add_fail[$id]}"
-											if [[ "$line" =~ $regex ]]; then
-												error_exit INVALID_ARGUMENT "Unable to convert \"$4\" to a time."
-											fi
-										else
-											error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-										fi
-									fi
-									;;
-								*)
-									error_exit INVALID_COMMAND "Usage: $0 <server-name> time set|add"
-									;;
-							esac
-							;;
-						toggledownfall|tdf)
-							if server_is_running "$id"; then
-								local line="$(server_eval_and_get_line "$id" "toggledownfall $3" "${server_confirm_toggledownfall[$id]}" "${server_confirm_toggledownfall_fail[$id]}")"
-
-								local regex="${LOG_REGEX} ${server_confirm_toggledownfall[$id]}"
-								if [[ "$line" =~ $regex ]]; then
-									echo "${line:36:(-3)}"
-								fi
-								local regex="${LOG_REGEX} ${server_confirm_toggledownfall_fail[$id]}"
-								if [[ "$line" =~ $regex ]]; then
-									echo "${line:34:(-3)}"
-								fi
-							else
-								error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-							fi
-							;;
-						save)
-							case "$3" in
-								on) server_save_on "$id";;
-								off) server_save_off "$id";;
-								all) server_save_all "$id";;
-								*) error_exit INVALID_COMMAND "Usage: $0 <server-name> save on|off|all";;
-							esac
-							;;
-						cmd)
-							if [ -z "$3" ]; then
-								error_exit INVALID_COMMAND "Usage: $0 <server-name> cmd <command-string>"
-							else
-								if server_is_running "$id"; then
-									server_eval "$id" "${*:3}"
-									echo "Command sent."
-								else
-									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-								fi
-							fi
-							;;
-						cmdlog)
-							if [ -z "$3" ]; then
-								error_exit INVALID_COMMAND "Usage: $0 <server-name> cmdlog <command-string>"
-							else
-								if server_is_running "$id"; then
-									server_eval "$id" "${*:3}"
-									echo "Now watching logs (press Ctrl+C to exit):"
-									as_user "${server_user_name[$id]}" "tail --pid=$$ --follow --lines=0 --sleep-interval=0.1 ${server_log[$id]}"
-								else
-									error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-								fi
-							fi
-							;;
-						console)
-							if server_is_running "$id"; then
-								as_user "${server_user_name[$1]}" "screen -r ${server_screen_name[$1]}"
-							else
-								error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
-							fi
-							;;
-						*)
-							error_exit INVALID_COMMAND "Invalid command. See \"$0 help\" for more information."
-							;;
-					esac
-				}
-
-				if [[ "$1" == "all" ]]; then
-					# Execute the command for all server names
-					while IFS= read -r -d $'\0' path; do
-						local name="$(basename "$path")"
-						args="${@:2}"
-						echo "Calling $0 \"$name\" \"$args\""
-						command_server "$name" $args
-					done < <(find "$SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
-				else
-					# Execute the command for a single server
-					command_server "$@"
-				fi
-			else
-			 	error_exit NAME_NOT_FOUND "No server with that name."
-			fi
-			;;
-	esac
+	# The following section registers commands to be available for use. The
+	# register_command function accepts a command_signature and a
+	# command_handler_function_name as positional arguments 1 and 2
+	# respectively.
+	#
+	# A command signature consists of multiple elements separated by spaces,
+	# the available options are as follows:
+	#
+	#     fixedstring    Matches an argument containing the specified
+	#                    characters, in this case the characters "fixedstring"
+	#
+	#     <string>       Same as "fixedstring", but is variable and the value
+	#                    is passed to the handler function as a positional
+	#                    argument
+	#
+	#     <strings>      Same as "<string>", but matches multiple arguments,
+	#                    must be final element
+	#
+	#     <name>         Same as "<string>", also ensures it's a valid name
+	#                    using the is_valid_name function
+	#
+	#     <name:server>  Same as "<name>", also converts value to server id or
+	#                    fails if the server does not exist
+	#
+	#     <name:world>   Same as "<name>", also converts value to world id or
+	#                    fails if the world does not exist. Must only be
+	#                    included after a "<name:server>" element.
+	#     
+	# Elements listed above encapsulated within angle brackets must be included
+	# within a signature verbatim, as apposed to the "fixedstring" element
+	# which is arbitrary.
+	#
+	# Variables passed to handler functions are of course positional and there
+	# position matches the position of that element in the command signature.
+	
+	register_command "start" "command_start"
+	register_command "stop" "command_stop"
+	register_command "stop now" "command_stop_now"
+	register_command "restart" "command_restart"
+	register_command "restart now" "command_restart_now"
+	register_command "version" "command_version"
+	register_command "server list" "command_server_list"
+	register_command "server create <name>" "command_server_create"
+	register_command "server delete <name>" "command_server_delete"
+	register_command "server rename <name> <name>" "command_server_rename"
+	register_command "jargroup list" "command_jargroup_list"
+	register_command "jargroup create <name> <string>" "command_jargroup_create"
+	register_command "jargroup delete <name>" "command_jargorup_delete"
+	register_command "jargroup rename <name> <name>" "command_jargroup_rename"
+	register_command "jargroup changetarget <name> <string>" "command_jargroup_changetarget"
+	register_command "jargroup getlatest <name>" "command_jargroup_getlatest"
+	register_command "help" "command_help"
+	register_command "<name:server> start" "command_server_start"
+	register_command "<name:server> stop" "command_server_stop"
+	register_command "<name:server> stop now" "command_server_stop_now"
+	register_command "<name:server> restart" "command_server_restart"
+	register_command "<name:server> restart now" "command_server_restart_now"
+	register_command "<name:server> status" "command_server_status"
+	register_command "<name:server> connected" "command_server_connected"
+	register_command "<name:server> worlds list" "command_server_worlds_list"
+	register_command "<name:server> worlds load" "command_server_worlds_load"
+	register_command "<name:server> worlds ram <name:world>" "command_server_worlds_ram"
+	register_command "<name:server> worlds todisk" "command_server_worlds_todisk"
+	register_command "<name:server> worlds backup" "command_server_worlds_backup"
+	register_command "<name:server> worlds on <name:world>" "command_server_worlds_on"
+	register_command "<name:server> worlds off <name:world>" "command_server_worlds_off"
+	register_command "<name:server> logroll" "command_server_logroll"
+	register_command "<name:server> backup" "command_server_backup"
+	register_command "<name:server> jar <name>" "command_server_jar"
+	register_command "<name:server> jar <name> <name>" "command_server_jar"
+	register_command "<name:server> whitelist|wl on" "command_server_whitelist_on"
+	register_command "<name:server> whitelist|wl off" "command_server_whitelist_off"
+	register_command "<name:server> whitelist|wl add <string>" "command_server_whitelist_add"
+	register_command "<name:server> whitelist|wl remove <string>" "command_server_whitelist_remove"
+	register_command "<name:server> whitelist|wl list" "command_server_whitelist_list"
+	register_command "<name:server> blacklist|bl player add <string>" "command_server_blacklist_player_add"
+	register_command "<name:server> blacklist|bl player remove <string>" "command_server_blacklist_player_remove"
+	register_command "<name:server> blacklist|bl ip add <string>" "command_server_blacklist_ip_add"
+	register_command "<name:server> blacklist|bl ip remove <string>" "command_server_blacklist_ip_remove"
+	register_command "<name:server> blacklist|bl list" "command_server_blacklist_list"
+	register_command "<name:server> operator|op add <string>" "command_server_operator_add"
+	register_command "<name:server> operator|op remove <string>" "command_server_operator_remove"
+	register_command "<name:server> operator|op list" "command_server_operator_list"
+	register_command "<name:server> gamemode|gm survival|creative|0|1 <string>" "command_server_gamemode"
+	register_command "<name:server> kick <string>" "command_server_kick"
+	register_command "<name:server> say <strings>" "command_server_say"
+	register_command "<name:server> time set <string>" "command_server_time_set"
+	register_command "<name:server> time add <string>" "command_server_time_add"
+	register_command "<name:server> toggledownfall|tdf" "command_server_toggledownfall"
+	register_command "<name:server> save on" "command_server_save_on"
+	register_command "<name:server> save off" "command_server_save_off"
+	register_command "<name:server> save all" "command_server_save_all"
+	register_command "<name:server> cmd" "command_server_cmd"
+	register_command "<name:server> cmdlog" "command_server_cmdlog"
+	register_command "<name:server> console" "command_server_console"
+	
+	# This function call matches the user input to a registered command
+	# signature, and then calls that commands handler function with positional
+	# arguments containing any variable strings.
+	call_command "$@"
 }
 
 
