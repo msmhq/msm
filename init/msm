@@ -1361,7 +1361,7 @@ command_help() {
 	echo -e "  start                                         Starts all active servers"
 	echo -e "  stop [now]                                    Stops all running servers"
 	echo -e "  restart [now]                                 Restarts all active servers"
-	echo -e "  version                                       Prints the Minecraft Server Manager version installed8"
+	echo -e "  version                                       Prints the Minecraft Server Manager version installed"
 }
 
 # Starts an individual server
