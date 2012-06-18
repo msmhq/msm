@@ -2289,7 +2289,7 @@ register_command() {
 	done
 	
 	if [ ${#regex} -ge 1 ]; then
-		regex="${regex:0:(-1)}\$"
+		regex="${regex:0:${#regex}-1}\$"
 		
 		# Sets the global command varibales in order to register this command
 		COMMAND_SIGNATURE[$COMMAND_COUNT]="$1"
