@@ -12,11 +12,11 @@ before_install:
 
 # Create a minecraft user for testing
 install:
-	- sudo adduser --system minecraft
+  - sudo adduser --system minecraft
 
 # Run the test script
 script: sudo /bin/bash ./test.sh
 
 branches:
-	only:
-		- master
+  only:
+    - master
