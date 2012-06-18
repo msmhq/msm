@@ -94,6 +94,7 @@ error_exit() {
 		DUPLICATE_NAME) code=71;;
 		LOGS_NOT_ROLLED) code=72;;
 		CONF_ERROR) code=73;;
+		FATAL_ERROR) code=74;;
 	esac
 	
 	echo "${2:-"Unknown Error"}" 1>&2
@@ -2287,14 +2288,18 @@ register_command() {
 		regex="${regex}$word "
 	done
 	
-	regex="${regex:0:(-1)}$"
-	
-	# Sets the global command varibales in order to register this command
-	COMMAND_SIGNATURE[$COMMAND_COUNT]="$1"
-	COMMAND_REGEX[$COMMAND_COUNT]="$regex"
-	COMMAND_HANDLER[$COMMAND_COUNT]="$2"
-	
-	COMMAND_COUNT=$(( $COMMAND_COUNT + 1 ))
+	if [ ${#regex} -ge 1 ]; then
+		regex="${regex:0:(-1)}\$"
+		
+		# Sets the global command varibales in order to register this command
+		COMMAND_SIGNATURE[$COMMAND_COUNT]="$1"
+		COMMAND_REGEX[$COMMAND_COUNT]="$regex"
+		COMMAND_HANDLER[$COMMAND_COUNT]="$2"
+		
+		COMMAND_COUNT=$(( $COMMAND_COUNT + 1 ))
+	else
+		error_exit FATAL_ERROR "Fatal error: Sorry about this, would you be so kind as to file a bug at http://git.io/2f_x-A and cite: \"Erroneous command regex '${regex}' for signature '${1}'\""
+	fi
 }
 
 # Match and call a command from user input
