@@ -45,7 +45,7 @@ body {
   margin-bottom: 20px;
 }
 .masthead #view-button,
-.masthead #download-button {
+.masthead #install-button {
   display: inline-block;
   vertical-align: top;
 }
