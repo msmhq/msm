@@ -10,6 +10,10 @@ Maintainers:
 
 Change Log
 ----------
+### [0.2.8](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.7...0.2.8)
+
+* Improved command registration to provided more accurate error messages if a command cannot be registered.
+* Improved Travis CI to only test the master branch.
 
 ### [0.2.7](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.6...0.2.7)
 
