@@ -10,6 +10,13 @@ Maintainers:
 
 Change Log
 ----------
+
+### [0.2.9](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.8...0.2.9)
+
+* Fixed issue [#23][#23] which caused commands to fail registration on some systems.
+
+[#23]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/23
+
 ### [0.2.8](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.7...0.2.8)
 
 * Improved command registration to provided more accurate error messages if a command cannot be registered.
