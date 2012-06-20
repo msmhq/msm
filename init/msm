@@ -2551,7 +2551,7 @@ main() {
 	register_command "server rename <name> <name>" "command_server_rename"
 	register_command "jargroup list" "command_jargroup_list"
 	register_command "jargroup create <name> <string>" "command_jargroup_create"
-	register_command "jargroup delete <name>" "command_jargorup_delete"
+	register_command "jargroup delete <name>" "command_jargroup_delete"
 	register_command "jargroup rename <name> <name>" "command_jargroup_rename"
 	register_command "jargroup changetarget <name> <string>" "command_jargroup_changetarget"
 	register_command "jargroup getlatest <name>" "command_jargroup_getlatest"
