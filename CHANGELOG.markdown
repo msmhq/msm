@@ -11,6 +11,11 @@ Maintainers:
 Change Log
 ----------
 
+### [0.2.10](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.9...0.2.10)
+
+* Fixed issue #28. Which prevented the `msm jargroup delete` command working.
+* Fixed a typo in the `msm version` help text.
+
 ### [0.2.9](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.8...0.2.9)
 
 * Fixed issue [#23][#23] which caused commands to fail registration on some systems.
