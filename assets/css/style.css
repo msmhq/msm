@@ -164,7 +164,7 @@ body {
 .players .player {
   position: relative;
   width: 32px;
-  height: 79px; /* 64 + 15 */
+  height: 80px; /* 65 + 15 */
 }
 .players .player .link {
   display: block;
