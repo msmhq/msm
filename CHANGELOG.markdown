@@ -11,7 +11,11 @@ Maintainers:
 Change Log
 ----------
 
-### [0.2.11](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.0...0.2.11)
+### [0.2.12](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.11...0.2.12)
+
+* Fixed `msm <server> stop` command. Which would fail for server's not first in the list.
+
+### [0.2.11](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.10...0.2.11)
 
 * Improved substring approach, which failed on some systems.
 
