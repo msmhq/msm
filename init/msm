@@ -1564,13 +1564,16 @@ command_server_whitelist_remove() {
 # Displays a list of whitelisted players for an individual server
 # $1: The server ID
 command_server_whitelist_list() {
-	# TODO: Protect against no whitelist file
-	local players="$(cat "${server_whitelist[$1]}")"
+	if [ -f "${server_whitelist[$1]}" ]; then
+		local players="$(cat "${server_whitelist[$1]}")"
 
-	if [ -z "$players" ]; then
-		echo "No players are whitelisted."
+		if [ -z "$players" ]; then
+			echo "No players are whitelisted."
+		else
+			echo "$players"
+		fi
 	else
-		echo "$players"
+		echo "No players are whitelisted."
 	fi
 }
 
@@ -1657,10 +1660,16 @@ command_server_blacklist_ip_remove() {
 # Displays a server's banned player names and ip addresses
 # $1: The server ID
 command_server_blacklist_list() {
-	# TODO: Protect against non-existent files
-	
-	local players="$(cat "${server_banned_players[$1]}")"
-	local ips="$(cat "${server_banned_ips[$1]}")"
+	local players
+	local ips
+
+	if [ -f "${server_banned_players[$1]}" ]; then
+		players="$(cat "${server_banned_players[$1]}")"
+	fi
+
+	if [ -f "${server_banned_ips[$1]}" ]; then
+		ips="$(cat "${server_banned_ips[$1]}")"
+	fi
 
 	if [[ -z "$players" && -z "$ips" ]]; then
 		echo "The blacklist is empty."
