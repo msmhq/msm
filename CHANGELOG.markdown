@@ -11,6 +11,12 @@ Maintainers:
 Change Log
 ----------
 
+### [0.2.14](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.13...0.2.14)
+
+* Improved checks done before reading server files. Closes [#20][#20]. 
+
+[#20]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/20
+
 ### [0.2.13](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.12...0.2.13)
 
 * Fixed the `msm <server> restart`, `msm <server> operator remove`, `msm <server> time set` and `msm <server> time add` commands.
