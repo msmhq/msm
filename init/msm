@@ -839,14 +839,14 @@ server_save_on() {
 server_stop() {
 	if server_is_running "$1"; then
 		# Change the state of the script
-		STOP_COUNTDOWN[$id]="true"
+		STOP_COUNTDOWN[$1]="true"
 	
-	    server_eval "$id" "say ${server_stop_message[$id]}"
-	    echo "Issued the warning \"${server_stop_message[$id]}\" to players."
+	    server_eval "$1" "say ${server_stop_message[$1]}"
+	    echo "Issued the warning \"${server_stop_message[$1]}\" to players."
 	
 		echo -n "Shutting down... "
 	
-		for ((i="${server_stop_delay[$id]}"; i>0; i--)); do
+		for ((i="${server_stop_delay[$1]}"; i>0; i--)); do
 			tput sc # Save cursor position
 			echo -n "in $i seconds."
 			sleep 1
@@ -856,7 +856,6 @@ server_stop() {
 		done
 	
 		echo -e "Now."
-		
 		server_stop_now "$1"
    	else
 		echo "Server \"${server_name[$1]}\" is not running."
