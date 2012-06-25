@@ -890,14 +890,14 @@ server_restart() {
 	# Restarts the server if it is already running
 	if server_is_running "$1"; then
 		# Change the state of the script
-		RESTART_COUNTDOWN[$id]="true"
+		RESTART_COUNTDOWN[$1]="true"
 	
-	    server_eval "$id" "say ${server_restart_message[$id]}"
-	    echo "Issued the warning \"${server_restart_message[$id]}\" to players."
+	    server_eval "$1" "say ${server_restart_message[$1]}"
+	    echo "Issued the warning \"${server_restart_message[$1]}\" to players."
 	
 		echo -n "Restarting... "
 	
-		for ((i="${server_stop_delay[$id]}"; i>0; i--)); do
+		for ((i="${server_stop_delay[$1]}"; i>0; i--)); do
 			tput sc # Save cursor position
 			echo -n "in $i seconds."
 			sleep 1
@@ -1045,7 +1045,7 @@ server_connected() {
 			echo "$players"
 		fi
 	else
-		echo "Server \"${server_name[$id]}\" is not running. No users are connected."
+		echo "Server \"${server_name[$1]}\" is not running. No users are connected."
 	fi
 }
 
@@ -1699,11 +1699,11 @@ command_server_operator_add() {
 # $2: The player name
 command_server_operator_remove() {
 	# TODO: Support multiple player names
-	if server_is_running "$id"; then
-		server_eval "$id" "deop $4"
-		echo "The player \"$4\" is no longer an operator for the server."
+	if server_is_running "$1"; then
+		server_eval "$1" "deop $2"
+		echo "The player \"$2\" is no longer an operator for the server."
 	else
-		error_exit SERVER_STOPPED "Server \"${server_name[$id]}\" is not running."
+		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
 	fi
 }
 
@@ -1797,11 +1797,11 @@ command_server_time_set() {
 
 		regex="${LOG_REGEX} ${server_confirm_time_set[$1]}"
 		if [[ "$line" =~ $regex ]]; then
-			echo "Set time to \"$1\"."
+			echo "Set time to \"$2\"."
 		fi
 		regex="${LOG_REGEX} ${server_confirm_time_set_fail[$1]}"
 		if [[ "$line" =~ $regex ]]; then
-			error_exit INVALID_ARGUMENT "Unable to convert \"$1\" to a time."
+			error_exit INVALID_ARGUMENT "Unable to convert \"$2\" to a time."
 		fi
 	else
 		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
@@ -1834,7 +1834,7 @@ command_server_time_add() {
 command_server_toggledownfall() {
 	if server_is_running "$1"; then
 		local line regex
-		line="$(server_eval_and_get_line "$id" "toggledownfall" "${server_confirm_toggledownfall[$1]}" "${server_confirm_toggledownfall_fail[$1]}")"
+		line="$(server_eval_and_get_line "$1" "toggledownfall" "${server_confirm_toggledownfall[$1]}" "${server_confirm_toggledownfall_fail[$1]}")"
 
 		regex="${LOG_REGEX} ${server_confirm_toggledownfall[$1]}"
 		if [[ "$line" =~ $regex ]]; then
