@@ -11,10 +11,16 @@ Maintainers:
 Change Log
 ----------
 
+### [0.2.11](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.0...0.2.11)
+
+* Improved substring approach, which failed on some systems.
+
 ### [0.2.10](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.9...0.2.10)
 
-* Fixed issue #28. Which prevented the `msm jargroup delete` command working.
+* Fixed issue [#28][#28]. Which prevented the `msm jargroup delete` command working.
 * Fixed a typo in the `msm version` help text.
+
+[#28]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/28
 
 ### [0.2.9](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.8...0.2.9)
 
@@ -33,12 +39,14 @@ Change Log
 
 ### [0.2.6](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.5...0.2.6)
 
-* Added the "all" keyword which can be used to execute a command for all servers. Closes #16
+* Added the "all" keyword which can be used to execute a command for all servers. Closes [#16][#16]
 * Added [Travis CI integration][travis] for per commit unit testing.
-* Improved command error messages to give specific command errors. Closes issue #10.
+* Improved command error messages to give specific command errors. Closes issue [#10][#10].
 * Fixed issue [#15][#15] which left a "tail" command process running after certain commands.
 
 [#15]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/15
+[#16]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/16
+[#10]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/10
 
 [travis]: http://travis-ci.org/#!/marcuswhybrow/minecraft-server-manager
 
