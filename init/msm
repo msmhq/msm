@@ -438,7 +438,7 @@ server_log_get_line() {
 				local regex="${LOG_REGEX} ${search_line}"
 				# and matches the regular expression
 				if [[ "$line" =~ $regex ]]; then
-					echo "$line"
+					echo "${line:0:${#line}-3}"
 					return 0
 				fi
 			done
@@ -1847,11 +1847,11 @@ command_server_toggledownfall() {
 
 		regex="${LOG_REGEX} ${server_confirm_toggledownfall[$1]}"
 		if [[ "$line" =~ $regex ]]; then
-			echo "${line:36:${#line}-3}"
+			echo "${line:36}"
 		fi
 		regex="${LOG_REGEX} ${server_confirm_toggledownfall_fail[$1]}"
 		if [[ "$line" =~ $regex ]]; then
-			echo "${line:34:${#line}-3}"
+			echo "${line:34}"
 		fi
 	else
 		error_exit SERVER_STOPPED "Server \"${server_name[$1]}\" is not running."
