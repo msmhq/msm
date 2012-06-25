@@ -11,6 +11,12 @@ Maintainers:
 Change Log
 ----------
 
+### [0.2.15](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.14...0.2.15)
+
+* Improved the removal of new line characters when reading Minecraft log files. Closes [#19][#19]
+
+[#19]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/19
+
 ### [0.2.14](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.13...0.2.14)
 
 * Improved checks done before reading server files. Closes [#20][#20]. 
