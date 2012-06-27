@@ -34,7 +34,8 @@ VERSION="0.2.16 Beta"
 declare -r JARGROUP_TARGET="target.txt"
 # Jar group directory name to download new jars to, is deleted afterwards
 declare -r JARGROUP_DOWNLOAD_DIR="downloads"
-
+# The server configuration file name
+declare -r SERVER_CONF_NAME="server.properties"
 # The start of a regex to find a log line
 declare -r LOG_REGEX="^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\]"
 
@@ -1961,6 +1962,8 @@ server_world_init() {
 # $1: The id of the server to laod
 server_load_config() {
 	local name value
+
+	echo "server: ${SERVER_NAME[$1]}"
 	
 	if [[ -f "${SERVER_CONF[$1]}" ]]; then
 		while read line; do 
@@ -1970,54 +1973,83 @@ server_load_config() {
 		   	# if not empty, set the property using declare
 		   	if [ ! -z "$line" ]; then
 			 	name="$(echo $line | awk -F '=' '{print $1}')"
-				value="$(echo $line | awk -F '\"' '{print $2}')"
+				value="$(echo $line | awk -F '=' '{print $2}')"
 			fi
 
 			case "$name" in
-				SERVER_USER) SERVER_USER_NAME[$1]="$value";;
-				SCREEN_NAME) SERVER_SCREEN_NAME[$1]="$value";;
-				WORLD_STORAGE_PATH) SERVER_WORLD_STORAGE[$1]="${SERVER_PATH[$1]}/$value";;
-				WORLD_STORAGE_INACTIVE_PATH) SERVER_WORLD_STORAGE_INACTIVE[$1]="${SERVER_PATH[$1]}/$value";;
+				# Minecraft settings:
+				allow-flight) SERVER_PROPERTIES_ALLOW_FLIGHT="$value";;
+				allow-nether) SERVER_PROPERTIES_ALLOW_NETHER="$value";;
+				difficulty) SERVER_PROPERTIES_DIFFICULTY="$value";;
+				enable-query) SERVER_PROPERTIES_ENABLE_QUERY="$value";;
+				enable-rcon) SERVER_PROPERTIES_ENABLE_RCON="$value";;
+				gamemode) SERVER_PROPERTIES_GAMEMODE="$value";;
+				generate-structures) SERVER_PROPERTIES_GENERATE_STRUCTURES="$value";;
+				level-name) SERVER_PROPERTIES_LEVEL_NAME="$value";;
+				level-seed) SERVER_PROPERTIES_LEVEL_SEED="$value";;
+				level-type) SERVER_PROPERTIES_LEVEL_TYPE="$value";;
+				max-build-height) SERVER_PROPERTIES_MAX_BUILD_HEIGHT="$value";;
+				max-players) SERVER_PROPERTIES_MAX_PLAYERS="$value";;
+				motd) SERVER_PROPERTIES_MOTD="$value";;
+				texture-pack) SERVER_PROPERTIES_TEXTURE_PACK="$value";;
+				online-mode) SERVER_PROPERTIES_ONLINE_MODE="$value";;
+				pvp) SERVER_PROPERTIES_PVP="$value";;
+				query.port) SERVER_PROPERTIES_QUERY_PORT="$value";;
+				rcon.password) SERVER_PROPERTIES_RCON_PASSWORD="$value";;
+				rcon.port) SERVER_PROPERTIES_RCON_PORT="$value";;
+				server-ip) SERVER_PROPERTIES_SERVER_IP="$value";;
+				server-port) SERVER_PROPERTIES_SERVER_PORT="$value";;
+				spawn-animals) SERVER_PROPERTIES_SPAWN_ANIMALS="$value";;
+				spawn-monsters) SERVER_PROPERTIES_SPAWN_MONSTERS="$value";;
+				spawn-npcs) SERVER_PROPERTIES_SPAWN_NPCS="$value";;
+				view-distance) SERVER_PROPERTIES_VIEW_DISTANCE="$value";;
+				white-list) SERVER_PROPERTIES_WHITE_LIST="$value";;
 
-				LOG) SERVER_LOG[$1]="${SERVER_PATH[$1]}/$value";;
-				PROPERTIES) SERVER_PROPERTIES[$1]="$value";;
-				WHITELIST) SERVER_WHITELIST[$1]="$value";;
-				BANNED_PLAYERS) SERVER_BANNED_PLAYERS[$1]="$value";;
-				BANNED_IPS) SERVER_BANNED_IPS[$1]="$value";;
+				# MSM setttings:
+				msm-server-user) SERVER_USER_NAME[$1]="$value";;
+				msm-screen-name) SERVER_SCREEN_NAME[$1]="$value";;
+				msm-world-storage-path) SERVER_WORLD_STORAGE[$1]="${SERVER_PATH[$1]}/$value";;
+				msm-world-storage-inactive-path) SERVER_WORLD_STORAGE_INACTIVE[$1]="${SERVER_PATH[$1]}/$value";;
 
-				OPS) SERVER_OPS[$1]="$value";;
-				JAR) SERVER_JAR[$1]="${SERVER_PATH[$1]}/$value";;
-				RAM) SERVER_RAM[$1]="$value";;
-				INVOCATION) SERVER_INVOCATION[$1]="$value";;
+				msm-log) SERVER_LOG[$1]="${SERVER_PATH[$1]}/$value";;
+				msm-whitelist) SERVER_WHITELIST[$1]="${SERVER_PATH[$1]}/$value";;
+				msm-banned-players) SERVER_BANNED_PLAYERS[$1]="${SERVER_PATH[$1]}/$value";;
+				msm-banned-ips) SERVER_BANNED_IPS[$1]="${SERVER_PATH[$1]}/$value";;
 
-				STOP_DELAY) SERVER_STOP_DELAY[$1]="$value";;
-				RESTART_DELAY) SERVER_RESTART_DELAY[$1]="$value";;
-				STOP_MESSAGE) SERVER_STOP_MESSAGE[$1]="$value";;
-				STOP_ABORT) SERVER_STOP_ABORT[$1]="$value";;
-				RESTART_MESSAGE) SERVER_RESTART_MESSAGE[$1]="$value";;
-				RESTART_ABORT) SERVER_RESTART_ABORT[$1]="$value";;
-				WORLD_BACKUP_STARTED) SERVER_WORLD_BACKUP_STARTED[$1]="$value";;
-				WORLD_BACKUP_FINISHED) SERVER_WORLD_BACKUP_FINISHED[$1]="$value";;
+				msm-ops) SERVER_OPS[$1]="${SERVER_PATH[$1]}/$value";;
+				msm-jar) SERVER_JAR[$1]="${SERVER_PATH[$1]}/$value";;
+				msm-ram) SERVER_RAM[$1]="$value";;
+				msm-invocation) SERVER_INVOCATION[$1]="$value";;
 
-				COMPLETE_BACKUP_STARTED) SERVER_COMPLETE_BACKUP_STARTED[$1]="$value";;
-				COMPLETE_BACKUP_FINISHED) SERVER_COMPLETE_BACKUP_FINISHED[$1]="$value";;
-				CONFIRM_SAVE_ON) SERVER_CONFIRM_SAVE_ON[$1]="$value";;
-				CONFIRM_SAVE_OFF) SERVER_CONFIRM_SAVE_OFF[$1]="$value";;
-				CONFIRM_SAVE_ALL) SERVER_CONFIRM_SAVE_ALL[$1]="$value";;
-				CONFIRM_START) SERVER_CONFIRM_START[$1]="$value";;
-				CONFIRM_WHITELIST_LIST) SERVER_CONFIRM_WHITELIST_LIST[$1]="$value";;
-				CONFIRM_KICK) SERVER_CONFIRM_CONFIRM_KICK[$1]="$value";;
-				CONFIRM_KICK_FAIL) SERVER_CONFIRM_KICK_FAIL[$1]="$value";;
-				CONFIRM_TIME_SET) SERVER_CONFIRM_TIME_SET[$1]="$value";;
-				CONFIRM_TIME_SET_FAIL) SERVER_CONFIRM_TIME_SET_FAIL[$1]="$value";;
-				CONFIRM_TIME_ADD) SERVER_CONFIRM_TIME_ADD[$1]="$value";;
-				CONFIRM_TIME_ADD_FAIL) SERVER_CONFIRM_TIME_ADD_FAIL[$1]="$value";;
-				CONFIRM_TOGGLEDOWNFALL) SERVER_CONFIRM_TOGGLEDOWNFALL[$1]="$value";;
-				CONFIRM_TOGGLEDOWNFALL_FAIL) SERVER_CONFIRM_TOGGLEDOWNFALL_FAIL[$1]="$value";;
-				CONFIRM_GAMEMODE) SERVER_CONFIRM_GAMEMODE[$1]="$value";;
-				CONFIRM_GAMEMODE_FAIL_NO_USER) SERVER_CONFIRM_GAMEMODE_FAIL_NO_USER[$1]="$value";;
-				CONFIRM_GAMEMODE_FAIL_NO_CHANGE) SERVER_CONFIRM_GAMEMODE_FAIL_NO_CHANGE[$1]="$value";;
-				COMPLETE_BACKUP_FOLLOW_SYMLINKS) SERVER_COMPLETE_BACKUP_FOLLOW_SYMLINKS[$1]="$value";;
+				msm-stop-delay) SERVER_STOP_DELAY[$1]="$value";;
+				msm-restart-delay) SERVER_RESTART_DELAY[$1]="$value";;
+				
+				msm-stop-message) SERVER_STOP_MESSAGE[$1]="$value";;
+				msm-stop-abort) SERVER_STOP_ABORT[$1]="$value";;
+				msm-restart-message) SERVER_RESTART_MESSAGE[$1]="$value";;
+				msm-restart-abort) SERVER_RESTART_ABORT[$1]="$value";;
+				msm-world-backup-started) SERVER_WORLD_BACKUP_STARTED[$1]="$value";;
+				msm-world-backup-finished) SERVER_WORLD_BACKUP_FINISHED[$1]="$value";;
+				msm-complete-backup-started) SERVER_COMPLETE_BACKUP_STARTED[$1]="$value";;
+				msm-complete-backup-finished) SERVER_COMPLETE_BACKUP_FINISHED[$1]="$value";;
+				msm-complete-backup-follow-symlinks) SERVER_COMPLETE_BACKUP_FOLLOW_SYMLINKS[$1]="$value";;
+
+				msm-confirm-save-on) SERVER_CONFIRM_SAVE_ON[$1]="$value";;
+				msm-confirm-save-off) SERVER_CONFIRM_SAVE_OFF[$1]="$value";;
+				msm-confirm-save-all) SERVER_CONFIRM_SAVE_ALL[$1]="$value";;
+				msm-confirm-start) SERVER_CONFIRM_START[$1]="$value";;
+				msm-confirm-whitelist-list) SERVER_CONFIRM_WHITELIST_LIST[$1]="$value";;
+				msm-confirm-kick) SERVER_CONFIRM_CONFIRM_KICK[$1]="$value";;
+				msm-confirm-kick-fail) SERVER_CONFIRM_KICK_FAIL[$1]="$value";;
+				msm-confirm-time-set) SERVER_CONFIRM_TIME_SET[$1]="$value";;
+				msm-confirm-time-set-fail) SERVER_CONFIRM_TIME_SET_FAIL[$1]="$value";;
+				msm-confirm-time-add) SERVER_CONFIRM_TIME_ADD[$1]="$value";;
+				msm-confirm-time-add-fail) SERVER_CONFIRM_TIME_ADD_FAIL[$1]="$value";;
+				msm-confirm-toggledownfall) SERVER_CONFIRM_TOGGLEDOWNFALL[$1]="$value";;
+				msm-confirm-toggledownfall-fail) SERVER_CONFIRM_TOGGLEDOWNFALL_FAIL[$1]="$value";;
+				msm-confirm-gamemode) SERVER_CONFIRM_GAMEMODE[$1]="$value";;
+				msm-confirm-gamemode-fail-no-user) SERVER_CONFIRM_GAMEMODE_FAIL_NO_USER[$1]="$value";;
+				msm-confirm-gamemode-fail-no-change) SERVER_CONFIRM_GAMEMODE_FAIL_NO_CHANGE[$1]="$value";;
 			esac
 		done < "${SERVER_CONF[$1]}"
 	fi
@@ -2029,7 +2061,7 @@ server_load_config() {
 server_init() {
 	SERVER_NAME[$1]="$2"
 	SERVER_PATH[$1]="$SERVER_STORAGE_PATH/$2"
-	SERVER_CONF[$1]="${SERVER_PATH[$1]}/$DEFAULT_SERVER_CONF"
+	SERVER_CONF[$1]="${SERVER_PATH[$1]}/$SERVER_CONF_NAME"
 	SERVER_FLAG_ACTIVE[$1]="${SERVER_PATH[$1]}/active"
 	SERVER_BACKUP_PATH[$1]="$BACKUP_ARCHIVE_PATH/${SERVER_NAME[$1]}"
 	SERVER_LOG_archive_path[$1]="$LOG_ARCHIVE_PATH/${SERVER_NAME[$1]}"
@@ -2050,7 +2082,6 @@ server_init() {
 	SERVER_WORLD_STORAGE[$1]="${SERVER_PATH[$1]}/$DEFAULT_WORLD_STORAGE_PATH"
 	SERVER_WORLD_STORAGE_INACTIVE[$1]="${SERVER_PATH[$1]}/$DEFAULT_WORLD_STORAGE_INACTIVE_PATH"
 	SERVER_LOG[$1]="${SERVER_PATH[$1]}/$DEFAULT_LOG"
-	SERVER_PROPERTIES[$1]="${SERVER_PATH[$1]}/$DEFAULT_PROPERTIES"
 	SERVER_WHITELIST[$1]="${SERVER_PATH[$1]}/$DEFAULT_WHITELIST"
 	SERVER_BANNED_PLAYERS[$1]="${SERVER_PATH[$1]}/$DEFAULT_BANNED_PLAYERS"
 	SERVER_BANNED_IPS[$1]="${SERVER_PATH[$1]}/$DEFAULT_BANNED_IPS"
