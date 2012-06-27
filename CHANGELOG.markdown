@@ -11,6 +11,12 @@ Maintainers:
 Change Log
 ----------
 
+### [0.3.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.16...0.3.0)
+
+* Closes [#22][#22], by merging `server.conf` into `server.properties`.
+
+[#22]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/22
+
 ### [0.2.16](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.15...0.2.16)
 
 * Improved the `msm <server> worlds ram <world>` command to insist the server is stopped.
@@ -113,7 +119,7 @@ Change Log
 * Added error messages preventing script use when a required `msm.conf` settings is not specified.
 * Removed fallbacks for settigns not specified in `msm.conf`.
 
-### [0.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.1.3...0.2)
+### [0.2.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.1.3...0.2)
 
 * Added bash completion.
 * Altered project layout to feature directories for bash_completion, cron and init files. This is useful for dealing with three files all named `msm`.
@@ -148,7 +154,7 @@ Change Log
 * Fixed a bug preventing world links from being created.
 * Fixed a bug where a server stopped as the result of a command would not always be made inactive.
 
-### [0.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/aaaa69dbd6c45ff0eb7dd69b756b4103abadfbc4...0.1)
+### [0.1.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/aaaa69dbd6c45ff0eb7dd69b756b4103abadfbc4...0.1)
 
 * Refactored and improved protype code.
 * Transitioned from managing a single to multiple servers.
