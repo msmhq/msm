@@ -11,6 +11,11 @@ Maintainers:
 Change Log
 ----------
 
+### [0.2.16](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.15...0.2.16)
+
+* Improved the `msm <server> worlds ram <world>` command to insist the server is stopped.
+* Refactored global variables to be uppercase. This avoids name clashes.
+
 ### [0.2.15](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.14...0.2.15)
 
 * Improved the removal of new line characters when reading Minecraft log files. Closes [#19][#19]
