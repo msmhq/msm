@@ -2182,7 +2182,6 @@ server_init() {
 
 # Asserts that a variable has been set in the config file
 # $1: The name of the variable to test
-# $2: The message to print to stderr if the variable is unset
 assert_is_set_in_config() {
     [[ ! ${!1} && ${!1-_} ]] && {
         error_exit CONF_ERROR "$1 must be set in $CONF"
@@ -2200,7 +2199,6 @@ init_ensure_settings() {
 	assert_is_set_in_config LOG_ARCHIVE_PATH
 	assert_is_set_in_config BACKUP_ARCHIVE_PATH
 	
-	assert_is_set_in_config DEFAULT_SERVER_CONF
 	assert_is_set_in_config DEFAULT_SERVER_USER
 	assert_is_set_in_config DEFAULT_SCREEN_NAME
 	assert_is_set_in_config DEFAULT_WORLD_STORAGE_PATH
