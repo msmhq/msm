@@ -23,10 +23,29 @@ As well as starting, stopping and restarting MSM has the following features:
 * Plethora of in-game commands (whitelist, blacklist, operator, gamemode, kick, say, time, toggledownfall, save)
 * Send commands straight to the server via the command line.
 
+
 ## Upcomming features
 
 * **QuickBackup:** If you store your backups non-locally (maybe on a NAS), QuickBackup optionally creates a backup locally for speed, and then moves it after your players are building again! My initial testing shows a 54 second network backup confaltes to 23 seconds of in-game time.
 * **Restore:** Roll-back to an old world or whole server backup automatically.
+
+
+## Versioning
+
+MSM uses semantic version numbers to better describe what code one might have installed, and indicate backwards incompatible changes.
+
+Releases will be numbered with the follow format:
+
+`<major>.<minor>.<patch>`
+
+And constructed with the following guidelines:
+
+* Breaking backward compatibility bumps the major (and resets the minor and patch)
+* New additions without breaking backward compatibility bumps the minor (and resets the patch)
+* Bug fixes and misc changes bumps the patch
+
+For more information on SemVer, please visit http://semver.org/.
+
 
 ## Acknowledgements
 
