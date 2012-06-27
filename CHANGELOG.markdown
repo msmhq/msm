@@ -11,9 +11,14 @@ Maintainers:
 Change Log
 ----------
 
+### [0.3.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.0...0.3.1)
+
+* Prevented `DEFAULT_SERVER_CONF` from being a required setting.
+
 ### [0.3.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.16...0.3.0)
 
 * Closes [#22][#22], by merging `server.conf` into `server.properties`.
+* Removed the `DEFAULT_SERVER_CONF` setting from `/etc/msm.conf`.
 
 [#22]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/22
 
