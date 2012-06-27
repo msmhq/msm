@@ -1425,7 +1425,11 @@ command_server_worlds_load() {
 # $1: The server ID
 # $2: The world ID
 command_server_worlds_ram() {
-	world_toggle_ramdisk_state "$2"
+	if server_is_running "$1"; then
+		error_exit SERVER_RUNNING "Server \"${SERVER_NAME[$1]}\" is running. Please stop the server before altering a worlds in-ram status."
+	else
+		world_toggle_ramdisk_state "$2"
+	fi
 }
 
 # Synchronises all inram worlds back to disk for an individual server
