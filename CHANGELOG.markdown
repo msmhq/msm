@@ -11,6 +11,12 @@ Maintainers:
 Change Log
 ----------
 
+### [0.3.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.1...0.3.2)
+
+* Removes an erroneous debug statement. Fixes [#32][#32]
+
+[#32]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/32
+
 ### [0.3.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.0...0.3.1)
 
 * Prevented `DEFAULT_SERVER_CONF` from being a required setting.
