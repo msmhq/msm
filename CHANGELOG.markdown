@@ -11,15 +11,25 @@ Maintainers:
 Change Log
 ----------
 
+### [0.3.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.2...0.3.3)
+
+* Fixed [#33][#33], by not assuming there are three invisible characters at the end of every log line.
+* Fixed function names which were accidently converted to uppercase.
+
+[#32]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/32
+
+
 ### [0.3.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.1...0.3.2)
 
 * Removes an erroneous debug statement. Fixes [#32][#32]
 
 [#32]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/32
 
+
 ### [0.3.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.0...0.3.1)
 
 * Prevented `DEFAULT_SERVER_CONF` from being a required setting.
+
 
 ### [0.3.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.16...0.3.0)
 
@@ -28,10 +38,12 @@ Change Log
 
 [#22]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/22
 
+
 ### [0.2.16](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.15...0.2.16)
 
 * Improved the `msm <server> worlds ram <world>` command to insist the server is stopped.
 * Refactored global variables to be uppercase. This avoids name clashes.
+
 
 ### [0.2.15](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.14...0.2.15)
 
@@ -39,23 +51,28 @@ Change Log
 
 [#19]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/19
 
+
 ### [0.2.14](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.13...0.2.14)
 
 * Improved checks done before reading server files. Closes [#20][#20]. 
 
 [#20]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/20
 
+
 ### [0.2.13](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.12...0.2.13)
 
 * Fixed the `msm <server> restart`, `msm <server> operator remove`, `msm <server> time set` and `msm <server> time add` commands.
+
 
 ### [0.2.12](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.11...0.2.12)
 
 * Fixed `msm <server> stop` command. Which would fail for server's not first in the list.
 
+
 ### [0.2.11](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.10...0.2.11)
 
 * Improved substring approach, which failed on some systems.
+
 
 ### [0.2.10](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.9...0.2.10)
 
@@ -64,20 +81,24 @@ Change Log
 
 [#28]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/28
 
+
 ### [0.2.9](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.8...0.2.9)
 
 * Fixed issue [#23][#23] which caused commands to fail registration on some systems.
 
 [#23]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/23
 
+
 ### [0.2.8](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.7...0.2.8)
 
 * Improved command registration to provided more accurate error messages if a command cannot be registered.
 * Improved Travis CI to only test the master branch.
 
+
 ### [0.2.7](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.6...0.2.7)
 
 * Refactored commands such that they are now registered using a function, rather than one huge swith/case statement.
+
 
 ### [0.2.6](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.5...0.2.6)
 
@@ -92,6 +113,7 @@ Change Log
 
 [travis]: http://travis-ci.org/#!/marcuswhybrow/minecraft-server-manager
 
+
 ### [0.2.5](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.4...0.2.5)
 
 * Added `test.sh`, a script which runs `shunit2` unit tests.
@@ -105,11 +127,13 @@ Change Log
 
 [#11]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/14
 
+
 ### [0.2.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.3...0.2.4)
 
 * Fixes issue [#11][#11]. Now running server's cannot be renamed, preventing not being able to stop a server renamed whilst running.
 
 [#11]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/11
+
 
 ### [0.2.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.2...0.2.3)
 
@@ -119,9 +143,11 @@ Change Log
 [#13]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/13
 [@Jonek01]: https://github.com/Jonek01
 
+
 ### [0.2.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.1...0.2.2)
 
 * Added `msm version` command, to check your installation version.
+
 
 ### [0.2.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2...0.2.1)
 
@@ -130,6 +156,7 @@ Change Log
 * Added error messages preventing script use when a required `msm.conf` settings is not specified.
 * Removed fallbacks for settigns not specified in `msm.conf`.
 
+
 ### [0.2.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.1.3...0.2)
 
 * Added bash completion.
@@ -137,6 +164,7 @@ Change Log
 * Removed `msm <server> worlds toram` as an accessible command.
 * Fixed a bug preventing `WORLD_STORAGE_PATH` from being overriden by a server.
 * Fixed error in `msm.conf`
+
 
 ### [0.1.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.1.2...0.1.3)
 
@@ -153,6 +181,7 @@ Change Log
 * Fixed a bug preventing `msm <server> connected` from working.
 * Fixed a bug preventing `msm <server> jar` from working.
 
+
 ### [0.1.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.1.1...0.1.2)
 
 * Added in-game messages, and correct pausing and resuming of Minecraft world saving around world backups.
@@ -160,10 +189,12 @@ Change Log
 * Fixed a bug listing a server's worlds.
 * Fixed a bug when stopping all servers in parallel, where a server might not stop at the correct time.
 
+
 ### [0.1.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.1...0.1.1)
 
 * Fixed a bug preventing world links from being created.
 * Fixed a bug where a server stopped as the result of a command would not always be made inactive.
+
 
 ### [0.1.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/aaaa69dbd6c45ff0eb7dd69b756b4103abadfbc4...0.1)
 
