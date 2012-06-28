@@ -420,7 +420,7 @@ server_worlds_to_disk() {
 # $2: A UNIX timestamp (seconds since 1970) which the $3 line must be after
 # $3->: The line or lines in the log to wait for
 # returns: When the line is found
-SERVER_LOG_get_line() {
+server_log_get_line() {
     # Make sure there is a server log to check
     as_user "${SERVER_USER_NAME[$1]}" "touch ${SERVER_LOG[$1]}"
 
@@ -441,10 +441,10 @@ SERVER_LOG_get_line() {
 	done < <(as_user "${SERVER_USER_NAME[$1]}" "tail --pid=$$ --follow --lines=100 --sleep-interval=0.1 \"${SERVER_LOG[$1]}\"")
 }
 
-# The same as SERVER_LOG_get_line, but does not print the line to stdout
+# The same as server_log_get_line, but does not print the line to stdout
 # when found.
-SERVER_LOG_wait_for_line() {
-	SERVER_LOG_get_line "$@" > /dev/null
+server_log_wait_for_line() {
+	server_log_get_line "$@" > /dev/null
 }
 
 # Sends as string to a server for execution
@@ -462,7 +462,7 @@ server_eval() {
 server_eval_and_get_line() {
 	time_now="$(now)"
 	server_eval "$1" "$2"
-	SERVER_LOG_get_line "$1" "$time_now" "${@:3}"
+	server_log_get_line "$1" "$time_now" "${@:3}"
 }
 
 # The same as server_eval_and_get_line, but does not print anything to stdout
@@ -775,7 +775,7 @@ server_start() {
 		
 		printf "Starting server... "
 		as_user "${SERVER_USER_NAME[$1]}" "cd \"${SERVER_PATH[$1]}\" && screen -dmS \"${SERVER_SCREEN_NAME[$1]}\" ${SERVER_INVOCATION[$1]}"
-		SERVER_LOG_wait_for_line "$1" "$time_now" "${SERVER_CONFIRM_START[$1]}"
+		server_log_wait_for_line "$1" "$time_now" "${SERVER_CONFIRM_START[$1]}"
 		
 		echo "Done."
 	fi
@@ -953,7 +953,7 @@ server_worlds_backup() {
 
 # Moves a servers log into another file, leaving the original log file empty
 # $1: The ID of the server
-SERVER_LOG_roll() {
+server_log_roll() {
 	# Moves and Gzips the logfile, a big log file slows down the
 	# server A LOT (what was notch thinking?)
 
@@ -1479,8 +1479,8 @@ command_server_worlds_off() {
 
 # Moves an individual server's log text to another file, leaving it empty
 # $1: The server ID
-command_SERVER_LOGroll() {
-	SERVER_LOG_roll "$1"
+command_server_logroll() {
+	server_log_roll "$1"
 }
 
 # Makes a backup of an entire server directory
