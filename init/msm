@@ -1962,8 +1962,6 @@ server_world_init() {
 # $1: The id of the server to laod
 server_load_config() {
 	local name value
-
-	echo "server: ${SERVER_NAME[$1]}"
 	
 	if [[ -f "${SERVER_CONF[$1]}" ]]; then
 		while read line; do 
