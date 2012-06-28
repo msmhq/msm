@@ -433,7 +433,7 @@ server_log_get_line() {
 				local regex="${LOG_REGEX} ${search_line}"
 				# and matches the regular expression
 				if [[ "$line" =~ $regex ]]; then
-					echo "${line:0:${#line}-3}"
+					echo "${line}"
 					return 0
 				fi
 			done
