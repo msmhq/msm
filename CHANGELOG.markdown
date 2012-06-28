@@ -149,7 +149,7 @@ Change Log
 * Added `msm version` command, to check your installation version.
 
 
-### [0.2.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2...0.2.1)
+### [0.2.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.2.0...0.2.1)
 
 * Added `msm <server> worlds on|off <world>` command, which activates and deactives worlds. Inactive worlds don't get backed up, cannot be used by the server, but are included in complete server backups.
 * Added `CHANGELOG.markdown`.
@@ -157,7 +157,7 @@ Change Log
 * Removed fallbacks for settigns not specified in `msm.conf`.
 
 
-### [0.2.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.1.3...0.2)
+### [0.2.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.1.3...0.2.0)
 
 * Added bash completion.
 * Altered project layout to feature directories for bash_completion, cron and init files. This is useful for dealing with three files all named `msm`.
@@ -190,13 +190,13 @@ Change Log
 * Fixed a bug when stopping all servers in parallel, where a server might not stop at the correct time.
 
 
-### [0.1.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.1...0.1.1)
+### [0.1.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.1.0...0.1.1)
 
 * Fixed a bug preventing world links from being created.
 * Fixed a bug where a server stopped as the result of a command would not always be made inactive.
 
 
-### [0.1.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/aaaa69dbd6c45ff0eb7dd69b756b4103abadfbc4...0.1)
+### [0.1.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/aaaa69dbd6c45ff0eb7dd69b756b4103abadfbc4...0.1.0)
 
 * Refactored and improved protype code.
 * Transitioned from managing a single to multiple servers.
