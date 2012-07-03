@@ -11,6 +11,15 @@ Maintainers:
 Change Log
 ----------
 
+### [0.4.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.4...0.4.0)
+
+* Added the `<server> give <player> <item> [amount] [data]` command. Closes [#34][#34]. Thanks to [@Vi3GameHkr][@Vi3GameHkr] for the suggestion.
+* Added the `<server> xp <player> <amount>` command.
+* Fixed the `gamemode`, `cmd` and `cmdlog` server commands *again*. They now accept multiple arguments as intented.
+
+[@Vi3GameHkr]: https://github.com/Vi3GameHkr
+[#34]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/34
+
 ### [0.3.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.3...0.3.4)
 
 * Fixed the `gamemode`, `cmd` and `cmdlog` server commands. They were not previously accessable. 
