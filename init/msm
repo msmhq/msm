@@ -1875,19 +1875,24 @@ command_server_toggledownfall() {
 command_server_give() {
 	if server_is_running "$1"; then
 		local line regex
+
+		if [[ "$3" =~ ^\-[0-9]+$ ]]; then
+			error_exit INVALID_ARGUMENT "Item ID \"$3\" must be a positive integer or string."
+		fi
+
 		line="$(server_eval_and_get_line "$1" "give $2 $3 $4 $5" "${SERVER_CONFIRM_GIVE[$1]}" "${SERVER_CONFIRM_GIVE_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_GIVE_FAIL_NO_ITEM[$1]}")"
 
 		regex="${LOG_REGEX} ${SERVER_CONFIRM_GIVE[$1]}"
 		if [[ "$line" =~ $regex ]]; then
-			echo "${line}"
+			echo "${line:36}"
 		fi
 		regex="${LOG_REGEX} ${SERVER_CONFIRM_GIVE_FAIL_NO_USER[$1]}"
 		if [[ "$line" =~ $regex ]]; then
-			echo "${line}"
+			echo "${line:27}"
 		fi
 		regex="${LOG_REGEX} ${SERVER_CONFIRM_GIVE_FAIL_NO_ITEM[$1]}"
 		if [[ "$line" =~ $regex ]]; then
-			echo "${line}"
+			echo "${line:27}"
 		fi
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
@@ -1898,14 +1903,27 @@ command_server_give() {
 # $1: The server ID
 # $2: The player name
 # $3: The amount of XP to give (can be negative)
-# command_server_xp() {
-# 	if server_is_running "$1"; then
-# 		local line regex
-# 		line="$(server_eval_and_get_line "$1" "xp $2 $3" "${SERVER_CONFIRM_XP[$1]}")"
-# 	else
-# 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
-# 	fi
-# }
+command_server_xp() {
+	if server_is_running "$1"; then
+		local line regex
+		line="$(server_eval_and_get_line "$1" "xp $2 $3" "${SERVER_CONFIRM_XP[$1]}" "${SERVER_CONFIRM_XP_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_XP_FAIL_INVALID_AMOUNT[$1]}")"
+
+		regex="${LOG_REGEX} ${SERVER_CONFIRM_XP[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "${line:36}"
+		fi
+		regex="${LOG_REGEX} ${SERVER_CONFIRM_XP_FAIL_NO_USER[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "${line:27}"
+		fi
+		regex="${LOG_REGEX} ${SERVER_CONFIRM_XP_FAIL_INVALID_AMOUNT[$1]}"
+		if [[ "$line" =~ $regex ]]; then
+			echo "${line:27}"
+		fi
+	else
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
+	fi
+}
 
 # Turns world saving on for an individual server
 # $1: The server ID
@@ -2101,6 +2119,9 @@ server_load_config() {
 				msm-confirm-give) SERVER_CONFIRM_GIVE[$1]="$value";;
 				msm-confirm-give-fail-no-user) SERVER_CONFIRM_GIVE_FAIL_NO_USER[$1]="$value";;
 				msm-confirm-give-fail-no-item) SERVER_CONFIRM_GIVE_FAIL_NO_ITEM[$1]="$value";;
+				msm-confirm-xp) SERVER_CONFIRM_XP[$1]="$value";;
+				msm-confirm-xp-fail-no-user) SERVER_CONFIRM_XP_FAIL_NO_USER[$1]="$value";;
+				msm-confirm-xp-fail-invalid-amount) SERVER_CONFIRM_XP_FAIL_INVALID_AMOUNT[$1]="$value";;
 			esac
 		done < "${SERVER_CONF[$1]}"
 	fi
@@ -2169,6 +2190,9 @@ server_init() {
 	SERVER_CONFIRM_GIVE[$1]="$DEFAULT_CONFIRM_GIVE"
 	SERVER_CONFIRM_GIVE_FAIL_NO_USER[$1]="$DEFAULT_CONFIRM_GIVE_FAIL_NO_USER"
 	SERVER_CONFIRM_GIVE_FAIL_NO_ITEM[$1]="$DEFAULT_CONFIRM_GIVE_FAIL_NO_ITEM"
+	SERVER_CONFIRM_XP[$1]="$DEFAULT_CONFIRM_XP"
+	SERVER_CONFIRM_XP_FAIL_NO_USER[$1]="$DEFAULT_CONFIRM_XP_FAIL_NO_USER"
+	SERVER_CONFIRM_XP_FAIL_INVALID_AMOUNT[$1]="$DEFAULT_CONFIRM_XP_FAIL_INVALID_AMOUNT"
 	
 	
 	# Load config overrides from server config file if present
@@ -2298,6 +2322,9 @@ init_ensure_settings() {
 	assert_is_set_in_config DEFAULT_CONFIRM_GIVE
 	assert_is_set_in_config DEFAULT_CONFIRM_GIVE_FAIL_NO_USER
 	assert_is_set_in_config DEFAULT_CONFIRM_GIVE_FAIL_NO_ITEM
+	assert_is_set_in_config DEFAULT_CONFIRM_XP
+	assert_is_set_in_config DEFAULT_CONFIRM_XP_FAIL_NO_USER
+	assert_is_set_in_config DEFAULT_CONFIRM_XP_FAIL_INVALID_AMOUNT
 }
 
 init() {
@@ -2363,7 +2390,11 @@ register_command() {
 		# Variables are denoted by angle brackets (e.g. "<variable>") and can
 		# at this stage be accepted as any non-zero string
 		if [[ "$word" =~ ^\<.*\>$ ]]; then
-			regex="${regex}([^ ]+|\\\"[^\\\"]*\\\") "
+			if [[ "$word" == "<strings>" ]]; then
+				regex="${regex}([^ ]+|\\\"[^\\\"]*\\\")( [^ ]+|\\\"[^\\\"]*\\\")+ "
+			else
+				regex="${regex}([^ ]+|\\\"[^\\\"]*\\\") "
+			fi
 			continue
 		fi
 		
@@ -2704,7 +2735,7 @@ main() {
 	register_command "<name:server> give <string> <string>" "command_server_give"
 	register_command "<name:server> give <string> <string> <string>" "command_server_give"
 	register_command "<name:server> give <string> <string> <string> <string>" "command_server_give"
-	# register_command "<name:server> xp <string> <string>" "command_server_xp"
+	register_command "<name:server> xp <string> <string>" "command_server_xp"
 	register_command "<name:server> save on" "command_server_save_on"
 	register_command "<name:server> save off" "command_server_save_off"
 	register_command "<name:server> save all" "command_server_save_all"
