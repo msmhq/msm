@@ -11,6 +11,10 @@ Maintainers:
 Change Log
 ----------
 
+### [0.3.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.3...0.3.4)
+
+* Fixed the `gamemode`, `cmd` and `cmdlog` server commands. They were not previously accessable. 
+
 ### [0.3.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.2...0.3.3)
 
 * Fixed [#33][#33], by not assuming there are three invisible characters at the end of every log line.
