@@ -1345,7 +1345,7 @@ command_help() {
 	echo -e "  <server> time set|add <number>                Set/increment time on a server (0-24000)"
 	echo -e "  <server> toggledownfall                       Toggles rain and snow on a server"
 	echo -e "  <server> give <player> <item> [amount] [data] Gives an entity to a player"
-	# echo -e "  <server> xp <player> <amount>                 Gives XP to, or takes away (when negative) XP from, a player"
+	echo -e "  <server> xp <player> <amount>                 Gives XP to, or takes away (when negative) XP from, a player"
 	echo -e "  <server> save on|off                          Enable/disable writing world changes to file"
 	echo -e "  <server> save all                             Force the writing of all non-saved world changes to file"
 	echo -e "  <server> cmd <command>                        Send a command string to the server and return"
