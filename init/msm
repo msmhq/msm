@@ -2363,7 +2363,7 @@ register_command() {
 		# Variables are denoted by angle brackets (e.g. "<variable>") and can
 		# at this stage be accepted as any non-zero string
 		if [[ "$word" =~ ^\<.*\>$ ]]; then
-			regex="${regex}([^ ]+|\".*\"|'.*') "
+			regex="${regex}([^ ]+|\\\"[^\\\"]*\\\") "
 			continue
 		fi
 		
@@ -2398,8 +2398,23 @@ register_command() {
 # Match and call a command from user input
 # $*: User input
 call_command() {
+
+	local args
+	local space="\ "
+	for arg in "$@"; do
+		if [[ "$arg" =~ $space ]]; then
+			args="$args\"$arg\" "
+		else
+			args="$args$arg "
+		fi
+	done
+
+	if [ ${#args} -ge 1 ]; then
+		args="${args:0:${#args}-1}"
+	fi
+
 	for ((i=0; i<$COMMAND_COUNT; i++)); do
-		if [[ "$*" =~ ${COMMAND_REGEX[$i]} ]]; then
+		if [[ "$args" =~ ${COMMAND_REGEX[$i]} ]]; then
 			unset args
 			local word_offset=1
 			local args
