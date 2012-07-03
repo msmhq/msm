@@ -118,7 +118,7 @@ _msm() {
 					__init_server "${COMP_WORDS[1]}"
 					
 					if [[ $COMP_CWORD == 2 ]]; then
-						options="start stop restart status connected worlds logroll backup jar whitelist blacklist operator gamemode kick say time toggledownfall save cmd cmdlog"
+						options="start stop restart status connected worlds logroll backup jar whitelist blacklist operator gamemode kick say time toggledownfall give xp save cmd cmdlog console"
 					else
 						case "${COMP_WORDS[2]}" in
 							stop|restart)
