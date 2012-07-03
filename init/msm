@@ -2621,7 +2621,7 @@ main() {
 	register_command "<name:server> operator|op add <string>" "command_server_operator_add"
 	register_command "<name:server> operator|op remove <string>" "command_server_operator_remove"
 	register_command "<name:server> operator|op list" "command_server_operator_list"
-	register_command "<name:server> gamemode|gm survival|creative|0|1 <string>" "command_server_gamemode"
+	register_command "<name:server> gamemode|gm <string> <string>" "command_server_gamemode"
 	register_command "<name:server> kick <string>" "command_server_kick"
 	register_command "<name:server> say <strings>" "command_server_say"
 	register_command "<name:server> time set <string>" "command_server_time_set"
@@ -2630,8 +2630,8 @@ main() {
 	register_command "<name:server> save on" "command_server_save_on"
 	register_command "<name:server> save off" "command_server_save_off"
 	register_command "<name:server> save all" "command_server_save_all"
-	register_command "<name:server> cmd" "command_server_cmd"
-	register_command "<name:server> cmdlog" "command_server_cmdlog"
+	register_command "<name:server> cmd <strings>" "command_server_cmd"
+	register_command "<name:server> cmdlog <strings>" "command_server_cmdlog"
 	register_command "<name:server> console" "command_server_console"
 	
 	# This function call matches the user input to a registered command
