@@ -2,7 +2,7 @@
 
 A single init script which makes running multiple Minecraft/Bukkit servers easier for us admins.
 
-See the [installation page][wiki-install] to get started, or [visit the wiki][wiki] for the full list of resources.
+See the [installation page][wiki-install] to get started, or [visit the wiki][wiki] for the full list of resources. Read the [changelog][changelog] to get a picture of how MSM has evloved over time. MSM is released under the GPLv3 licence, which is included in the repository [here][licence]. I'm open to suggestions where licencing is concerned.
 
 [![Flattr this git repo](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=marcuswhybrow&url=https://github.com/marcuswhybrow/minecraft-server-manager&title=Minecraft%20Server%20Manager&language=en_GB&tags=github,minecraft,bukkit,init,init.d,linux,ubunut&category=software) 
 
@@ -55,3 +55,5 @@ This code grew out of an old version of [Ahtenus' Minecraft Init Script][ahtenus
 [ahtenus-minecraft-init]: https://github.com/Ahtenus/minecraft-init
 [wiki]: https://github.com/marcuswhybrow/minecraft-server-manager/wiki
 [wiki-install]: https://github.com/marcuswhybrow/minecraft-server-manager/wiki/Installation
+[changelog]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/master/CHANGELOG.markdown
+[licence]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/master/LICENSE.markdown
