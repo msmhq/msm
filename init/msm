@@ -1030,15 +1030,14 @@ server_connected() {
 	if server_is_running "$1"; then
 		local line="$(server_eval_and_get_line "$1" "list" "Connected players:")"
 		
-		# Cuts the start off the line, and the last three (invisible)
-		# characters from the end.
+		# Cuts the start off the line
 		local players="${line:46}"
-		
-		if [ -z "$players" ]; then
-			echo "No players are connected."
-		else
-			echo "$players"
-		fi
+
+		# TODO: Use a reliable method of detecting when no players are online,
+		#       and display a different message.
+		#       This is currently hard as invisible characters make string length
+		#       always non-zero, and also may be ommitted.
+		echo "$players"
 	else
 		echo "Server \"${SERVER_NAME[$1]}\" is not running. No users are connected."
 	fi
