@@ -20,6 +20,7 @@ Change Log
 [#37]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/37
 [#38]: https://github.com/marcuswhybrow/minecraft-server-manager/pull/38
 [@jives]: https://github.com/jives
+[#39]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/39
 [#40]: https://github.com/marcuswhybrow/minecraft-server-manager/pull/40
 
 ### [0.4.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.4...0.4.0)
