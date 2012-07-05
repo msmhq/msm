@@ -1065,7 +1065,7 @@ manager_stop_all_servers() {
 			any_running="true"
 			was_running[$server]="true"
 			STOP_COUNTDOWN[$server]="true"
-			if [[ "${SERVER_STOP_DELAY[$i]}" -gt "$max_countdown" ]]; then
+			if [[ "${SERVER_STOP_DELAY[$server]}" -gt "$max_countdown" ]]; then
 				max_countdown="${SERVER_STOP_DELAY[$server]}"
 			fi
 			
