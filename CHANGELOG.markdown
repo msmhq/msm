@@ -11,6 +11,17 @@ Maintainers:
 Change Log
 ----------
 
+### [0.4.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.4.0...0.4.1)
+
+* Fixed issue [#37][#37] where the `msm stop` command would hang. Thanks to merging pull request [#38][#38] from [@escortkeel][@escortkeel]. 
+* Fixed issue [#39][#39] where server jar symlinks were not created. Thanks to merging pull request [#40][#40] from [@jives][@jives]. 
+
+[@escortkeel]: https://github.com/escortkeel
+[#37]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/37
+[#38]: https://github.com/marcuswhybrow/minecraft-server-manager/pull/38
+[@jives]: https://github.com/jives
+[#40]: https://github.com/marcuswhybrow/minecraft-server-manager/pull/40
+
 ### [0.4.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.3.4...0.4.0)
 
 * Added the `<server> give <player> <item> [amount] [data]` command. Closes [#34][#34]. Thanks to [@Vi3GameHkr][@Vi3GameHkr] for the suggestion.
