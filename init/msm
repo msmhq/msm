@@ -1016,7 +1016,7 @@ server_set_jar() {
 		fi
 		
 		if [[ ! -z "$jar" ]]; then
-			as_user "${SERVER_USER[$1]}" "ln -sf \"$jar\" \"${SERVER_JAR[$1]}\""
+			as_user "${SERVER_USER_NAME[$1]}" "ln -sf \"$jar\" \"${SERVER_JAR[$1]}\""
 			echo "Server \"${SERVER_NAME[$1]}\" is now using \"$jar\"."
 		fi
 	else
