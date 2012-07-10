@@ -11,6 +11,11 @@ Maintainers:
 Change Log
 ----------
 
+### [0.4.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.4.1...0.4.2)
+
+* Fixed the `msm <server> jar <jar-group> <jar-name>` command, which would state the `<jar-name>` was invalid, when it was not.
+
+
 ### [0.4.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.4.0...0.4.1)
 
 * Fixed issue [#37][#37] where the `msm stop` command would hang. Thanks to merging pull request [#38][#38] from [@escortkeel][@escortkeel]. 
