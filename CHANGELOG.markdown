@@ -11,6 +11,12 @@ Maintainers:
 Change Log
 ----------
 
+### [0.4.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.4.2...0.4.3)
+
+* Creating a new server now automatically creates a `worldstorage` folder with a `readme.txt` inside.
+* Quotations may now be used to delimit `server.properties` msm settings.
+
+
 ### [0.4.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.4.1...0.4.2)
 
 * Fixed the `msm <server> jar <jar-group> <jar-name>` command, which would state the `<jar-name>` was invalid, when it was not.
