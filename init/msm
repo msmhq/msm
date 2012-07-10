@@ -2711,7 +2711,7 @@ main() {
 	register_command "<name:server> logroll" "command_server_logroll"
 	register_command "<name:server> backup" "command_server_backup"
 	register_command "<name:server> jar <name>" "command_server_jar"
-	register_command "<name:server> jar <name> <name>" "command_server_jar"
+	register_command "<name:server> jar <name> <string>" "command_server_jar"
 	register_command "<name:server> whitelist|wl on" "command_server_whitelist_on"
 	register_command "<name:server> whitelist|wl off" "command_server_whitelist_off"
 	register_command "<name:server> whitelist|wl add <string>" "command_server_whitelist_add"
