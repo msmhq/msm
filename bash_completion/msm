@@ -248,10 +248,10 @@ _msm() {
 								fi
 								;;
 							config)
-							        if [[ $COMP_CWORD == 3 ]]; then
-							                options="$(more $SERVER_CONF | sed 's/=.*$//' | grep -v '#')";
-							        fi
-							        ;;
+								if [[ $COMP_CWORD == 3 ]]; then
+									options="$(more "$SERVER_CONF" | sed 's/=.*$//' | grep -v '#')";
+								fi
+								;;
 						esac
 								
 					fi
