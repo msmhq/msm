@@ -25,7 +25,7 @@ CONF="${MSM_CONF:-/etc/msm.conf}"
 
 
 ### The Minecraft Server Manager version, use "msm version" to check yours.
-VERSION="0.4.0"
+VERSION="0.4.w0"
 
 
 ### Config variables the user should not need/want to change
@@ -1980,6 +1980,26 @@ command_server_console() {
 	fi
 }
 
+# Sets a parameter in the config file if it exists otherwise inserts the
+# paramerter.
+# if the server is running it will do a restart to ensure the parameter is 
+# loaded
+# $1: The server ID
+# $2: The parameter
+# $3: The value to set it to
+command_set_config() {
+        if [[ -f "${SERVER_CONF[$1]}" ]]; then
+                if grep "$2" ${SERVER_CONF[$1]} >/dev/null; then
+                        sed -i /$2=/s/.*/"$2=$3"/g ${SERVER_CONF[$1]}
+                else
+                        echo "$2=$3" >> ${SERVER_CONF[$1]}
+                fi
+        fi
+        if server_is_running "$1"; then
+                echo "Server is running, restarting in 10secs to ensure update"
+                command_server_restart $1;
+        fi
+}
 
 ### Main Functions
 
@@ -2742,7 +2762,7 @@ main() {
 	register_command "<name:server> cmd <strings>" "command_server_cmd"
 	register_command "<name:server> cmdlog <strings>" "command_server_cmdlog"
 	register_command "<name:server> console" "command_server_console"
-	
+	register_command "<name:server> config <string> <string>" "command_set_config"	
 	# This function call matches the user input to a registered command
 	# signature, and then calls that commands handler function with positional
 	# arguments containing any variable strings.
