@@ -11,6 +11,16 @@ Maintainers:
 Change Log
 ----------
 
+### [0.5.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.4.3...0.5.0)
+
+* Added the `msm <server> config <setting> <new-value>` command. Thanks to merging pull request [#46][#46] from [@cameroncros][@cameroncros].
+* Fixed issue [#44][#44] where bash completion failed to work when accessing server conf information.
+
+[#44]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/44
+[@cameroncros]: https://github.com/cameroncros
+[#46]: https://github.com/marcuswhybrow/minecraft-server-manager/pull/46
+
+
 ### [0.4.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.4.2...0.4.3)
 
 * Creating a new server now automatically creates a `worldstorage` folder with a `readme.txt` inside.
