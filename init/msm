@@ -1352,6 +1352,7 @@ command_help() {
 	echo -e "  <server> cmd <command>                        Send a command string to the server and return"
 	echo -e "  <server> cmdlog <command>                     Same as 'cmd' but shows log output afterwards (Ctrl+C to exit)"
 	echo -e "  <server> console                              Connects to the interactive console. Access may be limited"
+	echo -e "  <server> config <setting> <value>             Updates or inserts a setting in the server.properties file"
 	echo -e
 	echo -e "--Jar Commands--------------------------------------------------"
 	echo -e "  jargroup list                                 List the stored jar files."
