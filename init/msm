@@ -1981,6 +1981,25 @@ command_server_console() {
 	fi
 }
 
+# Sets a parameter in the config file if it exists, otherwise inserts the
+# paramerter.
+# $1: The server ID
+# $2: The parameter
+# $3: The value to set it to
+command_set_config() {
+	if server_is_running "$1"; then
+		echo "Server is running, please stop the server before running this command: sudo msm "${SERVER_NAME[$1]}" stop"
+	else
+		if [[ -f "${SERVER_CONF[$1]}" ]]; then
+			if grep "$2" ${SERVER_CONF[$1]} >/dev/null; then
+				sed -i /$2=/s/.*/"$2=$3"/g ${SERVER_CONF[$1]}
+			else
+				echo "$2=$3" >> ${SERVER_CONF[$1]}
+			fi
+			echo "To see these changes please restart this server with: sudo msm "${SERVER_NAME[$1]}" start";
+		fi
+	fi
+}
 
 ### Main Functions
 
@@ -2752,7 +2771,7 @@ main() {
 	register_command "<name:server> cmd <strings>" "command_server_cmd"
 	register_command "<name:server> cmdlog <strings>" "command_server_cmdlog"
 	register_command "<name:server> console" "command_server_console"
-	
+	register_command "<name:server> config <string> <string>" "command_set_config"	
 	# This function call matches the user input to a registered command
 	# signature, and then calls that commands handler function with positional
 	# arguments containing any variable strings.
