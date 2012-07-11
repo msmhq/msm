@@ -11,6 +11,11 @@ Maintainers:
 Change Log
 ----------
 
+### [0.5.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.5.0...0.5.1)
+
+* Added help text line for `msm <server> config` command.
+
+
 ### [0.5.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.4.3...0.5.0)
 
 * Added the `msm <server> config <setting> <new-value>` command. Thanks to merging pull request [#46][#46] from [@cameroncros][@cameroncros].
