@@ -1987,16 +1987,15 @@ command_server_console() {
 # $2: The parameter
 # $3: The value to set it to
 command_set_config() {
-	if server_is_running "$1"; then
-		echo "Server is running, please stop the server before running this command: sudo msm "${SERVER_NAME[$1]}" stop"
-	else
-		if [[ -f "${SERVER_CONF[$1]}" ]]; then
-			if grep "$2" ${SERVER_CONF[$1]} >/dev/null; then
-				sed -i /$2=/s/.*/"$2=$3"/g ${SERVER_CONF[$1]}
-			else
-				echo "$2=$3" >> ${SERVER_CONF[$1]}
-			fi
-			echo "To see these changes please restart this server with: sudo msm "${SERVER_NAME[$1]}" start";
+	if [[ -f "${SERVER_CONF[$1]}" ]]; then
+		if grep "$2" ${SERVER_CONF[$1]} >/dev/null; then
+			sed -i /$2=/s/.*/"$2=$3"/g ${SERVER_CONF[$1]}
+		else
+			echo "$2=$3" >> ${SERVER_CONF[$1]}
+		fi
+
+		if server_is_running "$1"; then
+			echo "Changes to config may require a server restart to take effect: sudo $0 ${SERVER_NAME[$1]} restart";
 		fi
 	fi
 }
