@@ -1,10 +1,16 @@
-# Minecraft Server Manager [![Build Status](https://secure.travis-ci.org/marcuswhybrow/minecraft-server-manager.png?branch=master)](http://travis-ci.org/marcuswhybrow/minecraft-server-manager)
+# Minecraft Server Manager [![Build Status](https://secure.travis-ci.org/marcuswhybrow/minecraft-server-manager.png?branch=master)](http://travis-ci.org/marcuswhybrow/minecraft-server-manager) [![Flattr this git repo](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=marcuswhybrow&url=https://github.com/marcuswhybrow/minecraft-server-manager&title=Minecraft%20Server%20Manager&language=en_GB&tags=github,minecraft,bukkit,init,init.d,linux,ubunut&category=software) 
 
 A single init script which makes running multiple Minecraft/Bukkit servers easier for us admins.
 
-See the [installation page][wiki-install] to get started, or [visit the wiki][wiki] for the full list of resources. Read the [changelog][changelog] to get a picture of how MSM has evloved over time. MSM is released under the GPLv3 licence, which is included in the repository [here][licence]. I'm open to suggestions where licencing is concerned.
+## Getting Started
 
-[![Flattr this git repo](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=marcuswhybrow&url=https://github.com/marcuswhybrow/minecraft-server-manager&title=Minecraft%20Server%20Manager&language=en_GB&tags=github,minecraft,bukkit,init,init.d,linux,ubunut&category=software) 
+* [Install][wiki-install] MSM on your box.
+* [Visit the wiki][wiki] for the full list of resources.
+* Fork and contribute your own modifications.
+* Not a coder? [Post an issue][issues] with your idea for MSM instead.
+* Read the [changelog][changelog] to get a picture of how MSM has evloved over time.
+
+MSM is released under the GPLv3 licence, which is included in the repository [here][licence]. I'm open to suggestions where licencing is concerned.
 
 ## Features
 
@@ -57,3 +63,4 @@ This code grew out of an old version of [Ahtenus' Minecraft Init Script][ahtenus
 [wiki-install]: https://github.com/marcuswhybrow/minecraft-server-manager/wiki/Installation
 [changelog]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/master/CHANGELOG.markdown
 [licence]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/master/LICENSE.markdown
+[issues]: https://github.com/marcuswhybrow/minecraft-server-manager/issues
