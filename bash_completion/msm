@@ -74,7 +74,7 @@ _msm() {
 		if [ -d "$SERVER_STORAGE_PATH" ]; then
 			local servers="$(ls -1 "$SERVER_STORAGE_PATH")"
 		fi
-		options="help start stop restart version server jargroup all $servers"
+		options="help start stop restart version server jargroup all config $servers"
 	else
 		case "${COMP_WORDS[1]}" in
 			stop|restart)

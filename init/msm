@@ -30,12 +30,6 @@ VERSION="0.5.2"
 
 ### Config variables the user should not need/want to change
 
-# Jar group file which contains the download target URL
-declare -r JARGROUP_TARGET="target.txt"
-# Jar group directory name to download new jars to, is deleted afterwards
-declare -r JARGROUP_DOWNLOAD_DIR="downloads"
-# The server configuration file name
-declare -r SERVER_CONF_NAME="server.properties"
 # The start of a regex to find a log line
 declare -r LOG_REGEX="^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\]"
 
@@ -47,6 +41,11 @@ declare STOP_COUNTDOWN
 
 # "true" whilst the script is counting down a delay to restart the server
 declare RESTART_COUNTDOWN
+
+# Variables used for registration
+COMMAND_COUNT=0
+SETTING_COUNT=0
+SERVER_SETTING_COUNT=0
 
 
 ### Utility Functions
@@ -114,11 +113,11 @@ debug() {
 # $1: The name to check
 is_valid_name() {
 	local valid="^[a-zA-Z0-9\_\-]+$"
-	local invalid="^(start|stop|restart|version|server|jargroup|all)$"
+	local invalid="^(start|stop|restart|version|server|jargroup|all|config)$"
 	
 	if [[ "$1" =~ $valid ]]; then
 		if [[ "$1" =~ $invalid ]]; then
-			error_exit INVALID_ARGUMENT "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"version\", \"jargroup\" or \"all\"."
+			error_exit INVALID_ARGUMENT "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"version\", \"jargroup\", \"all\" or \"config\"."
 		else
 			return 0
 		fi
@@ -173,15 +172,15 @@ log_line_get_time() {
 # Moves a world to RAM
 # $1: the ID of the world to move
 world_to_ram() {
-	if [ ! -z "$RAMDISK_STORAGE_PATH" ]; then
-		as_user "${SERVER_USER_NAME[${WORLD_SERVER_ID[$1]}]}" "mkdir -p \"${WORLD_RAMDISK_PATH[$1]}\" && rsync -rt --exclude '$(basename "${WORLD_FLAG_INRAM[$1]}")' \"${WORLD_PATH[$1]}/\" \"${WORLD_RAMDISK_PATH[$1]}\""
+	if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
+		as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "mkdir -p \"${WORLD_RAMDISK_PATH[$1]}\" && rsync -rt --exclude '$(basename "${WORLD_FLAG_INRAM[$1]}")' \"${WORLD_PATH[$1]}/\" \"${WORLD_RAMDISK_PATH[$1]}\""
 	fi
 }
 
 # Moves a world in RAM to disk
 # $1: the ID of the world to move
 world_to_disk() {
-	as_user "${SERVER_USER_NAME[${WORLD_SERVER_ID[$1]}]}" "rsync -rt --exclude '$(basename "${WORLD_FLAG_INRAM[$1]}")' \"${WORLD_RAMDISK_PATH[$1]}/\" \"${WORLD_PATH[$1]}\""
+	as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "rsync -rt --exclude '$(basename "${WORLD_FLAG_INRAM[$1]}")' \"${WORLD_RAMDISK_PATH[$1]}/\" \"${WORLD_PATH[$1]}\""
 }
 
 # Toggles a worlds ramdisk state
@@ -189,15 +188,15 @@ world_to_disk() {
 world_toggle_ramdisk_state() {
 	if [ -f "${WORLD_FLAG_INRAM[$1]}" ]; then
 		echo -n "Removing RAM flag from world \"${WORLD_NAME[$1]}\"... "
-		as_user "${SERVER_USER_NAME[${WORLD_SERVER_ID[$1]}]}" "rm -f \"${WORLD_FLAG_INRAM[$1]}\""
+		as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "rm -f \"${WORLD_FLAG_INRAM[$1]}\""
 		echo "Done."
 		
 		echo -n "Removing world \"${WORLD_NAME[$1]}\" from RAM... "
-		as_user "${SERVER_USER_NAME[${WORLD_SERVER_ID[$1]}]}" "rm -r \"${WORLD_RAMDISK_PATH[$1]}\""
+		as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "rm -r \"${WORLD_RAMDISK_PATH[$1]}\""
 		echo "Done."
 	else
 		echo -n "Adding RAM flag to world \"${WORLD_NAME[$1]}\"... "
-		as_user "${SERVER_USER_NAME[${WORLD_SERVER_ID[$1]}]}" "touch \"${WORLD_FLAG_INRAM[$1]}\""
+		as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "touch \"${WORLD_FLAG_INRAM[$1]}\""
 		echo "Done."
 		
 		echo -n "Copying world to RAM... "
@@ -216,7 +215,7 @@ world_backup() {
 	local server_id="${WORLD_SERVER_ID[$1]}"
 	local containing_dir="$(dirname "${WORLD_PATH[$1]}")"
 	local dir_name="$(basename "${WORLD_PATH[$1]}")"
-	as_user "${SERVER_USER_NAME[$server_id]}" "mkdir -p \"${WORLD_BACKUP_PATH[$1]}\" && cd \"$containing_dir\" && zip -rq \"${WORLD_BACKUP_PATH[$1]}/${file_name}\" \"${dir_name}\""
+	as_user "${SERVER_USERNAME[$server_id]}" "mkdir -p \"${WORLD_BACKUP_PATH[$1]}\" && cd \"$containing_dir\" && zip -rq \"${WORLD_BACKUP_PATH[$1]}/${file_name}\" \"${dir_name}\""
 
 	echo "Done."
 }
@@ -227,7 +226,7 @@ world_activate() {
 	if [ -d "${WORLD_INACTIVE_PATH[$1]}" ]; then
 		echo -n "Moving world \"${WORLD_NAME[$1]}\" to the active worldstorage directory... "
 		local new_path="${WORLD_ACTIVE_PATH[$1]}"
-		as_user "${SERVER_USER_NAME[${WORLD_SERVER_ID[$1]}]}" "mkdir -p \"$new_path\" && mv \"${WORLD_INACTIVE_PATH[$1]}\" \"$new_path\""
+		as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "mkdir -p \"$new_path\" && mv \"${WORLD_INACTIVE_PATH[$1]}\" \"$new_path\""
 		echo "Done."
 	else
 		if [ -d "${WORLD_ACTIVE_PATH[$1]}" ]; then
@@ -247,7 +246,7 @@ world_deactivate() {
 		if [ -d "${WORLD_ACTIVE_PATH[$1]}" ]; then
 			echo -n "Moving world \"${WORLD_NAME[$1]}\" to the inactive worldstorage directory... "
 			local new_path="${WORLD_INACTIVE_PATH[$1]}"
-			as_user "${SERVER_USER_NAME[${WORLD_SERVER_ID[$1]}]}" "mkdir -p \"$new_path\" && mv \"${WORLD_PATH[$1]}\" \"$new_path\""
+			as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "mkdir -p \"$new_path\" && mv \"${WORLD_PATH[$1]}\" \"$new_path\""
 			echo "Done."
 		else
 			if [ -d "${WORLD_INACTIVE_PATH[$1]}" ]; then
@@ -280,7 +279,7 @@ server_get_id() {
 # $1: The ID of the server
 # $2: The name of the world
 server_world_get_id() {
-	if [ -d "${SERVER_WORLD_STORAGE[$1]}/$2" ] || [ -d "${SERVER_WORLD_STORAGE_INACTIVE[$1]}/$2" ]; then
+	if [ -d "${SERVER_WORLD_STORAGE_PATH[$1]}/$2" ] || [ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}/$2" ]; then
 		# If the directory exists
 		
 		local start="${SERVER_WORLD_OFFSET[$1]}"
@@ -309,7 +308,7 @@ server_is_running() {
 	fi
 }
 
-# Creates symbolic links in the server directory (SERVER_STORAGE_PATH) for each
+# Creates symbolic links in the server directory (SETTINGS_SERVER_STORAGE_PATH) for each
 # of the Minecraft worlds located in the world storage directory.
 # $1: The id of the server for which links should be ensured
 server_ensure_links() {
@@ -321,7 +320,7 @@ server_ensure_links() {
 	for ((i=$start; i<$max; i++)); do
 		if [[ "${WORLD_STATUS[$i]}" != "active" ]]; then
 			# Remove the symbolic link if it exists
-			as_user "${SERVER_USER_NAME[$1]}" "rm -f \"${WORLD_LINK[$i]}\""
+			as_user "${SERVER_USERNAME[$1]}" "rm -f \"${WORLD_LINK[$i]}\""
 			continue
 		fi
 		
@@ -343,10 +342,10 @@ server_ensure_links() {
 					# If the symbolic link does not point to the RAM version of the world
 
 					# Remove the symbolic link if it exists
-					as_user "${SERVER_USER_NAME[$1]}" "rm -f \"${WORLD_LINK[$i]}\""
+					as_user "${SERVER_USERNAME[$1]}" "rm -f \"${WORLD_LINK[$i]}\""
 
 					# Create a new symbolic link pointing to the RAM version of the world
-					as_user "${SERVER_USER_NAME[$1]}" "ln -s \"${WORLD_RAMDISK_PATH[$i]}\" \"${WORLD_LINK[$i]}\""
+					as_user "${SERVER_USERNAME[$1]}" "ln -s \"${WORLD_RAMDISK_PATH[$i]}\" \"${WORLD_LINK[$i]}\""
 				fi
 			else
 				# Otherwise the world is not loaded into RAM, and is just on disk
@@ -355,10 +354,10 @@ server_ensure_links() {
 					# If the symbolic link does not point to the disk version of the world
 
 					# Remove the symbolic link if it exists
-					as_user "${SERVER_USER_NAME[$1]}" "rm -f \"${WORLD_LINK[$i]}\""
+					as_user "${SERVER_USERNAME[$1]}" "rm -f \"${WORLD_LINK[$i]}\""
 
 					# Create a new symbolic link pointing to the disk version of the world
-					as_user "${SERVER_USER_NAME[$1]}" "ln -s \"${WORLD_PATH[$i]}\" \"${WORLD_LINK[$i]}\""
+					as_user "${SERVER_USERNAME[$1]}" "ln -s \"${WORLD_PATH[$i]}\" \"${WORLD_LINK[$i]}\""
 				fi
 			fi
 		else
@@ -378,7 +377,7 @@ server_ensure_links() {
 # $1: The ID of the server
 server_worlds_to_ram() {
 	# Only proceed if there is a ramdisk path set in config
-	if [ ! -z "$RAMDISK_STORAGE_PATH" ]; then
+	if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
 		echo -n "Synchronising flagged worlds on disk to RAM... "
 		local i="${SERVER_WORLD_OFFSET[$1]}"
 		local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
@@ -398,7 +397,7 @@ server_worlds_to_ram() {
 # Moves a servers "in RAM" worlds back to disk
 # $1: The ID of the server
 server_worlds_to_disk() {
-	if [ ! -z "$RAMDISK_STORAGE_PATH" ]; then
+	if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
 		echo -n "Synchronising worlds in RAM to disk... "
 		local i="${SERVER_WORLD_OFFSET[$1]}"
 		local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
@@ -422,7 +421,7 @@ server_worlds_to_disk() {
 # returns: When the line is found
 server_log_get_line() {
     # Make sure there is a server log to check
-    as_user "${SERVER_USER_NAME[$1]}" "touch ${SERVER_LOG[$1]}"
+    as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
 	while read line; do
 		line_time="$(log_line_get_time "$line")"
@@ -438,7 +437,7 @@ server_log_get_line() {
 				fi
 			done
 		fi
-	done < <(as_user "${SERVER_USER_NAME[$1]}" "tail --pid=$$ --follow --lines=100 --sleep-interval=0.1 \"${SERVER_LOG[$1]}\"")
+	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
 }
 
 # The same as server_log_get_line, but does not print the line to stdout
@@ -451,7 +450,7 @@ server_log_wait_for_line() {
 # $1: The ID of the server
 # $2: The line of text to enter into the server console
 server_eval() {
-	as_user "${SERVER_USER_NAME[$1]}" "screen -p 0 -S ${SERVER_SCREEN_NAME[$1]} -X eval 'stuff \"$2\"\015'"
+	as_user "${SERVER_USERNAME[$1]}" "screen -p 0 -S ${SERVER_SCREEN_NAME[$1]} -X eval 'stuff \"$2\"\015'"
 }
 
 # The same as server_eval, but also waits for a log entry before returning
@@ -497,11 +496,11 @@ server_wait_for_stop() {
 server_set_active() {
 	case "$2" in
 		active)
-			as_user "${SERVER_USER_NAME[$1]}" "touch \"${SERVER_FLAG_ACTIVE[$1]}\""
+			as_user "${SERVER_USERNAME[$1]}" "touch \"${SERVER_FLAG_ACTIVE[$1]}\""
 			SERVER_ACTIVE[$1]="true"
 			;;
 		inactive)
-			as_user "${SERVER_USER_NAME[$1]}" "rm -f \"${SERVER_FLAG_ACTIVE[$1]}\""
+			as_user "${SERVER_USERNAME[$1]}" "rm -f \"${SERVER_FLAG_ACTIVE[$1]}\""
 			SERVER_ACTIVE[$1]="false"
 			;;
 		*)
@@ -515,7 +514,7 @@ server_set_active() {
 
 # Lists the jar files grouped by jar groups.
 jargroup_list() {
-	if [[ -d "${JAR_STORAGE_PATH}" ]]; then
+	if [[ -d "${SETTINGS_JAR_STORAGE_PATH}" ]]; then
 		local jargroup_name
 		local jar_name
 	
@@ -527,8 +526,8 @@ jargroup_list() {
 				if [[ "$jar_name" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}- ]]; then
 					echo "    $jar_name"
 				fi
-			done < <(find "${JAR_STORAGE_PATH}/${jargroup_name}" -mindepth 1 -maxdepth 1 -type f -print0)
-		done < <(find "${JAR_STORAGE_PATH}" -mindepth 1 -maxdepth 1 -type d -print0)
+			done < <(find "${SETTINGS_JAR_STORAGE_PATH}/${jargroup_name}" -mindepth 1 -maxdepth 1 -type f -print0)
+		done < <(find "${SETTINGS_JAR_STORAGE_PATH}" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 }
 
@@ -536,16 +535,16 @@ jargroup_list() {
 # $1: The name for the jargroup
 jargroup_create() {
 	if is_valid_name "$1"; then
-		if [[ ! -d "$JAR_STORAGE_PATH/$1" ]]; then
+		if [[ ! -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
 			printf "Creating jar group... "
 			
-			local error="$(as_user_stderr "$USERNAME" "mkdir -p \"$JAR_STORAGE_PATH/$1\"")"
+			local error="$(as_user_stderr "$SETTINGS_USERNAME" "mkdir -p \"$SETTINGS_JAR_STORAGE_PATH/$1\"")"
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
 				error_exit FILE_NOT_FOUND "$error"
 			fi
 			
-			error="$(as_user "$USERNAME" "echo \"$2\" > \"$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET\"")"
+			error="$(as_user "$SETTINGS_USERNAME" "echo \"$2\" > \"$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET\"")"
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
 				error_exit FILE_NOT_FOUND "$error"
@@ -565,31 +564,31 @@ jargroup_create() {
 # $1: The jargroup name to download the latest version for
 jargroup_getlatest() {
 	if is_valid_name "$1"; then
-		if [[ -d "$JAR_STORAGE_PATH/$1" ]]; then
-			if [[ -f "$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET" ]]; then
+		if [[ -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
+			if [[ -f "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET" ]]; then
 				printf "Downloading latest version... "
 			
 				# Try and make 
-				local error="$(as_user_stderr "$USERNAME" "mkdir -p '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'")"
+				local error="$(as_user_stderr "$SETTINGS_USERNAME" "mkdir -p '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'")"
 				if [[ "$error" != "" ]]; then
 					echo "Failed."
 					error_exit FILE_NOT_FOUND "$error"
 				fi
 			
-				as_user "$USERNAME" "wget --quiet --trust-server-names --no-check-certificate --input-file='$JAR_STORAGE_PATH/$1/$JARGROUP_TARGET' --directory-prefix='$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'"
+				as_user "$SETTINGS_USERNAME" "wget --quiet --trust-server-names --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
 				echo "Done."
 			
-				local num_files="$(as_user "$USERNAME" "ls -1 '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR' | wc -l")"
+				local num_files="$(as_user "$SETTINGS_USERNAME" "ls -1 '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' | wc -l")"
 			
 				if [[ "$num_files" == 1 ]]; then
 					# There was 1 file downloaded
 				
-					local file_name="$(ls -1 "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR")"
+					local file_name="$(ls -1 "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR")"
 					local new_name="$(date +%F-%H-%M-%S)-$file_name"
-					local most_recent_jar="$(get_latest_file "$JAR_STORAGE_PATH/$1")"
+					local most_recent_jar="$(get_latest_file "$SETTINGS_JAR_STORAGE_PATH/$1")"
 					
 				
-					if [[ ! -f "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name" > /dev/null; then
+					if [[ ! -f "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR/$file_name" > /dev/null; then
 						# There is not a previous version to do a comparison against, or
 						# The previous version is different:
 						# Add it to the group
@@ -597,15 +596,15 @@ jargroup_getlatest() {
 						[[ -f "$most_recent_jar" ]]
 						local was_previous="$?"
 					
-						as_user "$USERNAME" "mv '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR/$file_name' '$JAR_STORAGE_PATH/$1/$new_name'"
+						as_user "$SETTINGS_USERNAME" "mv '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR/$file_name' '$SETTINGS_JAR_STORAGE_PATH/$1/$new_name'"
 					
 						if [[ ! -z "$most_recent_jar" ]]; then
-							echo "Downloaded version was different to previous latest. Saved as \"$JAR_STORAGE_PATH/$1/$new_name\"."
+							echo "Downloaded version was different to previous latest. Saved as \"$SETTINGS_JAR_STORAGE_PATH/$1/$new_name\"."
 						else
-							echo "Saved as \"$JAR_STORAGE_PATH/$1/$new_name\"."
+							echo "Saved as \"$SETTINGS_JAR_STORAGE_PATH/$1/$new_name\"."
 						fi
 					else
-						echo "Existing version \"$JAR_STORAGE_PATH/$1/$new_name\" was already up to date."
+						echo "Existing version \"$SETTINGS_JAR_STORAGE_PATH/$1/$new_name\" was already up to date."
 					fi
 				
 				elif [[ "$num_files" == 0 ]]; then
@@ -617,7 +616,7 @@ jargroup_getlatest() {
 				fi
 			
 				# Clean up the temp download folder
-				as_user "$USERNAME" "rm -fr '$JAR_STORAGE_PATH/$1/$JARGROUP_DOWNLOAD_DIR'"
+				as_user "$SETTINGS_USERNAME" "rm -fr '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
 			else
 				error_exit FILE_NOT_FOUND "Target URL not found, use $0 jargroup seturl <download-url>"
 			fi
@@ -631,12 +630,12 @@ jargroup_getlatest() {
 # $1: The name of the existing jargroup
 jargroup_delete() {
 	if is_valid_name "$1"; then
-		if [[ -d "$JAR_STORAGE_PATH/$1" ]]; then
+		if [[ -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
 			printf "Are you sure you want to delete this jar group [y/N]: "
 		
 			read answer
 			if [[ "$answer" =~ ^y|Y|yes$ ]]; then
-				as_user "$USERNAME" "rm -rf \"$JAR_STORAGE_PATH/$1\""
+				as_user "$SETTINGS_USERNAME" "rm -rf \"$SETTINGS_JAR_STORAGE_PATH/$1\""
 				echo "Jar group deleted."
 			else
 				echo "Jar group was NOT deleted."
@@ -652,16 +651,16 @@ jargroup_delete() {
 # $2: The new name
 jargroup_rename() {
 	if is_valid_name "$1"; then
-		if [[ -d "$JAR_STORAGE_PATH/$1" ]]; then
+		if [[ -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
 			# If the jar group name is valid,
 			# and there is no other jar group with the name $1
 		
 			if is_valid_name "$2"; then
-				if [[ -e "$JAR_STORAGE_PATH/$2" ]]; then
+				if [[ -e "$SETTINGS_JAR_STORAGE_PATH/$2" ]]; then
 					error_exit DUPLICATE_NAME "Could not be renamed, there is already a jar group with the name \"$2\"."
 				else
 					# TODO: Update any symbolic links which point to a jar in this directory
-					as_user "$USERNAME" "mv '$JAR_STORAGE_PATH/$1' '$JAR_STORAGE_PATH/$2'"
+					as_user "$SETTINGS_USERNAME" "mv '$SETTINGS_JAR_STORAGE_PATH/$1' '$SETTINGS_JAR_STORAGE_PATH/$2'"
 					echo "Renamed jar group \"$1\" to \"$2\"."
 				fi
 			fi
@@ -674,10 +673,10 @@ jargroup_rename() {
 
 ### Server Functions
 
-# Echos a list of servers in the SERVER_STORAGE_PATH
+# Echos a list of servers in the SETTINGS_SERVER_STORAGE_PATH
 server_list() {
-	if [ -d "$SERVER_STORAGE_PATH" ]; then
-		ls -1 "$SERVER_STORAGE_PATH"
+	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
+		ls -1 "$SETTINGS_SERVER_STORAGE_PATH"
 	else
 		echo "[There are no servers]"
 	fi	
@@ -687,18 +686,18 @@ server_list() {
 # $1: The server name to create
 server_create() {
 	if is_valid_name "$1"; then
-		if [[ -d "$SERVER_STORAGE_PATH/$1" ]]; then
+		if [[ -d "$SETTINGS_SERVER_STORAGE_PATH/$1" ]]; then
 			error_exit DUPLICATE_NAME "A server with that name already exists."
 		else
 			printf "Creating server directory... "
-			as_user "$USERNAME" "mkdir -p '$SERVER_STORAGE_PATH/$1'"
-			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_WHITELIST'"
-			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_BANNED_IPS'"
-			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_BANNED_PLAYERS'"
-			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_OPS'"
-			as_user "$USERNAME" "touch '$SERVER_STORAGE_PATH/$1/$DEFAULT_PROPERTIES'"
-			as_user "$USERNAME" "mkdir -p '$SERVER_STORAGE_PATH/$1/$DEFAULT_WORLD_STORAGE_PATH'"
-			as_user "$USERNAME" "echo \"MSM requires all your worlds be moved into this directory.\" > '$SERVER_STORAGE_PATH/$1/$DEFAULT_WORLD_STORAGE_PATH/readme.txt'"
+			as_user "$SETTINGS_USERNAME" "mkdir -p '$SETTINGS_SERVER_STORAGE_PATH/$1'"
+			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WHITELIST_PATH'"
+			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_BANNED_IPS_PATH'"
+			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_BANNED_PLAYERS_PATH'"
+			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_OPS_PATH'"
+			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_SERVER_PROPERTIES'"
+			as_user "$SETTINGS_USERNAME" "mkdir -p '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH'"
+			as_user "$USERNAME" "echo \"MSM requires all your worlds be moved into this directory.\" > '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH/readme.txt'"
 			echo "Done."
 			
 			# Now that the new server has been created, we must call init again
@@ -707,7 +706,7 @@ server_create() {
 			
 			# TODO: Handle server default setup stuff better than just using
 			#       the "minecraft" jar group. And make it configurable.
-			if [ -d "$JAR_STORAGE_PATH/minecraft" ]; then
+			if [ -d "$SETTINGS_JAR_STORAGE_PATH/minecraft" ]; then
 				server_set_jar "$(server_get_id "$1")" "minecraft"
 			fi
 		fi
@@ -718,13 +717,13 @@ server_create() {
 # $1: The server name to delete
 server_delete() {
 	if is_valid_name "$1"; then
-		if [[ -d "$SERVER_STORAGE_PATH/$1" ]]; then
+		if [[ -d "$SETTINGS_SERVER_STORAGE_PATH/$1" ]]; then
 			printf "Are you sure you want to delete this server and its worlds (note: backups are preserved) [y/N]: "
 
 			read answer
 			if [[ "$answer" =~ ^(y|Y|yes)$ ]]; then
 				# TODO: stop the server if running first
-				as_user "$USERNAME" "rm -rf '$SERVER_STORAGE_PATH/$1'"
+				as_user "$SETTINGS_USERNAME" "rm -rf '$SETTINGS_SERVER_STORAGE_PATH/$1'"
 				echo "Server deleted."
 			else
 				echo "Server was NOT deleted."
@@ -740,7 +739,7 @@ server_delete() {
 # $2: The new name for the server
 server_rename() {
 	if is_valid_name "$1"; then
-		if [ -d "$SERVER_STORAGE_PATH/$1" ]; then
+		if [ -d "$SETTINGS_SERVER_STORAGE_PATH/$1" ]; then
 			# If the server name is valid and exists
 			
 			local existing_id="$(server_get_id "$1")"
@@ -749,11 +748,11 @@ server_rename() {
 			else
 				if is_valid_name "$2"; then
 					# If the server name is valid
-					if [[ -e "$SERVER_STORAGE_PATH/$2" ]]; then
+					if [[ -e "$SETTINGS_SERVER_STORAGE_PATH/$2" ]]; then
 						# and there is not already a server with the name $2
 						error_exit DUPLICATE_NAME "Could not be renamed, there is already a server with the name \"$2\"."
 					else
-						as_user "$USERNAME" "mv '$SERVER_STORAGE_PATH/$1' '$SERVER_STORAGE_PATH/$2'"
+						as_user "$SETTINGS_USERNAME" "mv '$SETTINGS_SERVER_STORAGE_PATH/$1' '$SETTINGS_SERVER_STORAGE_PATH/$2'"
 						echo "Renamed server \"$1\" to \"$2\"."
 					fi
 				fi
@@ -776,7 +775,7 @@ server_start() {
 		local time_now="$(now)"
 		
 		printf "Starting server... "
-		as_user "${SERVER_USER_NAME[$1]}" "cd \"${SERVER_PATH[$1]}\" && screen -dmS \"${SERVER_SCREEN_NAME[$1]}\" ${SERVER_INVOCATION[$1]}"
+		as_user "${SERVER_USERNAME[$1]}" "cd \"${SERVER_PATH[$1]}\" && screen -dmS \"${SERVER_SCREEN_NAME[$1]}\" ${SERVER_INVOCATION[$1]}"
 		server_log_wait_for_line "$1" "$time_now" "${SERVER_CONFIRM_START[$1]}"
 		
 		echo "Done."
@@ -838,8 +837,8 @@ server_stop() {
 		# Change the state of the script
 		STOP_COUNTDOWN[$1]="true"
 	
-	    server_eval "$1" "say ${SERVER_STOP_MESSAGE[$1]}"
-	    echo "Issued the warning \"${SERVER_STOP_MESSAGE[$1]}\" to players."
+	    server_eval "$1" "say ${SERVER_MESSAGE_STOP[$1]}"
+	    echo "Issued the warning \"${SERVER_MESSAGE_STOP[$1]}\" to players."
 	
 		echo -n "Shutting down... "
 	
@@ -889,8 +888,8 @@ server_restart() {
 		# Change the state of the script
 		RESTART_COUNTDOWN[$1]="true"
 	
-	    server_eval "$1" "say ${SERVER_RESTART_MESSAGE[$1]}"
-	    echo "Issued the warning \"${SERVER_RESTART_MESSAGE[$1]}\" to players."
+	    server_eval "$1" "say ${SERVER_MESSAGE_RESTART[$1]}"
+	    echo "Issued the warning \"${SERVER_MESSAGE_RESTART[$1]}\" to players."
 	
 		echo -n "Restarting... "
 	
@@ -963,13 +962,13 @@ server_log_roll() {
 
 	printf "Rolling server logs... "
 	
-	if [ -e "${SERVER_LOG[$1]}" ]; then
+	if [ -e "${SERVER_LOG_PATH[$1]}" ]; then
 		file_name="${SERVER_NAME[$1]}-$(date +%F-%H-%M-%S).log"
-		as_user "${SERVER_USER_NAME[$1]}" "mkdir -p \"${SERVER_LOG_archive_path[$1]}\" && cp \"${SERVER_LOG[$1]}\" \"${SERVER_LOG_archive_path[$1]}/${file_name}\" && gzip \"${SERVER_LOG_archive_path[$1]}/${file_name}\""
+		as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_LOG_ARCHIVE_PATH[$1]}\" && cp \"${SERVER_LOG_PATH[$1]}\" \"${SERVER_LOG_ARCHIVE_PATH[$1]}/${file_name}\" && gzip \"${SERVER_LOG_ARCHIVE_PATH[$1]}/${file_name}\""
 		
-		if [ -e "${SERVER_LOG_archive_path[$1]}/${file_name}.gz" ]; then
-			as_user "${SERVER_USER_NAME[$1]}" "cp \"/dev/null\" \"${SERVER_LOG[$1]}\""
-			as_user "${SERVER_USER_NAME[$1]}" "echo \"Previous logs can be found at \\\"${SERVER_LOG_archive_path[$1]}\\\"\" > \"${SERVER_LOG[$1]}\""
+		if [ -e "${SERVER_LOG_ARCHIVE_PATH[$1]}/${file_name}.gz" ]; then
+			as_user "${SERVER_USERNAME[$1]}" "cp \"/dev/null\" \"${SERVER_LOG_PATH[$1]}\""
+			as_user "${SERVER_USERNAME[$1]}" "echo \"Previous logs can be found at \\\"${SERVER_LOG_ARCHIVE_PATH[$1]}\\\"\" > \"${SERVER_LOG_PATH[$1]}\""
 		else
 			echo "Failed."
 			error_exit LOGS_NOT_ROLLED "Logs were not rolled."
@@ -992,7 +991,7 @@ server_backup() {
 	
 	# Zip up the server directory
 	file_name="${SERVER_BACKUP_PATH[$1]}/$(date "+%F-%H-%M-%S").zip"
-	as_user "${SERVER_USER_NAME[$1]}" "mkdir -p \"${SERVER_BACKUP_PATH[$1]}\" && cd \"$SERVER_STORAGE_PATH\" && zip ${zip_flags} \"${file_name}\" \"${SERVER_NAME[$1]}\""
+	as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_BACKUP_PATH[$1]}\" && cd \"$SETTINGS_SERVER_STORAGE_PATH\" && zip ${zip_flags} \"${file_name}\" \"${SERVER_NAME[$1]}\""
 	
 	echo "Done."
 }
@@ -1002,17 +1001,17 @@ server_backup() {
 # $2: The name of the jar group
 # $3: Optionally, a specific jar to use.
 server_set_jar() {
-	if [ -d "$JAR_STORAGE_PATH/$2" ]; then
+	if [ -d "$SETTINGS_JAR_STORAGE_PATH/$2" ]; then
 		
 		if [ -z "$3" ]; then
 			# If a specific jar file is not mentioned
 			
 			# Download the latest version
 			jargroup_getlatest "$2"
-			local jar="$(get_latest_file "$JAR_STORAGE_PATH/$2")"
+			local jar="$(get_latest_file "$SETTINGS_JAR_STORAGE_PATH/$2")"
 		else
 			# If a specific jar IS mentioned use that
-			local jar="$JAR_STORAGE_PATH/$2/$3"
+			local jar="$SETTINGS_JAR_STORAGE_PATH/$2/$3"
 			
 			if [[ ! -e "$jar" ]]; then
 				error_exit NAME_NOT_FOUND "There is no jar named \"$3\" in jargroup \"$2\"."
@@ -1020,7 +1019,7 @@ server_set_jar() {
 		fi
 		
 		if [[ ! -z "$jar" ]]; then
-			as_user "${SERVER_USER_NAME[$1]}" "ln -sf \"$jar\" \"${SERVER_JAR[$1]}\""
+			as_user "${SERVER_USERNAME[$1]}" "ln -sf \"$jar\" \"${SERVER_JAR_PATH[$1]}\""
 			echo "Server \"${SERVER_NAME[$1]}\" is now using \"$jar\"."
 		fi
 	else
@@ -1045,6 +1044,13 @@ server_connected() {
 	else
 		echo "Server \"${SERVER_NAME[$1]}\" is not running. No users are connected."
 	fi
+}
+
+# Get the value of a server property
+# $1: The ID of the server
+# $2: The name of the server property
+server_property() {
+	eval echo "\${SERVER_$2[$1]}"
 }
 
 
@@ -1074,16 +1080,16 @@ manager_stop_all_servers() {
 			
 			# Send a warning message to the server
 			case "$1" in
-				stop) server_eval "$server" "say ${SERVER_STOP_MESSAGE[$server]}";;
-				restart) server_eval "$server" "say ${SERVER_RESTART_MESSAGE[$server]}";;
+				stop) server_eval "$server" "say ${SERVER_MESSAGE_STOP[$server]}";;
+				restart) server_eval "$server" "say ${SERVER_MESSAGE_RESTART[$server]}";;
 			esac
 			
 			# Send message to stdout
 			echo "Server \"${SERVER_NAME[$server]}\" was running, now stopping:"
 			
 			case "$1" in
-				stop) echo "    Issued the warning \"${SERVER_STOP_MESSAGE[$server]}\" to players.";;
-				restart) echo "    Issued the warning \"${SERVER_RESTART_MESSAGE[$server]}\" to players.";;
+				stop) echo "    Issued the warning \"${SERVER_MESSAGE_STOP[$server]}\" to players.";;
+				restart) echo "    Issued the warning \"${SERVER_MESSAGE_RESTART[$server]}\" to players.";;
 			esac
 			
 			case "${SERVER_STOP_DELAY[$server]}" in
@@ -1180,6 +1186,12 @@ manager_stop_all_servers_now() {
 	fi
 }
 
+# Get the value of a global manager property
+# $1: The name of the property
+manager_property() {
+	eval echo "\$SETTINGS_$1"
+}
+
 
 ### Command Functions
 
@@ -1242,6 +1254,13 @@ command_version() {
 	fi
 
 	echo "Minecraft Server Manager $version"
+}
+
+# Displays config values used by MSM
+command_config() {
+	for ((i=0; i<$SETTING_COUNT; i++)); do
+		echo "${SETTING_NAME[$i]}=\"$(manager_property "${SETTING_NAME[$i]}")\""
+	done
 }
 
 # Displays a list of servers
@@ -1354,7 +1373,7 @@ command_help() {
 	echo -e "  <server> cmd <command>                        Send a command string to the server and return"
 	echo -e "  <server> cmdlog <command>                     Same as 'cmd' but shows log output afterwards (Ctrl+C to exit)"
 	echo -e "  <server> console                              Connects to the interactive console. Access may be limited"
-	echo -e "  <server> config <setting> <value>             Updates or inserts a setting in the server.properties file"
+	echo -e "  <server> config [<setting> <value>]           Lists server settings, or sets a specific setting."
 	echo -e
 	echo -e "--Jar Commands--------------------------------------------------"
 	echo -e "  jargroup list                                 List the stored jar files."
@@ -1369,6 +1388,7 @@ command_help() {
 	echo -e "  stop [now]                                    Stops all running servers"
 	echo -e "  restart [now]                                 Restarts all active servers"
 	echo -e "  version                                       Prints the Minecraft Server Manager version installed"
+	echo -e "  config                                        Displays a list of the config values used by MSM"
 }
 
 # Starts an individual server
@@ -1459,7 +1479,7 @@ command_server_worlds_todisk() {
 # $1: The server ID
 command_server_worlds_backup() {
 	if server_is_running "$1"; then
-		server_eval "$1" "say ${SERVER_WORLD_BACKUP_STARTED[$1]}"
+		server_eval "$1" "say ${SERVER_MESSAGE_WORLD_BACKUP_STARTED[$1]}"
 		server_save_off "$1"
 		server_save_all "$1"
 	fi
@@ -1469,7 +1489,7 @@ command_server_worlds_backup() {
 
 	if server_is_running "$1"; then
 		server_save_on "$1"
-		server_eval "$1" "say ${SERVER_WORLD_BACKUP_FINISHED[$1]}"
+		server_eval "$1" "say ${SERVER_MESSAGE_WORLD_BACKUP_FINISHED[$1]}"
 	fi
 
 	echo "Backup took $SECONDS seconds".
@@ -1500,7 +1520,7 @@ command_server_logroll() {
 # $1: The server ID
 command_server_backup() {
 	if server_is_running "$1"; then
-		server_eval "$1" "say ${SERVER_COMPLETE_BACKUP_STARTED[$1]}"
+		server_eval "$1" "say ${SERVER_MESSAGE_COMPLETE_BACKUP_STARTED[$1]}"
 		server_save_off "$1"
 		server_save_all "$1"
 	fi
@@ -1510,7 +1530,7 @@ command_server_backup() {
 
 	if server_is_running "$1"; then
 		server_save_on "$1"
-		server_eval "$1" "say ${SERVER_COMPLETE_BACKUP_FINISHED[$1]}"
+		server_eval "$1" "say ${SERVER_MESSAGE_COMPLETE_BACKUP_FINISHED[$1]}"
 	fi
 
 	echo "Backup took $SECONDS seconds".
@@ -1576,8 +1596,8 @@ command_server_whitelist_remove() {
 # Displays a list of whitelisted players for an individual server
 # $1: The server ID
 command_server_whitelist_list() {
-	if [ -f "${SERVER_WHITELIST[$1]}" ]; then
-		local players="$(cat "${SERVER_WHITELIST[$1]}")"
+	if [ -f "${SERVER_WHITELIST_PATH[$1]}" ]; then
+		local players="$(cat "${SERVER_WHITELIST_PATH[$1]}")"
 
 		if [ -z "$players" ]; then
 			echo "No players are whitelisted."
@@ -1675,12 +1695,12 @@ command_server_blacklist_list() {
 	local players
 	local ips
 
-	if [ -f "${SERVER_BANNED_PLAYERS[$1]}" ]; then
-		players="$(cat "${SERVER_BANNED_PLAYERS[$1]}")"
+	if [ -f "${SERVER_BANNED_PLAYERS_PATH[$1]}" ]; then
+		players="$(cat "${SERVER_BANNED_PLAYERS_PATH[$1]}")"
 	fi
 
-	if [ -f "${SERVER_BANNED_IPS[$1]}" ]; then
-		ips="$(cat "${SERVER_BANNED_IPS[$1]}")"
+	if [ -f "${SERVER_BANNED_IPS_PATH[$1]}" ]; then
+		ips="$(cat "${SERVER_BANNED_IPS_PATH[$1]}")"
 	fi
 
 	if [[ -z "$players" && -z "$ips" ]]; then
@@ -1732,7 +1752,7 @@ command_server_operator_remove() {
 # $1: The server ID
 command_server_operator_list() {
 	# TODO: Protect against non-existent files
-	local players="$(cat "${SERVER_OPS[$1]}")"
+	local players="$(cat "${SERVER_OPS_PATH[$1]}")"
 
 	if [ -z "$players" ]; then
 		echo "No players are operators."
@@ -1967,7 +1987,7 @@ command_server_cmdlog() {
 	if server_is_running "$1"; then
 		server_eval "$1" "${*:2}"
 		echo "Now watching logs (press Ctrl+C to exit):"
-		as_user "${SERVER_USER_NAME[$1]}" "tail --pid=$$ --follow --lines=0 --sleep-interval=0.1 ${SERVER_LOG[$1]}"
+		as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=0 --sleep-interval=0.1 ${SERVER_LOG_PATH[$1]}"
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
@@ -1978,7 +1998,7 @@ command_server_cmdlog() {
 # $1: The server ID
 command_server_console() {
 	if server_is_running "$1"; then
-		as_user "${SERVER_USER_NAME[$1]}" "screen -r ${SERVER_SCREEN_NAME[$1]}"
+		as_user "${SERVER_USERNAME[$1]}" "screen -r ${SERVER_SCREEN_NAME[$1]}"
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
@@ -1987,19 +2007,41 @@ command_server_console() {
 # Sets a parameter in the config file if it exists, otherwise inserts the
 # paramerter.
 # $1: The server ID
-# $2: The parameter
-# $3: The value to set it to
-command_set_config() {
-	if [[ -f "${SERVER_CONF[$1]}" ]]; then
-		if grep "$2" ${SERVER_CONF[$1]} >/dev/null; then
-			sed -i /$2=/s/.*/"$2=$3"/g ${SERVER_CONF[$1]}
-		else
-			echo "$2=$3" >> ${SERVER_CONF[$1]}
-		fi
+# $2: Optionally, a setting name
+# $3: Optionally, a value to set for $2
+command_server_config() {
+	# If both a setting name and value are given
+	if [ ! -z "$2" ] && [ ! -z "$3" ]; then
+		if [[ -f "${SERVER_CONF[$1]}" ]]; then
+			if grep "$2" "${SERVER_CONF[$1]}" >/dev/null; then
+				sed -i /$2=/s/.*/"$2=$3"/g "${SERVER_CONF[$1]}"
+			else
+				echo "$2=$3" >> "${SERVER_CONF[$1]}"
+			fi
 
-		if server_is_running "$1"; then
-			echo "Changes to config may require a server restart to take effect: sudo $0 ${SERVER_NAME[$1]} restart";
+			if server_is_running "$1"; then
+				echo "Changes to config may require a server restart to take effect: sudo $0 ${SERVER_NAME[$1]} restart";
+			fi
 		fi
+	fi
+
+	# If only a setting name is given
+	if [ ! -z "$2" ]; then
+
+		# Convert name into upper-case with underscores
+		local setting_name="$(echo "$2" | tr '[a-z\-]' '[A-Z\_]')"
+
+		# Display the value of that setting
+		echo "$(server_property "$1" "$setting_name")"
+	fi
+
+	# If no paramter name is given
+	if [ -z "$2" ]; then
+		# List all parameters
+		for ((i=0; i<$SERVER_SETTING_COUNT; i++)); do
+			local setting_name="$(echo "${SERVER_SETTING_NAME[$i]}" | tr '[A-Z\_]' '[a-z\-]')"
+			echo "msm-$setting_name=\"$(server_property "$1" "${SERVER_SETTING_NAME[$i]}")\""
+		done
 	fi
 }
 
@@ -2012,8 +2054,8 @@ command_set_config() {
 server_world_init() {
 	WORLD_SERVER_ID[$2]="$1"
 	WORLD_NAME[$2]="$3"
-	WORLD_ACTIVE_PATH[$2]="${SERVER_WORLD_STORAGE[$1]}/${WORLD_NAME[$2]}"
-	WORLD_INACTIVE_PATH[$2]="${SERVER_WORLD_STORAGE_INACTIVE[$1]}/${WORLD_NAME[$2]}"
+	WORLD_ACTIVE_PATH[$2]="${SERVER_WORLD_STORAGE_PATH[$1]}/${WORLD_NAME[$2]}"
+	WORLD_INACTIVE_PATH[$2]="${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}/${WORLD_NAME[$2]}"
 	
 	# Set the status of this world (active/inactive)
 	if [ -d "${WORLD_ACTIVE_PATH[$2]}" ]; then
@@ -2033,11 +2075,11 @@ server_world_init() {
 	# TODO: Allow the inram flag location to be overridable.
 	WORLD_FLAG_INRAM[$2]="${WORLD_PATH[$2]}/inram"
 	WORLD_LINK[$2]="${SERVER_PATH[$1]}/${WORLD_NAME[$2]}"
-	WORLD_BACKUP_PATH[$2]="$WORLD_ARCHIVE_PATH/${SERVER_NAME[$1]}/${WORLD_NAME[$2]}"
+	WORLD_BACKUP_PATH[$2]="$SETTINGS_WORLD_ARCHIVE_PATH/${SERVER_NAME[$1]}/${WORLD_NAME[$2]}"
 
 	# If the ramdisk path is set, get the path for this world
-	if [ ! -z "$RAMDISK_STORAGE_PATH" ]; then
-		WORLD_RAMDISK_PATH[$2]="${RAMDISK_STORAGE_PATH}/${SERVER_NAME[$1]}/${WORLD_NAME[$2]}"
+	if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
+		WORLD_RAMDISK_PATH[$2]="${SETTINGS_RAMDISK_STORAGE_PATH}/${SERVER_NAME[$1]}/${WORLD_NAME[$2]}"
 	fi
 
 	# Detect whether this world should be in ram
@@ -2048,113 +2090,46 @@ server_world_init() {
 	fi
 }
 
-# Load a config file for a server
-# $1: The id of the server to laod
-server_load_config() {
+# Load a the server.properties file for a server
+# $1: The id of the server to load
+server_load_properties() {
 	local name value
 	
-	if [[ -f "${SERVER_CONF[$1]}" ]]; then
+	if [[ -f "${SERVER_PATH[$1]}/$SETTINGS_SERVER_PROPERTIES" ]]; then
 		while read line; do 
 		 	# ignore comment lines
-			echo "$line" | grep "^#" >/dev/null 2>&1 && continue
+			if [[ "$line" =~ ^# ]]; then
+				continue
+			fi
 
-		   	# if not empty, set the property using declare
-		   	if [ ! -z "$line" ]; then
-			 	name="$(echo $line | awk -F '=' '{print $1}')"
-				value="$(echo $line | awk -F '=' '{print $2}')"
+		   	# if not empty, get the name and value of the setting
+		   	if [[ "$line" =~ ^(.*)=(.*)$ ]]; then
+				name="${BASH_REMATCH[1]}"
+				value="${BASH_REMATCH[2]}"
 
-				# Remove quotations from value
-				if [[ "$value" =~ ^\"(.*)\" ]]; then
-					value="${BASH_REMATCH[1]}"
-				else
-					if [[ "$value" =~ ^\'(.*)\' ]]; then
+				# Create variables
+				if [[ "$name" =~ ^msm-[\-\_a-zA-Z0-9]+$ ]]; then
+					local name_upper_case="$(echo ${name:4} | tr '[a-z\-]' '[A-Z\_]')"
+
+					if [[ "$name" =~ ^msm-[\-\_a-zA-Z0-9]+-path$ ]]; then
+						if [[ ! "$value" =~ ^\/ ]]; then
+							value="${SERVER_PATH[$1]}/$value"
+						fi
+					fi
+
+					if [[ "$value" =~ ^\"(.*)\"$ ]] || [[ "$value" =~ ^\'(.*)\'$ ]]; then
 						value="${BASH_REMATCH[1]}"
+					fi
+
+					eval SERVER_${name_upper_case}[$1]=\"$value\"
+				else
+					if [[ "$name" =~ ^[\-\_a-zA-Z0-9]+$ ]]; then
+						local name_upper_case="$(echo $name | tr '[a-z\-\.]' '[A-Z\_\_]')"
+						eval SERVER_PROPERTIES_${name_upper_case}[$1]=\"$value\"
 					fi
 				fi
 			fi
-
-			case "$name" in
-				# Minecraft settings:
-				allow-flight) SERVER_PROPERTIES_ALLOW_FLIGHT="$value";;
-				allow-nether) SERVER_PROPERTIES_ALLOW_NETHER="$value";;
-				difficulty) SERVER_PROPERTIES_DIFFICULTY="$value";;
-				enable-query) SERVER_PROPERTIES_ENABLE_QUERY="$value";;
-				enable-rcon) SERVER_PROPERTIES_ENABLE_RCON="$value";;
-				gamemode) SERVER_PROPERTIES_GAMEMODE="$value";;
-				generate-structures) SERVER_PROPERTIES_GENERATE_STRUCTURES="$value";;
-				level-name) SERVER_PROPERTIES_LEVEL_NAME="$value";;
-				level-seed) SERVER_PROPERTIES_LEVEL_SEED="$value";;
-				level-type) SERVER_PROPERTIES_LEVEL_TYPE="$value";;
-				max-build-height) SERVER_PROPERTIES_MAX_BUILD_HEIGHT="$value";;
-				max-players) SERVER_PROPERTIES_MAX_PLAYERS="$value";;
-				motd) SERVER_PROPERTIES_MOTD="$value";;
-				texture-pack) SERVER_PROPERTIES_TEXTURE_PACK="$value";;
-				online-mode) SERVER_PROPERTIES_ONLINE_MODE="$value";;
-				pvp) SERVER_PROPERTIES_PVP="$value";;
-				query.port) SERVER_PROPERTIES_QUERY_PORT="$value";;
-				rcon.password) SERVER_PROPERTIES_RCON_PASSWORD="$value";;
-				rcon.port) SERVER_PROPERTIES_RCON_PORT="$value";;
-				server-ip) SERVER_PROPERTIES_SERVER_IP="$value";;
-				server-port) SERVER_PROPERTIES_SERVER_PORT="$value";;
-				spawn-animals) SERVER_PROPERTIES_SPAWN_ANIMALS="$value";;
-				spawn-monsters) SERVER_PROPERTIES_SPAWN_MONSTERS="$value";;
-				spawn-npcs) SERVER_PROPERTIES_SPAWN_NPCS="$value";;
-				view-distance) SERVER_PROPERTIES_VIEW_DISTANCE="$value";;
-				white-list) SERVER_PROPERTIES_WHITE_LIST="$value";;
-
-				# MSM setttings:
-				msm-server-user) SERVER_USER_NAME[$1]="$value";;
-				msm-screen-name) SERVER_SCREEN_NAME[$1]="$value";;
-				msm-world-storage-path) SERVER_WORLD_STORAGE[$1]="${SERVER_PATH[$1]}/$value";;
-				msm-world-storage-inactive-path) SERVER_WORLD_STORAGE_INACTIVE[$1]="${SERVER_PATH[$1]}/$value";;
-
-				msm-log) SERVER_LOG[$1]="${SERVER_PATH[$1]}/$value";;
-				msm-whitelist) SERVER_WHITELIST[$1]="${SERVER_PATH[$1]}/$value";;
-				msm-banned-players) SERVER_BANNED_PLAYERS[$1]="${SERVER_PATH[$1]}/$value";;
-				msm-banned-ips) SERVER_BANNED_IPS[$1]="${SERVER_PATH[$1]}/$value";;
-
-				msm-ops) SERVER_OPS[$1]="${SERVER_PATH[$1]}/$value";;
-				msm-jar) SERVER_JAR[$1]="${SERVER_PATH[$1]}/$value";;
-				msm-ram) SERVER_RAM[$1]="$value";;
-				msm-invocation) SERVER_INVOCATION[$1]="$value";;
-
-				msm-stop-delay) SERVER_STOP_DELAY[$1]="$value";;
-				msm-restart-delay) SERVER_RESTART_DELAY[$1]="$value";;
-				
-				msm-stop-message) SERVER_STOP_MESSAGE[$1]="$value";;
-				msm-stop-abort) SERVER_STOP_ABORT[$1]="$value";;
-				msm-restart-message) SERVER_RESTART_MESSAGE[$1]="$value";;
-				msm-restart-abort) SERVER_RESTART_ABORT[$1]="$value";;
-				msm-world-backup-started) SERVER_WORLD_BACKUP_STARTED[$1]="$value";;
-				msm-world-backup-finished) SERVER_WORLD_BACKUP_FINISHED[$1]="$value";;
-				msm-complete-backup-started) SERVER_COMPLETE_BACKUP_STARTED[$1]="$value";;
-				msm-complete-backup-finished) SERVER_COMPLETE_BACKUP_FINISHED[$1]="$value";;
-				msm-complete-backup-follow-symlinks) SERVER_COMPLETE_BACKUP_FOLLOW_SYMLINKS[$1]="$value";;
-
-				msm-confirm-save-on) SERVER_CONFIRM_SAVE_ON[$1]="$value";;
-				msm-confirm-save-off) SERVER_CONFIRM_SAVE_OFF[$1]="$value";;
-				msm-confirm-save-all) SERVER_CONFIRM_SAVE_ALL[$1]="$value";;
-				msm-confirm-start) SERVER_CONFIRM_START[$1]="$value";;
-				msm-confirm-whitelist-list) SERVER_CONFIRM_WHITELIST_LIST[$1]="$value";;
-				msm-confirm-kick) SERVER_CONFIRM_CONFIRM_KICK[$1]="$value";;
-				msm-confirm-kick-fail) SERVER_CONFIRM_KICK_FAIL[$1]="$value";;
-				msm-confirm-time-set) SERVER_CONFIRM_TIME_SET[$1]="$value";;
-				msm-confirm-time-set-fail) SERVER_CONFIRM_TIME_SET_FAIL[$1]="$value";;
-				msm-confirm-time-add) SERVER_CONFIRM_TIME_ADD[$1]="$value";;
-				msm-confirm-time-add-fail) SERVER_CONFIRM_TIME_ADD_FAIL[$1]="$value";;
-				msm-confirm-toggledownfall) SERVER_CONFIRM_TOGGLEDOWNFALL[$1]="$value";;
-				msm-confirm-toggledownfall-fail) SERVER_CONFIRM_TOGGLEDOWNFALL_FAIL[$1]="$value";;
-				msm-confirm-gamemode) SERVER_CONFIRM_GAMEMODE[$1]="$value";;
-				msm-confirm-gamemode-fail-no-user) SERVER_CONFIRM_GAMEMODE_FAIL_NO_USER[$1]="$value";;
-				msm-confirm-gamemode-fail-no-change) SERVER_CONFIRM_GAMEMODE_FAIL_NO_CHANGE[$1]="$value";;
-				msm-confirm-give) SERVER_CONFIRM_GIVE[$1]="$value";;
-				msm-confirm-give-fail-no-user) SERVER_CONFIRM_GIVE_FAIL_NO_USER[$1]="$value";;
-				msm-confirm-give-fail-no-item) SERVER_CONFIRM_GIVE_FAIL_NO_ITEM[$1]="$value";;
-				msm-confirm-xp) SERVER_CONFIRM_XP[$1]="$value";;
-				msm-confirm-xp-fail-no-user) SERVER_CONFIRM_XP_FAIL_NO_USER[$1]="$value";;
-				msm-confirm-xp-fail-invalid-amount) SERVER_CONFIRM_XP_FAIL_INVALID_AMOUNT[$1]="$value";;
-			esac
-		done < "${SERVER_CONF[$1]}"
+		done < "${SERVER_PATH[$1]}/$SETTINGS_SERVER_PROPERTIES"
 	fi
 }
 
@@ -2163,80 +2138,51 @@ server_load_config() {
 # $2: The name of the server
 server_init() {
 	SERVER_NAME[$1]="$2"
-	SERVER_PATH[$1]="$SERVER_STORAGE_PATH/$2"
-	SERVER_CONF[$1]="${SERVER_PATH[$1]}/$SERVER_CONF_NAME"
-	SERVER_FLAG_ACTIVE[$1]="${SERVER_PATH[$1]}/active"
-	SERVER_BACKUP_PATH[$1]="$BACKUP_ARCHIVE_PATH/${SERVER_NAME[$1]}"
-	SERVER_LOG_archive_path[$1]="$LOG_ARCHIVE_PATH/${SERVER_NAME[$1]}"
+	SERVER_PATH[$1]="$SETTINGS_SERVER_STORAGE_PATH/$2"
+
+	SERVER_BACKUP_PATH[$1]="$SETTINGS_BACKUP_ARCHIVE_PATH/${SERVER_NAME[$1]}"
+	SERVER_LOG_ARCHIVE_PATH[$1]="$SETTINGS_LOG_ARCHIVE_PATH/${SERVER_NAME[$1]}"
 	
 	if [[ -e "${SERVER_FLAG_ACTIVE[$1]}" ]]; then
 		SERVER_ACTIVE[$1]="true"
 	else
 		SERVER_ACTIVE[$1]="false"
 	fi
+
+
+	# Setup default values for this server's variables using default settings
+	# from /etc/msm.conf
+	local name value
+
+	for ((i=0; i<$SERVER_SETTING_COUNT; i++)); do
+		name="${SERVER_SETTING_NAME[$i]}"
+		value="$(eval echo \$SETTINGS_DEFAULT_${name})"
+
+		# Make relative paths absolute, assuming the server directory
+		# as the current directory.
+		if [[ "$name" =~ _PATH$ ]]; then
+			if [[ ! "$value" =~ ^\/ ]]; then
+				value="${SERVER_PATH[$1]}/$value"
+			fi
+		fi
+
+		echo SERVER_${name}[$1]=\"${value}\"
+		eval SERVER_${name}[$1]=\"${value}\"
+	done
+
+	# Load setting overrides from server.properties
+	server_load_properties "$1"
 	
-	# Setup defaults
-	# Note: screen_name will at this stage have the {SERVER_NAME} tag in it
-	# which needs to be replaced.
-	# Invocation may also the {RAM} and {JAR} tags.
-	
-	SERVER_USER_NAME[$1]="$DEFAULT_SERVER_USER"
-	SERVER_SCREEN_NAME[$1]="${DEFAULT_SCREEN_NAME//\{SERVER_NAME\}/${SERVER_NAME[$1]}}" # Replace tags now, they cannot change
-	SERVER_WORLD_STORAGE[$1]="${SERVER_PATH[$1]}/$DEFAULT_WORLD_STORAGE_PATH"
-	SERVER_WORLD_STORAGE_INACTIVE[$1]="${SERVER_PATH[$1]}/$DEFAULT_WORLD_STORAGE_INACTIVE_PATH"
-	SERVER_LOG[$1]="${SERVER_PATH[$1]}/$DEFAULT_LOG"
-	SERVER_WHITELIST[$1]="${SERVER_PATH[$1]}/$DEFAULT_WHITELIST"
-	SERVER_BANNED_PLAYERS[$1]="${SERVER_PATH[$1]}/$DEFAULT_BANNED_PLAYERS"
-	SERVER_BANNED_IPS[$1]="${SERVER_PATH[$1]}/$DEFAULT_BANNED_IPS"
-	SERVER_OPS[$1]="${SERVER_PATH[$1]}/$DEFAULT_OPS"
-	SERVER_JAR[$1]="${SERVER_PATH[$1]}/$DEFAULT_JAR"
-	SERVER_RAM[$1]="$DEFAULT_RAM"
-	SERVER_INVOCATION[$1]="$DEFAULT_INVOCATION" # Don't replace tags yet, they may change
-	SERVER_STOP_DELAY[$1]="$DEFAULT_STOP_DELAY"
-	SERVER_RESTART_DELAY[$1]="$DEFAULT_RESTART_DELAY"
-	SERVER_STOP_MESSAGE[$1]="$DEFAULT_STOP_MESSAGE"
-	SERVER_STOP_ABORT[$1]="$DEFAULT_STOP_ABORT"
-	SERVER_RESTART_MESSAGE[$1]="$DEFAULT_RESTART_MESSAGE"
-	SERVER_RESTART_ABORT[$1]="$DEFAULT_RESTART_ABORT"
-	SERVER_WORLD_BACKUP_STARTED[$1]="$DEFAULT_WORLD_BACKUP_STARTED"
-	SERVER_WORLD_BACKUP_FINISHED[$1]="$DEFAULT_WORLD_BACKUP_FINISHED"
-	SERVER_COMPLETE_BACKUP_STARTED[$1]="$DEFAULT_COMPLETE_BACKUP_STARTED"
-	SERVER_COMPLETE_BACKUP_FINISHED[$1]="$DEFAULT_COMPLETE_BACKUP_FINISHED"
-	SERVER_COMPLETE_BACKUP_FOLLOW_SYMLINKS[$1]="$DEFAULT_COMPLETE_BACKUP_FOLLOW_SYMLINKS"
-	SERVER_CONFIRM_SAVE_ON[$1]="$DEFAULT_CONFIRM_SAVE_ON"
-	SERVER_CONFIRM_SAVE_OFF[$1]="$DEFAULT_CONFIRM_SAVE_OFF"
-	SERVER_CONFIRM_SAVE_ALL[$1]="$DEFAULT_CONFIRM_SAVE_ALL"
-	SERVER_CONFIRM_START[$1]="$DEFAULT_CONFIRM_START"
-	SERVER_CONFIRM_KICK[$1]="$DEFAULT_CONFIRM_KICK"
-	SERVER_CONFIRM_KICK_FAIL[$1]="$DEFAULT_CONFIRM_KICK_FAIL"
-	SERVER_CONFIRM_TIME_SET[$1]="$DEFAULT_CONFIRM_TIME_SET"
-	SERVER_CONFIRM_TIME_SET_FAIL[$1]="$DEFAULT_CONFIRM_TIME_SET_FAIL"
-	SERVER_CONFIRM_TIME_ADD[$1]="$DEFAULT_CONFIRM_TIME_ADD"
-	SERVER_CONFIRM_TIME_ADD_FAIL[$1]="$DEFAULT_CONFIRM_TIME_ADD_FAIL"
-	SERVER_CONFIRM_TOGGLEDOWNFALL[$1]="$DEFAULT_CONFIRM_TOGGLEDOWNFALL"
-	SERVER_CONFIRM_TOGGLEDOWNFALL_FAIL[$1]="$DEFAULT_CONFIRM_TOGGLEDOWNFALL_FAIL"
-	SERVER_CONFIRM_GAMEMODE[$1]="$DEFAULT_CONFIRM_GAMEMODE"
-	SERVER_CONFIRM_GAMEMODE_FAIL_NO_USER[$1]="$DEFAULT_CONFIRM_GAMEMODE_FAIL_NO_USER"
-	SERVER_CONFIRM_GAMEMODE_FAIL_NO_CHANGE[$1]="$DEFAULT_CONFIRM_GAMEMODE_FAIL_NO_CHANGE"
-	SERVER_CONFIRM_GIVE[$1]="$DEFAULT_CONFIRM_GIVE"
-	SERVER_CONFIRM_GIVE_FAIL_NO_USER[$1]="$DEFAULT_CONFIRM_GIVE_FAIL_NO_USER"
-	SERVER_CONFIRM_GIVE_FAIL_NO_ITEM[$1]="$DEFAULT_CONFIRM_GIVE_FAIL_NO_ITEM"
-	SERVER_CONFIRM_XP[$1]="$DEFAULT_CONFIRM_XP"
-	SERVER_CONFIRM_XP_FAIL_NO_USER[$1]="$DEFAULT_CONFIRM_XP_FAIL_NO_USER"
-	SERVER_CONFIRM_XP_FAIL_INVALID_AMOUNT[$1]="$DEFAULT_CONFIRM_XP_FAIL_INVALID_AMOUNT"
-	
-	
-	# Load config overrides from server config file if present
-	server_load_config "$1"
-	
+	# Perform tag replacements on specific variables
+	SERVER_SCREEN_NAME[$1]="${SERVER_SCREEN_NAME[$1]//\{SERVER_NAME\}/${SERVER_NAME[$1]}}" # Replace tags now, they cannot change
 	
 	# Replace tags in delay messages
-	SERVER_STOP_MESSAGE[$1]="${SERVER_STOP_MESSAGE[$1]//\{DELAY\}/${SERVER_STOP_DELAY[$1]}}"
-	SERVER_RESTART_MESSAGE[$1]="${SERVER_RESTART_MESSAGE[$1]//\{DELAY\}/${SERVER_RESTART_DELAY[$1]}}"
+	SERVER_MESSAGE_STOP[$1]="${SERVER_MESSAGE_STOP[$1]//\{DELAY\}/${SERVER_STOP_DELAY[$1]}}"
+	SERVER_MESSAGE_RESTART[$1]="${SERVER_MESSAGE_RESTART[$1]//\{DELAY\}/${SERVER_RESTART_DELAY[$1]}}"
 	
 	# Replace tags in server invocation
 	SERVER_INVOCATION[$1]="${SERVER_INVOCATION[$1]//\{RAM\}/${SERVER_RAM[$1]}}"
-	SERVER_INVOCATION[$1]="${SERVER_INVOCATION[$1]//\{JAR\}/${SERVER_JAR[$1]}}"
+	SERVER_INVOCATION[$1]="${SERVER_INVOCATION[$1]//\{JAR\}/${SERVER_JAR_PATH[$1]}}"
 	
 	
 	# Load worlds if there is a world storage directory present
@@ -2249,7 +2195,7 @@ server_init() {
 	# Record the index at which worlds for this server start
 	SERVER_WORLD_OFFSET[$1]="$id"
 	
-	if [[ -d "${SERVER_WORLD_STORAGE[$1]}" ]]; then
+	if [[ -d "${SERVER_WORLD_STORAGE_PATH[$1]}" ]]; then
 		# Load active worlds
 		while IFS= read -r -d $'\0' path; do
 			local name="$(basename "$path")"
@@ -2264,10 +2210,10 @@ server_init() {
 			
 			id="$(($id+1))"
 			num_worlds="$id"
-		done < <(find "${SERVER_WORLD_STORAGE[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
+		done < <(find "${SERVER_WORLD_STORAGE_PATH[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 	
-	if [[ -d "${SERVER_WORLD_STORAGE_INACTIVE[$1]}" ]]; then
+	if [[ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}" ]]; then
 		# Load inactive worlds
 		while IFS= read -r -d $'\0' path; do
 			local name="$(basename "$path")"
@@ -2282,99 +2228,146 @@ server_init() {
 			
 			id="$(($id+1))"
 			num_worlds="$id"
-		done < <(find "${SERVER_WORLD_STORAGE_INACTIVE[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
+		done < <(find "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 	
 	# Record the number of worlds this server has
 	SERVER_NUM_WORLDS[$1]="$(( $id - ${SERVER_WORLD_OFFSET[$1]} ))"
 }
 
-# Asserts that a variable has been set in the config file
-# $1: The name of the variable to test
-assert_is_set_in_config() {
-    [[ ! ${!1} && ${!1-_} ]] && {
-        error_exit CONF_ERROR "Have you recently upgraded? \"$1\" is a new required setting, and must be set in $CONF. See https://raw.github.com/marcuswhybrow/minecraft-server-manager/${VERSION}/msm.conf and look for the line starting with \"$1\". Add this line to your settings. Sorry about this... A better sollution for upgrading is being worked on."
-    }
+# Registers a setting that can be defined in /etc/msm.conf
+# $1: Setting name to register
+# $2: Optionally a default value for this setting
+register_setting() {
+	# Create the default version of the variable
+	eval SETTINGS_$1=\"$2\"
+
+	SETTING_NAME[$SETTING_COUNT]="$1"
+	SETTING_COUNT=$(( $SETTING_COUNT + 1 ))
 }
 
-# Ensures all non-optional settings have been set
-init_ensure_settings() {
-	assert_is_set_in_config USERNAME
-	assert_is_set_in_config SERVER_STORAGE_PATH
-	assert_is_set_in_config JAR_STORAGE_PATH
-	assert_is_set_in_config RAMDISK_STORAGE_PATH
-	
-	assert_is_set_in_config WORLD_ARCHIVE_PATH
-	assert_is_set_in_config LOG_ARCHIVE_PATH
-	assert_is_set_in_config BACKUP_ARCHIVE_PATH
-	
-	assert_is_set_in_config DEFAULT_SERVER_USER
-	assert_is_set_in_config DEFAULT_SCREEN_NAME
-	assert_is_set_in_config DEFAULT_WORLD_STORAGE_PATH
-	assert_is_set_in_config DEFAULT_WORLD_STORAGE_INACTIVE_PATH
-	assert_is_set_in_config DEFAULT_COMPLETE_BACKUP_FOLLOW_SYMLINKS
-	
-	assert_is_set_in_config DEFAULT_LOG
-	assert_is_set_in_config DEFAULT_PROPERTIES
-	assert_is_set_in_config DEFAULT_WHITELIST
-	assert_is_set_in_config DEFAULT_BANNED_PLAYERS
-	assert_is_set_in_config DEFAULT_BANNED_IPS
-	assert_is_set_in_config DEFAULT_OPS
+# Registers a setting that can be defined for each server 
+# $1: Server setting name to register
+# $2: Optionally a default value
+register_server_setting() {
+	register_setting "DEFAULT_$1" "$2"
 
-	assert_is_set_in_config DEFAULT_JAR
-	assert_is_set_in_config DEFAULT_RAM
-	assert_is_set_in_config DEFAULT_INVOCATION
+	SERVER_SETTING_NAME[$SERVER_SETTING_COUNT]="$1"
+	SERVER_SETTING_COUNT=$(( $SERVER_SETTING_COUNT + 1 ))
+}
+
+# Register possible settings
+register_settings() {
+	register_setting USERNAME "minecraft"
+	register_setting SERVER_STORAGE_PATH "/opt/msm/servers"
+	register_setting JAR_STORAGE_PATH "/opt/msm/jars"
+	register_setting RAMDISK_STORAGE_PATH "/dev/shm/msm"
+
+	register_setting WORLD_ARCHIVE_PATH "/opt/msm/archives/worlds"
+	register_setting LOG_ARCHIVE_PATH "/opt/msm/archives/logs"
+	register_setting BACKUP_ARCHIVE_PATH "/opt/msm/archives/backups"
+
+	register_setting JARGROUP_TARGET "target.txt"
+	register_setting JARGROUP_DOWNLOAD_DIR "downloads"
+	register_setting SERVER_PROPERTIES "server.properties"
 	
-	assert_is_set_in_config DEFAULT_STOP_DELAY
-	assert_is_set_in_config DEFAULT_RESTART_DELAY
-	assert_is_set_in_config DEFAULT_STOP_MESSAGE
-	assert_is_set_in_config DEFAULT_STOP_ABORT
-	assert_is_set_in_config DEFAULT_RESTART_MESSAGE
-	assert_is_set_in_config DEFAULT_RESTART_ABORT
-	assert_is_set_in_config DEFAULT_WORLD_BACKUP_STARTED
-	assert_is_set_in_config DEFAULT_WORLD_BACKUP_FINISHED
-	assert_is_set_in_config DEFAULT_COMPLETE_BACKUP_STARTED
-	assert_is_set_in_config DEFAULT_COMPLETE_BACKUP_FINISHED
-	assert_is_set_in_config DEFAULT_CONFIRM_SAVE_ON
-	assert_is_set_in_config DEFAULT_CONFIRM_SAVE_OFF
-	assert_is_set_in_config DEFAULT_CONFIRM_SAVE_ALL
-	assert_is_set_in_config DEFAULT_CONFIRM_START
-	assert_is_set_in_config DEFAULT_CONFIRM_KICK
-	assert_is_set_in_config DEFAULT_CONFIRM_KICK_FAIL
-	assert_is_set_in_config DEFAULT_CONFIRM_TIME_SET
-	assert_is_set_in_config DEFAULT_CONFIRM_TIME_SET_FAIL
-	assert_is_set_in_config DEFAULT_CONFIRM_TIME_ADD
-	assert_is_set_in_config DEFAULT_CONFIRM_TIME_ADD_FAIL
-	assert_is_set_in_config DEFAULT_CONFIRM_TOGGLEDOWNFALL
-	assert_is_set_in_config DEFAULT_CONFIRM_TOGGLEDOWNFALL_FAIL
-	assert_is_set_in_config DEFAULT_CONFIRM_GAMEMODE
-	assert_is_set_in_config DEFAULT_CONFIRM_GAMEMODE_FAIL_NO_USER
-	assert_is_set_in_config DEFAULT_CONFIRM_GAMEMODE_FAIL_NO_CHANGE
-	assert_is_set_in_config DEFAULT_CONFIRM_GIVE
-	assert_is_set_in_config DEFAULT_CONFIRM_GIVE_FAIL_NO_USER
-	assert_is_set_in_config DEFAULT_CONFIRM_GIVE_FAIL_NO_ITEM
-	assert_is_set_in_config DEFAULT_CONFIRM_XP
-	assert_is_set_in_config DEFAULT_CONFIRM_XP_FAIL_NO_USER
-	assert_is_set_in_config DEFAULT_CONFIRM_XP_FAIL_INVALID_AMOUNT
+	register_server_setting USERNAME "minecraft"
+	register_server_setting SCREEN_NAME "msm-{SERVER_NAME}"
+
+	register_server_setting WORLD_STORAGE_PATH "worldstorage"
+	register_server_setting WORLD_STORAGE_INACTIVE_PATH "worldstorage_inactive"
+	register_server_setting LOG_PATH "server.log"
+	register_server_setting WHITELIST_PATH "white-list.txt"
+	register_server_setting BANNED_PLAYERS_PATH "banned-players.txt"
+	register_server_setting BANNED_IPS_PATH "banned-ips.txt"
+	register_server_setting OPS_PATH "ops.txt"
+	register_server_setting JAR_PATH "server.jar"
+
+	register_server_setting FLAG_ACTIVE_PATH "active"
+	register_server_setting COMPLETE_BACKUP_FOLLOW_SYMLINKS "false"
+
+	register_server_setting RAM "1024"
+	register_server_setting INVOCATION "java -Xms{RAM}M -Xmx{RAM}M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:+AggressiveOpts -jar {JAR} nogui"
+	register_server_setting STOP_DELAY "10"
+	register_server_setting RESTART_DELAY "10"
+
+	register_server_setting MESSAGE_STOP "SERVER SHUTTING DOWN IN {DELAY} SECONDS!"
+	register_server_setting MESSAGE_STOP_ABORT "Server shut down aborted."
+	register_server_setting MESSAGE_RESTART "SERVER REBOOT IN {DELAY} SECONDS!"
+	register_server_setting MESSAGE_RESTART_ABORT "Server reboot aborted."
+	register_server_setting MESSAGE_WORLD_BACKUP_STARTED "Backing up world."
+	register_server_setting MESSAGE_WORLD_BACKUP_FINISHED "Backup complete."
+	register_server_setting MESSAGE_COMPLETE_BACKUP_STARTED "Backing up entire server."
+	register_server_setting MESSAGE_COMPLETE_BACKUP_FINISHED "Backup complete."
+
+	register_server_setting CONFIRM_SAVE_ON "CONSOLE: Enabling level saving.."
+	register_server_setting CONFIRM_SAVE_OFF "CONSOLE: Disabling level saving.."
+	register_server_setting CONFIRM_SAVE_ALL "CONSOLE: Save complete."
+	register_server_setting CONFIRM_START "Done"
+	register_server_setting CONFIRM_KICK "CONSOLE: Kicking "
+	register_server_setting CONFIRM_KICK_FAIL "Can't find user "
+	register_server_setting CONFIRM_TIME_SET "CONSOLE: Set time to"
+	register_server_setting CONFIRM_TIME_SET_FAIL "Unable to convert time value"
+	register_server_setting CONFIRM_TIME_ADD "CONSOLE: Added .+ to time"
+	register_server_setting CONFIRM_TIME_ADD_FAIL "Unable to convert time value"
+	register_server_setting CONFIRM_TOGGLEDOWNFALL "CONSOLE: Toggling downfall on|off for world"
+	register_server_setting CONFIRM_TOGGLEDOWNFALL_FAIL ".\[31m;1mNo world exists with the name"
+	register_server_setting CONFIRM_GAMEMODE "CONSOLE: Setting .+ to game mode (1|0)"
+	register_server_setting CONFIRM_GAMEMODE_FAIL_NO_USER "Can't find user .+"
+	register_server_setting CONFIRM_GAMEMODE_FAIL_NO_CHANGE ".+ already has game mode (1|0)"
+	register_server_setting CONFIRM_GIVE "CONSOLE: Giving .+ some .+ (.+)"
+	register_server_setting CONFIRM_GIVE_FAIL_NO_USER "Can't find user .+"
+	register_server_setting CONFIRM_GIVE_FAIL_NO_ITEM "There's no item called .+"
+	register_server_setting CONFIRM_XP "CONSOLE: Giving .+ exp to .+"
+	register_server_setting CONFIRM_XP_FAIL_NO_USER "Can't find user .+"
+	register_server_setting CONFIRM_XP_FAIL_INVALID_AMOUNT "Invalid exp count: .+"
+}
+
+load_conf() {
+	if [[ -f "$CONF" ]]; then
+		while read line; do
+			# ignore comment lines
+			if [[ "$line" =~ ^# ]]; then
+				continue
+			fi
+
+			# if not empty, get the name and value of the setting
+			if [[ "$line" =~ ^(.*)=(.*)$ ]]; then
+				name="${BASH_REMATCH[1]}"
+				value="${BASH_REMATCH[2]}"
+
+				# If the value is wrapped in double or single quotations
+				# remove them from the value.
+				if [[ "$value" =~ ^\".*\"$ ]] || [[ "$value" =~ ^\'.*\'$ ]]; then
+					value="${value:1:${#value}-2}"
+				fi
+
+				name="$(echo "$name" | tr '[\-a-z]' '[\_A-Z]')"
+
+				# Create variables
+				if [[ "$name" =~ ^[\_A-Z0-9]+$ ]]; then
+					eval SETTINGS_${name}=\"$value\"
+				fi
+			fi
+		done < "$CONF"
+	fi
 }
 
 init() {
-	# Sourcing $CONF will override the previous defaults, with new values
-	source "$CONF"
-	
-	init_ensure_settings
+	register_settings
+	load_conf
 	
 	num_worlds=0
 	num_servers=0
 	
-	if [ -d "$SERVER_STORAGE_PATH" ]; then
+	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
 		local id=0
 		while IFS= read -r -d $'\0' path; do
 			local name="$(basename "$path")"
 			server_init "$id" "$name"
 			id="$(($id+1))"
 			num_servers="$id"
-		done < <(find "$SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
+		done < <(find "$SETTINGS_SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 }
 
@@ -2387,7 +2380,7 @@ interrupt() {
 				echo -e "\nInterrupted..."
 				exit_message="true"
 			fi
-			server_eval "$i" "say ${SERVER_STOP_ABORT[$i]}"
+			server_eval "$i" "say ${SERVER_MESSAGE_STOP_ABORT[$i]}"
 			echo "Server \"${SERVER_NAME[$i]}\" shutdown was aborted."
 		fi
 		
@@ -2396,14 +2389,12 @@ interrupt() {
 				echo -e "\nInterrupted..."
 				exit_message="true"
 			fi
-			server_eval "$i" "say ${SERVER_RESTART_ABORT[$i]}"
+			server_eval "$i" "say ${SERVER_MESSAGE_RESTART_ABORT[$i]}"
 			echo "Server \"${SERVER_NAME[$i]}\" restart was aborted."
 		fi
 	done
 	exit
 }
-
-COMMAND_COUNT=0
 
 # Adds a command to the list, allowing it to be called from the command line.
 # $1: The command signature, a coded string describing the structure of the
@@ -2549,7 +2540,7 @@ call_command() {
 							sid="server:all"
 						else
 							if is_valid_name "$specified_name"; then
-								if [ -d "$SERVER_STORAGE_PATH/$specified_name" ]; then
+								if [ -d "$SETTINGS_SERVER_STORAGE_PATH/$specified_name" ]; then
 									sid="$(server_get_id "$specified_name")"
 								fi
 							fi
@@ -2585,7 +2576,7 @@ call_command() {
 
 						if [[ "$sid" -ge "0" ]]; then
 							if is_valid_name "$specified_name"; then
-								if [ -d "${SERVER_WORLD_STORAGE[$sid]}/$specified_name" ] || [ -d "${SERVER_WORLD_STORAGE_INACTIVE[$sid]}/$specified_name" ]; then
+								if [ -d "${SERVER_WORLD_STORAGE_PATH[$sid]}/$specified_name" ] || [ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH2[$sid]}/$specified_name" ]; then
 									wid="$(server_world_get_id "$sid" "$specified_name")"
 								fi
 							fi
@@ -2715,6 +2706,7 @@ main() {
 	register_command "restart" "command_restart"
 	register_command "restart now" "command_restart_now"
 	register_command "version" "command_version"
+	register_command "config" "command_config"
 	register_command "server list" "command_server_list"
 	register_command "server create <name>" "command_server_create"
 	register_command "server delete <name>" "command_server_delete"
@@ -2773,7 +2765,8 @@ main() {
 	register_command "<name:server> cmd <strings>" "command_server_cmd"
 	register_command "<name:server> cmdlog <strings>" "command_server_cmdlog"
 	register_command "<name:server> console" "command_server_console"
-	register_command "<name:server> config <string> <string>" "command_set_config"	
+	register_command "<name:server> config" "command_server_config"
+	register_command "<name:server> config <string> <string>" "command_server_config"
 	# This function call matches the user input to a registered command
 	# signature, and then calls that commands handler function with positional
 	# arguments containing any variable strings.
