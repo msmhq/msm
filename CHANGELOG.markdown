@@ -11,6 +11,13 @@ Maintainers:
 Change Log
 ----------
 
+### [0.5.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.5.1...0.5.2)
+
+* Fixed issue [#47][#47] where toggling any world's ram status would alwqays effect the first world, alphabetically, instead.
+
+[#47]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/47
+
+
 ### [0.5.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.5.0...0.5.1)
 
 * Added help text line for `msm <server> config` command.
