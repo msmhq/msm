@@ -2583,7 +2583,7 @@ call_command() {
 
 						if [[ "$sid" -ge "0" ]]; then
 							if is_valid_name "$specified_name"; then
-								if [ -d "${SERVER_WORLD_ACTIVE_PATH[$sid]}/$specified_name" ] || [ -d "${SERVER_WORLD_INACTIVE_PATH[$sid]}/$specified_name" ]; then
+								if [ -d "${SERVER_WORLD_STORAGE[$sid]}/$specified_name" ] || [ -d "${SERVER_WORLD_STORAGE_INACTIVE[$sid]}/$specified_name" ]; then
 									wid="$(server_world_get_id "$sid" "$specified_name")"
 								fi
 							fi
