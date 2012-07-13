@@ -11,6 +11,49 @@ Maintainers:
 Change Log
 ----------
 
+### [0.6.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.5.2...0.6.0)
+
+* Added new command `msm config` which displays a key value list of all MSM settings in use. Useful for transparency.
+* Improved `msm <server> config <setting> <value>` to list all MSM settings for a server when arguments are omitted.
+* Refactored the way settings are added globally and for individual servers, making development far simpler.
+* Changed several setting names in `/etc/msm.conf`:
+	* `DEFAULT_SERVER_USER` is now `DEFAULT_USERNAME`
+	* `DEFAULT_LOG` is now `DEFAULT_LOG_PATH`
+	* `DEFAULT_PROPERTIES` is now `DEFAULT_PROPERTIES_PATH`
+	* `DEFAULT_WHITELIST` is now `DEFAULT_WHITELIST_PATH`
+	* `DEFAULT_BANNED_PLAYERS` is now `DEFAULT_BANNED_PLAYERS_PATH`
+	* `DEFAULT_BANNED_IPS` is now `DEFAULT_BANNED_IPS_PATH`
+	* `DEFAULT_OPS` is now `DEFAULT_OPS_PATH`
+	* `DEFAULT_JAR` is now `DEFAULT_JAR_PATH`
+	* `DEFAULT_STOP_MESSAGE` is now `DEFAULT_MESSAGE_STOP`
+	* `DEFAULT_STOP_ABORT` is now `DEFAULT_MESSAGE_STOP_ABORT`
+	* `DEFAULT_RESTART_MESSAGE` is now `DEFAULT_MESSAGE_RESTART`
+	* `DEFAULT_RESTART_ABORT` is now `DEFAULT_MESSAGE_RESTART_ABORT`
+	* `DEFAULT_WORLD_BACKUP_STARTED` is now `DEFAULT_MESSAGE_WORLD_BACKUP_STARTED`
+	* `DEFAULT_WORLD_BACKUP_FINISHED` is now `DEFAULT_MESSAGE_WORLD_BACKUP_FINISHED`
+	* `DEFAULT_COMPLETE_BACKUP_STARTED` is now `DEFAULT_MESSAGE_COMPLETE_BACKUP_STARTED`
+	* `DEFAULT_COMPLETE_BACKUP_FINISHED` is now `DEFAULT_MESSAGE_COMPLETE_BACKUP_STARTED`
+* Those same name changes also effect `server.properties` files:
+	* `msm-server-user` is now `msm-username`
+	* `msm-log` is now `msm-log-path`
+	* `msm-properties` is now `msm-properties-path`
+	* `msm-whitelist` is now `msm-whitelist-path`
+	* `msm-banned-players` is now `msm-banned-players-path`
+	* `msm-banned-ips` is now `msm-banned-ips-path`
+	* `msm-ops` is now `msm-ops-path`
+	* `msm-stop-message` is now `msm-message-stop`
+	* `msm-stop-abort` is now `msm-message-stop-abort`
+	* `msm-restart-message` is now `msm-message-restart`
+	* `msm-restart-abort` is now `msm-message-restart-abort`
+	* `msm-world-backup-started` is now `msm-message-world-backup-started`
+	* `msm-world-backup-finished` is now `msm-message-world-backup-finished`
+	* `msm-complete-backup-started` is now `msm-message-complete-backup-started`
+	* `msm-complete-backup-finished` is now `msm-message-complete-backup-finished`
+* The [config wiki page][server-config] is now updated with all of these new setting names for reference.
+
+[server-config]: https://github.com/marcuswhybrow/minecraft-server-manager/wiki/Server-Configuration
+
+
 ### [0.5.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.5.1...0.5.2)
 
 * Fixed issue [#47][#47] where toggling any world's ram status would alwqays effect the first world, alphabetically, instead.
