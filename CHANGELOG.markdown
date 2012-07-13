@@ -15,6 +15,7 @@ Change Log
 
 * Added new command `msm config` which displays a key value list of all MSM settings in use. Useful for transparency.
 * Improved `msm <server> config <setting> <value>` to list all MSM settings for a server when arguments are omitted.
+* Updated bash completion script for new commands.
 * Refactored the way settings are added globally and for individual servers, making development far simpler.
 * Changed several setting names in `/etc/msm.conf`:
 	* `DEFAULT_SERVER_USER` is now `DEFAULT_USERNAME`
