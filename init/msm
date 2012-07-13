@@ -25,7 +25,7 @@ CONF="${MSM_CONF:-/etc/msm.conf}"
 
 
 ### The Minecraft Server Manager version, use "msm version" to check yours.
-VERSION="0.6.0"
+VERSION="0.6.1"
 
 
 ### Config variables the user should not need/want to change
@@ -2165,7 +2165,7 @@ server_init() {
 				value="${SERVER_PATH[$1]}/$value"
 			fi
 		fi
-		
+
 		eval SERVER_${name}[$1]=\"${value}\"
 	done
 

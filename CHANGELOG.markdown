@@ -11,6 +11,11 @@ Maintainers:
 Change Log
 ----------
 
+### [0.6.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.6.0...0.6.1)
+
+* Fixed `test.sh` to use new settings names.
+
+
 ### [0.6.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.5.2...0.6.0)
 
 * Added new command `msm config` which displays a key value list of all MSM settings in use. Useful for transparency.
