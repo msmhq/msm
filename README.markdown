@@ -8,7 +8,7 @@ A single init script which makes running multiple Minecraft/Bukkit servers easie
 * [Visit the wiki][wiki] for the full list of resources.
 * Fork and contribute your own modifications.
 * Not a coder? [Post an issue][issues] with your idea for MSM instead.
-* Read the [changelog][changelog] to get a picture of how MSM has evloved over time.
+* Read the [changelog][changelog] to get a picture of how MSM has evolved over time.
 
 MSM is released under the GPLv3 licence, which is included in the repository [here][licence]. I'm open to suggestions where licencing is concerned.
 
