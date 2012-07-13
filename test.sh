@@ -187,7 +187,7 @@ test_creating_server_with_jar_groups() {
 
 	assertEquals "Incorrect exit code." $EX_OK $EXIT_CODE
 	assertTrue "Server direcotry was not created." "[ -d \"$SERVER_STORAGE_PATH/example\" ]"
-	assertTrue "Server jar was not linked." "[ -f \"$SERVER_STORAGE_PATH/example/$DEFAULT_JAR\" ]"
+	assertTrue "Server jar ($SERVER_STORAGE_PATH/example/$DEFAULT_JAR_PATH) was not linked." "[ -f \"$SERVER_STORAGE_PATH/example/$DEFAULT_JAR_PATH\" ]"
 }
 
 ### "msm server delete" tests
