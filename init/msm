@@ -948,7 +948,9 @@ server_worlds_backup() {
 
 	# For each of the servers worlds:
 	while [[ "$i" -lt "$max" ]]; do
-		world_backup "$i"
+		if [[ "${WORLD_STATUS[$i]}" == "active" ]]; then
+			world_backup "$i"
+		fi
 		i="$(( $i + 1 ))"
 	done
 }
