@@ -265,7 +265,7 @@ world_deactivate() {
 # config information for that server
 # $1: The name of the server
 server_get_id() {
-	for ((i=0; i<$num_servers; i++)); do
+	for ((i=0; i<$NUM_SERVERS; i++)); do
 		if [[ "${SERVER_NAME[$i]}" == "$1" ]]; then
 			echo "$i"
 			return 0
@@ -675,8 +675,31 @@ jargroup_rename() {
 
 # Echos a list of servers in the SETTINGS_SERVER_STORAGE_PATH
 server_list() {
-	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
-		ls -1 "$SETTINGS_SERVER_STORAGE_PATH"
+	if [ "$NUM_SERVERS" -gt 0 ]; then
+		for ((server=0; server<$NUM_SERVERS; server++)); do
+			if "${SERVER_ACTIVE[$server]}"; then
+				echo -n "[ ACTIVE ] "
+			else
+				echo -n "[INACTIVE] "
+			fi
+
+			echo -n "\"${SERVER_NAME[$server]}\" "
+
+
+			if "${SERVER_ACTIVE[$server]}"; then
+				if server_is_running "$server"; then
+					echo "is running. Everything is OK."
+				else
+					echo "is stopped. Server is down!"
+				fi
+			else
+				if server_is_running "$server"; then
+					echo "is running. It should not be running!"
+				else
+					echo "is stopped. Everything is OK."
+				fi
+			fi
+		done
 	else
 		echo "[There are no servers]"
 	fi	
@@ -1069,7 +1092,7 @@ manager_stop_all_servers() {
 	# For all running servers issue the stop warning
 	local max_countdown=0
 	
-	for ((server=0; server<${num_servers}; server++)); do
+	for ((server=0; server<${NUM_SERVERS}; server++)); do
 		if server_is_running "$server"; then
 			any_running="true"
 			was_running[$server]="true"
@@ -1118,7 +1141,7 @@ manager_stop_all_servers() {
 		
 			# Each second check all server, to see if its their time to
 			# stop. If so issue the stop command, and don't hang.
-			for ((server=0; server<${num_servers}; server++)); do
+			for ((server=0; server<${NUM_SERVERS}; server++)); do
 				if server_is_running "$server"; then
 					stop_tick="$(( ${max_countdown} - ${SERVER_STOP_DELAY[$server]} ))"
 					if [[ "$stop_tick" == "$tick" ]]; then
@@ -1140,7 +1163,7 @@ manager_stop_all_servers() {
 		echo "Now."
 	
 		# Finally check all servers have stopped
-		for ((server=0; server<${num_servers}; server++)); do
+		for ((server=0; server<${NUM_SERVERS}; server++)); do
 			if "${was_running[$server]}"; then
 				echo -n "Ensuring server \"${SERVER_NAME[$server]}\" has stopped... "
 				server_wait_for_stop "$server"
@@ -1160,7 +1183,7 @@ manager_stop_all_servers_now() {
 	local any_running="false"
 	
 	# Stop all servers at the same time
-	for ((server=0; server<${num_servers}; server++)); do
+	for ((server=0; server<${NUM_SERVERS}; server++)); do
 		if server_is_running "$server"; then
 			was_running[$server]="true"
 			any_running="true"
@@ -1174,7 +1197,7 @@ manager_stop_all_servers_now() {
 	
 	if "$any_running"; then
 		# Ensure all the servers have stopped
-		for ((server=0; server<${num_servers}; server++)); do
+		for ((server=0; server<${NUM_SERVERS}; server++)); do
 			if "${was_running[$server]}"; then
 				echo -n "Ensuring server \"${SERVER_NAME[$server]}\" has stopped... "
 				server_wait_for_stop "$server"
@@ -1198,7 +1221,7 @@ manager_property() {
 # Starts all servers
 command_start() {
 	# Required start option, for debian init.d scripts
-	for ((server=0; server<${num_servers}; server++)); do
+	for ((server=0; server<${NUM_SERVERS}; server++)); do
 		# Only starts active servers
 		if "${SERVER_ACTIVE[$server]}"; then
 			if server_is_running "$server"; then
@@ -2189,7 +2212,7 @@ server_init() {
 	SERVER_NUM_WORLDS[$1]=0
 	
 	# Start world id's for this server's worlds at the end of the array
-	local id="$num_worlds"
+	local id="$NUM_WORLDS"
 	
 	# Record the index at which worlds for this server start
 	SERVER_WORLD_OFFSET[$1]="$id"
@@ -2208,7 +2231,7 @@ server_init() {
 			fi
 			
 			id="$(($id+1))"
-			num_worlds="$id"
+			NUM_WORLDS="$id"
 		done < <(find "${SERVER_WORLD_STORAGE_PATH[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 	
@@ -2226,7 +2249,7 @@ server_init() {
 			fi
 			
 			id="$(($id+1))"
-			num_worlds="$id"
+			NUM_WORLDS="$id"
 		done < <(find "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 	
@@ -2356,8 +2379,8 @@ init() {
 	register_settings
 	load_conf
 	
-	num_worlds=0
-	num_servers=0
+	NUM_WORLDS=0
+	NUM_SERVERS=0
 	
 	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
 		local id=0
@@ -2365,7 +2388,7 @@ init() {
 			local name="$(basename "$path")"
 			server_init "$id" "$name"
 			id="$(($id+1))"
-			num_servers="$id"
+			NUM_SERVERS="$id"
 		done < <(find "$SETTINGS_SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 }
@@ -2373,7 +2396,7 @@ init() {
 # Called if the script is interrupted before exiting naturally
 interrupt() {
 	local exit_message="false"
-	for ((i=0; $i<$num_servers; i++)); do
+	for ((i=0; $i<$NUM_SERVERS; i++)); do
 		if [[ "${STOP_COUNTDOWN[$i]}" == "true" ]] && server_is_running "$i"; then
 			if [[ "$exit_message" == "false" ]]; then
 				echo -e "\nInterrupted..."
@@ -2601,7 +2624,7 @@ call_command() {
 			# This code block calls the handler for all possible servers and
 			# all possible worlds.
 			if [[ "$sid" == "server:all" ]] && [[ "$wid" == "world:all" ]]; then
-				for ((j=0; j<$num_worlds; j++)); do
+				for ((j=0; j<$NUM_WORLDS; j++)); do
 					# Replace server and world id placeholders with actual id's
 					local replaced_args
 					for k in ${!args[@]}; do
@@ -2620,7 +2643,7 @@ call_command() {
 			# This calls the handler for all possible servers, and preserves 
 			# all other arguments.
 			if [[ "$sid" == "server:all" ]]; then
-				for ((j=0; j<$num_servers; j++)); do
+				for ((j=0; j<$NUM_SERVERS; j++)); do
 					local replaced_args
 					for k in ${!args[@]}; do
 						replaced_args[$k]="${args[$k]//server\:all/$j}"
