@@ -5,7 +5,7 @@ A single init script which makes running multiple Minecraft/Bukkit servers easie
 ## Getting Started
 
 * [Install][install] MSM on your box.
-* [Visit the docs][docs] for the help on getting started.
+* [Visit the docs][docs] for help with getting started.
 * Fork and contribute your own modifications.
 * Not a coder? [Post an issue][issues] with your idea for MSM instead.
 * Read the [changelog][changelog] to get a picture of how MSM has evolved over time.
