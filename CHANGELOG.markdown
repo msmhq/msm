@@ -11,6 +11,13 @@ Maintainers:
 Change Log
 ----------
 
+### [0.6.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.6.1...0.6.2)
+
+* Fixed issue [#49][#49] where, probably since 0.6.0, `active` files where not being created upon server start.
+
+[#49]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/49
+
+
 ### [0.6.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.6.0...0.6.1)
 
 * Fixed `test.sh` to use new settings names.
