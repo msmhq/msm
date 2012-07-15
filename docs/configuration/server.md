@@ -1,0 +1,92 @@
+---
+layout: docs
+title: Server Configuration · Docs · MSM
+tab: docs
+docsitem: configuration-server
+---
+
+Server Configuration
+====================
+
+Default values which apply to all servers can be found in `/etc/msm.conf` under the heading "Server Defaults". See [Configuration &rarr; Global Settings][global-config] intead for setitngs which apply to all servers.
+
+If a server is not configured individually–and it does not have to be–global default values are used instead. You may however override these defaults for a particular server by editing its `server.properties` file found in the respective server directory, and adding any of the settings from the following sections.
+
+*Note: MSM's default values are used for every unspecified option, so `server.properties` can be left completely unedited.*
+
+## A Note on Paths
+
+A setting ending `-path` accepts a relative or absolute path. Relative paths are appended to the location of the server directory. Neither absolute nor relative paths should end in a trailing slash, otherwise MSM will interpret them incorrectly.
+
+Remember an absolute path is one that starts with a forwards slash, whereas a relative path does not. 
+
+## Invocation
+
+These options cover starting the server in the way you want:
+
+    msm-username=                    # The linux user used to start the server
+    msm-screen-name=                 # The name used to reference the screen session for this server
+    msm-world-storage-path=          # The directory (relative to the server directory) to store worlds in
+    msm-world-storage-inactive-path= # The directory to store unused worlds
+
+    msm-log-path=                    # The location of the Minecraft server log file
+    msm-whitelist-path=              # The location of the whitelist file
+    msm-banned-players-path=         # The location of banned players file
+    msm-banned-ips-path=             # The location of the banned ups file
+
+    msm-ops-path=                    # The location of the ops file
+    msm-jar-path=                    # The jar file (relative to the server directory) to launch
+    msm-ram=                         # The amount of RAM (in MBs) to dedicate to this server
+    msm-invocation=                  # The line called to start the server: you may use the tags "{JAR}" and
+                                     # "{RAM}" in this string which will be replaced with the values from
+                                     # the previous settings
+    
+## Delays
+
+When a server is going to stop, it's nice to give users some time to finish up:
+
+    msm-stop-delay=                  # The delay between warning players and stopping the server
+    msm-restart-delay=               # The delay between warning players and restarting the server
+
+## Messages
+
+When interruptions to the normal experience occur, it's nice to give players some explanation:
+    
+    msm-message-stop=                      # The message shown to players before stopping the server
+    msm-message-stop-abort=                # The message shown to players when a shut-down is aborted
+    msm-message-restart=                   # The message shown to players before restarting the server
+    msm-message-restart-abort=             # The message shown to players when a restart is aborted
+    msm-message-world-backup-started=      # The message shown to players when starting to backup server worlds
+    msm-message-world-backup-finished=     # The message shown to players when finished backing up server worlds
+    msm-message-complete-backup-started=   # The message shown to players when starting to backup the entire server
+    msm-message-complete-backup-finished=  # The message shown to players when finished backing up the entire server
+
+## Log Confirmation
+
+To be as responsive as possible, MSM determines exactly when a command has completed by watching the server logs for specific entries. When that entry is found, the command can return. If Minecraft server changes the messages it logs (for "save-on", "save-off", "save-all" and when starting up) these values should be altered in `/etc/msm.conf` globally if possible. However if a single server has a different version to the rest you may override what log entries to wait for in a server's `server.conf` file.
+
+Each setting value when set constitutes part of a regular expression used to look for that log entry. As such one may use any special regular expression characters to better define the entry.
+    
+    msm-confirm-save-on=                  # The log entry (following "[INFO]") which confirms the "save-on" command has completed.
+    msm-confirm-save-off=                 # The log entry that confirms the "save-off" command has completed.
+    msm-confirm-save-all=                 # The log entry that confirms the "save-all" command has completed.
+    msm-confirm-start=                    # The log entry that confirms the server has finished starting up.
+    msm-confirm-kick=                     # The log entry that confirms a user has been kicked
+    msm-confirm-kick-fail=                # The log entry that confirms a user has not been kicked
+    msm-confirm-time-set=                 # The log entry that confirms the time has been set
+    msm-confirm-time-set-fail=            # The log entry that confirms the time format was invalid
+    msm-confirm-time-add=                 # The log entry that confirms the time has been incremented
+    msm-confirm-time-add-fail=            # The log entry that confirms the time format was invalid
+    msm-confirm-toggledownfall=           # The log entry that confirms the toggle of down fall
+    msm-confirm-toggledownfall-fail=      # The log entry that confirms the world specified for toggling did not exit
+    msm-confirm-gamemode=                 # The log entry that confirms as user's game mode was changed
+    msm-confirm-gamemode-fail-no-user=    # The log entry that confirms the specified user was not found
+    msm-confirm-gamemode-fail-no-change=  # The log entry that confirms the user was already in that mode
+    msm-confirm-give=                     # The log entry that confirms a player was given an entity
+    msm-confirm-give-fail-no-user=        # The log entry that confirms the specified user was not found
+    msm-confirm-give-fail-no-item=        # The log entry that confirms the item ID/name was not found
+    msm-confirm-xp=                       # The log entry that confirms the XP was awarded to a player
+    msm-confirm-xp-fail-no-user=          # The log entry that confirms the specified user was not found
+    msm-confirm-xp-fail-invalid-amount=   # The log entry that confirms the XP amount was an invalid format
+
+[global-config]: {{ site.baseurl }}docs/configuration/msm.html

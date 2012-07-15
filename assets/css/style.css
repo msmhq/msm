@@ -1,6 +1,6 @@
 body {
-  padding-top: 90px;
-  background: #fff url(../img/grass-bg-small.png) repeat-x top center;
+  padding-top: 130px;
+  background: #fff url(../img/grass-bg-small.png) repeat-x center 40px;
 }
 
 .masthead {
@@ -51,6 +51,10 @@ body {
 }
 .masthead #view-button {
   margin-right: 10px;
+}
+
+.docs .masthead {
+  border-bottom: none;
 }
 
 
@@ -215,4 +219,23 @@ body {
   background:     -ms-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 50%);
   background:      -o-radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 50%);
   background:         radial-gradient(50% 50%, cover, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 50%);
+}
+
+
+
+.navbar .brand {
+  text-transform: uppercase;
+  font-weight: 100;
+  color: white;
+}
+
+
+
+.docs-content h1 {
+  font-weight: 300;
+  margin-bottom: 30px;
+}
+
+.docs .nav-list {
+  margin-bottom: 20px;
 }

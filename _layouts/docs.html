@@ -1,0 +1,42 @@
+---
+layout: default
+tab: docs
+---
+
+<div class="container docs">
+
+	<div class="masthead">
+		<h1>Documentation</h1>
+	</div>
+
+	<div class="row">
+		<div class="span3">
+			<ul class="nav nav-list well">
+				<li{% if page.docsitem == "home" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/">Home</a></li>
+				<li{% if page.docsitem == "installation" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/installation.html">Installation</a></li>
+				<li{% if page.docsitem == "updating" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/updating.html">Updating</a></li>
+
+				<li class="nav-header">Configuration</li>
+				<li{% if page.docsitem == "configuration-msm" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/configuration/msm.html">Global Settings</a></li>
+				<li{% if page.docsitem == "configuration-server" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/configuration/server.html">Individual Server</a></li>
+
+				<li class="nav-header">Commands</li>
+				<li{% if page.docsitem == "commands-overview" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/commands/">Overview</a></li>
+				<li{% if page.docsitem == "commands-setup" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/commands/setup.html">Setup</a></li>
+				<li{% if page.docsitem == "commands-server" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/commands/server.html">Server</a></li>
+				<li{% if page.docsitem == "commands-in-game" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/commands/in-game.html">In Game</a></li>
+				<li{% if page.docsitem == "commands-jar-group" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/commands/jar-group.html">Jar Group</a></li>
+				<li{% if page.docsitem == "commands-global" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/commands/global.html">Global</a></li>
+
+				<li class="nav-header">Concepts</li>
+				<li{% if page.docsitem == "concepts-layout" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/concepts/layout.html">Server Layout</a></li>
+				<li{% if page.docsitem == "concepts-active-vs-inactive" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/concepts/active-vs-inactive.html">Active vs Inactive</a></li>
+				<li{% if page.docsitem == "concepts-cron" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/concepts/cron.html">Cron Scheduler</a></li>
+			</ul>
+		</div>
+
+		<div class="span9 docs-content">
+			{{ content }}
+		</div>
+	</div>
+</div>

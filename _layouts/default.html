@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{ page.title }}</title>
+    <meta name="description" content="">
+    <meta name="author" content="Marcus Whybrow">
+    
+    <link rel="author" href="https://plus.google.com/103832793361409130288/posts">
+    <link rel="stylesheet" href="{{ site.baseurl }}assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ site.baseurl }}assets/css/style.css">
+    <link rel="stylesheet" href="{{ site.baseurl }}assets/css/bootstrap-responsive.min.css">
+    
+    <!--[if lt IE 9]>
+      <script type="text/javascript" src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-32675598-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </head>
+  <body>
+
+  	<div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="{{ site.baseurl }}">MSM</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li></li>
+              <li{% if page.tab == "overview" %} class="active"{% endif %}><a href="{{ site.baseurl }}">Overview</a></li>
+              <li{% if page.tab == "docs" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/">Docs</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container">
+      
+{{ content }}
+    
+      <footer class="footer">
+        <p>Code licensed under the <a class="ga-track" href="http://www.gnu.org/copyleft/gpl.html" target="_blank">General Public Licence v3</a>. Documentation licensed under <a class="ga-track" href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
+        <p>You may have noticed this design approach is a shamless reworking of <a class="ga-track" href="http://twitter.github.com/bootstrap/">Twitter's Bootstrap</a> github page.</p>
+        <p>Icons from <a class="ga-track" href="http://glyphicons.com">Glyphicons Free</a>, licensed under <a class="ga-track" href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
+      </footer>
+    </div>
+
+    <script type="text/javascript" src="http://widget.uservoice.com/PV3DwOMKgbtdnsS4oZBew.js" async="true"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.0.3/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+      // jquery-1.7.2.min.js local fallback
+      typeof jQuery == 'undefined' && document.write('<script src="/minecraft-server-manager/assets/js/jquery-1.7.2.min.js" type="text/javascript"><\/script>');
+      // bootstrap.min.js local fallback
+      typeof jQuery != 'undefined' && typeof jQuery.fn.modal == 'undefined' && document.write('<script src="/minecraft-server-manager/assets/js/bootstrap.min.js" type="text/javascript"><\/script>');
+    </script>
+    <script type="text/javascript" src="/minecraft-server-manager/assets/js/index.js"></script>
+  </body>
+</html>>
+</html>
