@@ -30,19 +30,12 @@
   	<div class="navbar navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
           <a class="brand" href="{{ site.baseurl }}">MSM</a>
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-              <li></li>
-              <li{% if page.tab == "overview" %} class="active"{% endif %}><a href="{{ site.baseurl }}">Overview</a></li>
-              <li{% if page.tab == "docs" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/">Docs</a></li>
-            </ul>
-          </div>
+          <ul class="nav">
+            <li{% if page.tab == "overview" %} class="active"{% endif %}><a href="{{ site.baseurl }}">Overview</a></li>
+            <li{% if page.tab == "docs" %} class="active"{% endif %}><a href="{{ site.baseurl }}docs/">Docs</a></li>
+            <li><a href="https://msm.tenderapp.com/">Support</a></li>
+          </ul>
         </div>
       </div>
     </div>
