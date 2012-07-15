@@ -11,6 +11,13 @@ Maintainers:
 Change Log
 ----------
 
+### [0.6.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.6.2...0.6.3)
+
+* Improved the `msm server list` command to show active/inactive and running/stopped statuses. Thanks to [oldman,j's suggestion][uservoice-2987515].
+
+[uservoice-2987515]: http://minecraftservermanager.uservoice.com/forums/166773-general/suggestions/2987515-the-server-list-command-
+
+
 ### [0.6.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.6.1...0.6.2)
 
 * Fixed issue [#49][#49] where, probably since 0.6.0, `active` files where not being created upon server start.
