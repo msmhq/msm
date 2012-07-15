@@ -4,8 +4,8 @@ A single init script which makes running multiple Minecraft/Bukkit servers easie
 
 ## Getting Started
 
-* [Install][wiki-install] MSM on your box.
-* [Visit the wiki][wiki] for the full list of resources.
+* [Install][install] MSM on your box.
+* [Visit the docs][docs] for the help on getting started.
 * Fork and contribute your own modifications.
 * Not a coder? [Post an issue][issues] with your idea for MSM instead.
 * Read the [changelog][changelog] to get a picture of how MSM has evolved over time.
@@ -59,8 +59,8 @@ This code grew out of an old version of [Ahtenus' Minecraft Init Script][ahtenus
 
 [we-snapshot]: http://wiki.sk89q.com/wiki/WorldEdit/Snapshots
 [ahtenus-minecraft-init]: https://github.com/Ahtenus/minecraft-init
-[wiki]: https://github.com/marcuswhybrow/minecraft-server-manager/wiki
-[wiki-install]: https://github.com/marcuswhybrow/minecraft-server-manager/wiki/Installation
+[docs]: http://marcuswhybrow.github.com/minecraft-server-manager/docs/
+[install]: http://marcuswhybrow.github.com/minecraft-server-manager/docs/installation.html
 [changelog]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/master/CHANGELOG.markdown
 [licence]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/master/LICENSE.markdown
 [issues]: https://github.com/marcuswhybrow/minecraft-server-manager/issues
