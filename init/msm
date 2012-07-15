@@ -496,11 +496,11 @@ server_wait_for_stop() {
 server_set_active() {
 	case "$2" in
 		active)
-			as_user "${SERVER_USERNAME[$1]}" "touch \"${SERVER_FLAG_ACTIVE[$1]}\""
+			as_user "${SERVER_USERNAME[$1]}" "touch \"${SERVER_FLAG_ACTIVE_PATH[$1]}\""
 			SERVER_ACTIVE[$1]="true"
 			;;
 		inactive)
-			as_user "${SERVER_USERNAME[$1]}" "rm -f \"${SERVER_FLAG_ACTIVE[$1]}\""
+			as_user "${SERVER_USERNAME[$1]}" "rm -f \"${SERVER_FLAG_ACTIVE_PATH[$1]}\""
 			SERVER_ACTIVE[$1]="false"
 			;;
 		*)
@@ -2137,17 +2137,11 @@ server_load_properties() {
 # $1: The id to use for this server
 # $2: The name of the server
 server_init() {
+	# Non-configurable Variables
 	SERVER_NAME[$1]="$2"
 	SERVER_PATH[$1]="$SETTINGS_SERVER_STORAGE_PATH/$2"
-
 	SERVER_BACKUP_PATH[$1]="$SETTINGS_BACKUP_ARCHIVE_PATH/${SERVER_NAME[$1]}"
 	SERVER_LOG_ARCHIVE_PATH[$1]="$SETTINGS_LOG_ARCHIVE_PATH/${SERVER_NAME[$1]}"
-	
-	if [[ -e "${SERVER_FLAG_ACTIVE[$1]}" ]]; then
-		SERVER_ACTIVE[$1]="true"
-	else
-		SERVER_ACTIVE[$1]="false"
-	fi
 
 
 	# Setup default values for this server's variables using default settings
@@ -2168,6 +2162,12 @@ server_init() {
 
 		eval SERVER_${name}[$1]=\"${value}\"
 	done
+
+	if [[ -e "${SERVER_FLAG_ACTIVE_PATH[$1]}" ]]; then
+		SERVER_ACTIVE[$1]="true"
+	else
+		SERVER_ACTIVE[$1]="false"
+	fi
 
 	# Load setting overrides from server.properties
 	server_load_properties "$1"
