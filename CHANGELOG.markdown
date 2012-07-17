@@ -11,6 +11,14 @@ Maintainers:
 Change Log
 ----------
 
+### [0.6.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.6.3...0.6.4)
+
+* Closes issue [#25][#25] by improving the `msm <server> start` command to be more robust. It now alerts the user when the server jar to be started cannot be found, and prints out dots for each log line created during startup. The absence of these dots make it simple to spot a hanging server.
+* Fixed a bug with the `msm <server> say` command, where it would only accept 2 or more arguments.
+
+[#25]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/25
+
+
 ### [0.6.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.6.2...0.6.3)
 
 * Improved the `msm server list` command to show active/inactive and running/stopped statuses. Thanks to [oldman,j's suggestion][uservoice-2987515].
