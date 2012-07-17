@@ -2435,7 +2435,7 @@ register_command() {
 		# at this stage be accepted as any non-zero string
 		if [[ "$word" =~ ^\<.*\>$ ]]; then
 			if [[ "$word" == "<strings>" ]]; then
-				regex="${regex}([^ ]+|\\\"[^\\\"]*\\\")( [^ ]+|\\\"[^\\\"]*\\\")+ "
+				regex="${regex}([^ ]+|\\\"[^\\\"]*\\\")( [^ ]+|\\\"[^\\\"]*\\\")* "
 			else
 				regex="${regex}([^ ]+|\\\"[^\\\"]*\\\") "
 			fi
