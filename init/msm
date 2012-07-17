@@ -308,6 +308,16 @@ server_is_running() {
 	fi
 }
 
+# Ensures the server has a jar file where it is expected to be
+# $1: The id of the server
+server_ensure_jar() {
+	if [ -f "${SERVER_JAR_PATH[$1]}" ]; then
+		return 0
+	fi
+	
+	error_exit FILE_NOT_FOUND "Could not find jar for server \"${SERVER_NAME[$1]}\": Expected \"${SERVER_JAR_PATH[$1]}\"."
+}
+
 # Creates symbolic links in the server directory (SETTINGS_SERVER_STORAGE_PATH) for each
 # of the Minecraft worlds located in the world storage directory.
 # $1: The id of the server for which links should be ensured
@@ -420,8 +430,8 @@ server_worlds_to_disk() {
 # $3->: The line or lines in the log to wait for
 # returns: When the line is found
 server_log_get_line() {
-    # Make sure there is a server log to check
-    as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
+	# Make sure there is a server log to check
+	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
 	while read line; do
 		line_time="$(log_line_get_time "$line")"
@@ -433,6 +443,37 @@ server_log_get_line() {
 				# and matches the regular expression
 				if [[ "$line" =~ $regex ]]; then
 					echo "${line}"
+					return 0
+				fi
+			done
+		fi
+	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
+}
+
+# The same as server_log_get_line, but prints a dot instead of the log line
+# to stdout, and retruns when line is found.
+# $1: the ID of the server
+# $2: A UNIX timestamp (seconds since 1970) which the $3 line must be after
+# $3->: The line or lines in the log to wait for
+# returns: When the line is found
+server_log_dots_for_lines() {
+	# Make sure there is a server log to check
+	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
+
+	while read line; do
+		line_time="$(log_line_get_time "$line")"
+
+		# If the entry is old enough
+		if [[ "$line_time" -ge "$2" ]]; then
+
+			# Print a dot for this line
+			echo -n '.'
+
+			for search_line in "${@:3}"; do
+				local regex="${LOG_REGEX} ${search_line}"
+				# and matches the regular expression
+				if [[ "$line" =~ $regex ]]; then
+					# Return if this is the line being looked for
 					return 0
 				fi
 			done
@@ -792,16 +833,17 @@ server_start() {
 	if server_is_running "$1"; then
 		echo "Server \"${SERVER_NAME[$1]}\" is already running!"
 	else
+		server_ensure_jar "$1"
 		server_ensure_links "$1"
 		server_worlds_to_ram "$1"
 
 		local time_now="$(now)"
 		
-		printf "Starting server... "
+		printf "Starting server..."
 		as_user "${SERVER_USERNAME[$1]}" "cd \"${SERVER_PATH[$1]}\" && screen -dmS \"${SERVER_SCREEN_NAME[$1]}\" ${SERVER_INVOCATION[$1]}"
-		server_log_wait_for_line "$1" "$time_now" "${SERVER_CONFIRM_START[$1]}"
+		server_log_dots_for_lines "$1" "$time_now" "${SERVER_CONFIRM_START[$1]}"
 		
-		echo "Done."
+		echo " Done."
 	fi
 }
 
