@@ -1325,7 +1325,8 @@ manager_stop_all_servers_now() {
 # Get the value of a global manager property
 # $1: The name of the property
 manager_property() {
-	eval echo "\$SETTINGS_$1"
+	unset RETURN
+	eval RETURN=\"\$SETTINGS_$1\"
 }
 
 
@@ -1405,7 +1406,8 @@ command_version() {
 # Displays config values used by MSM
 command_config() {
 	for ((i=0; i<$SETTING_COUNT; i++)); do
-		echo "${SETTING_NAME[$i]}=\"$(manager_property "${SETTING_NAME[$i]}")\""
+		manager_property "${SETTING_NAME[$i]}"
+		echo "${SETTING_NAME[$i]}=\"$RETURN\""
 	done
 }
 
