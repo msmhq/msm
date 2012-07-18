@@ -103,10 +103,30 @@ error_exit() {
 # $1: The bash version required
 is_bash_version() {
 	if [[ "$BASH_VERSION" =~ ^$1 ]]; then
-		return 0;
+		return 0
 	fi
 
-	return 1;
+	return 1
+}
+
+# Converts a string to be ready for use as a global
+# variable name.
+# $1: The string to convert
+# returns: The name in uppercase and with underscores
+to_global_name() {
+	unset RETURN
+	# Translate to uppercase, and replace dashes with underscores
+	local result="$1"
+	if is_bash_version 4; then
+		# Much faster than the `tr` command
+		result="${result//-/_}"
+		result="${result//./_}"
+		result="${result^^}"
+	else
+		result="$(echo "$result" | tr '[\-\.a-z]' '[\_\_A-Z]')"
+	fi
+
+	RETURN="$result"
 }
 
 # A function used to print debug messages to stdout. Prevents messages from
@@ -142,7 +162,10 @@ is_valid_name() {
 # Gets the latest jar from a jar group, based upon the date and time encoded
 # in the file name.
 # $1: The directory to search
+# RETURN: The latest file
 get_latest_file() {
+	unset RETURN
+
 	local best_time=0
 	local best_file=""
 	
@@ -160,7 +183,7 @@ get_latest_file() {
 		fi
 	done < <(find "$1" -maxdepth 1 -type f -print0)
 	
-	echo "$best_file"
+	RETURN="$best_file"
 }
 
 # Returns the current time as a UNIX timestamp (in seconds since 1970)
@@ -278,9 +301,10 @@ world_deactivate() {
 # config information for that server
 # $1: The name of the server
 server_get_id() {
+	unset RETURN
 	for ((i=0; i<$NUM_SERVERS; i++)); do
 		if [[ "${SERVER_NAME[$i]}" == "$1" ]]; then
-			echo "$i"
+			RETURN="$i"
 			return 0
 		fi
 	done
@@ -292,6 +316,7 @@ server_get_id() {
 # $1: The ID of the server
 # $2: The name of the world
 server_world_get_id() {
+	unset RETURN
 	if [ -d "${SERVER_WORLD_STORAGE_PATH[$1]}/$2" ] || [ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}/$2" ]; then
 		# If the directory exists
 		
@@ -301,7 +326,7 @@ server_world_get_id() {
 		# For each of the servers worlds:
 		for ((i=$start; i<$max; i++)); do
 			if [[ "${WORLD_NAME[$i]}" == "$2" ]]; then
-				echo "$i"
+				RETURN="$i"
 				return 0
 			fi
 		done
@@ -443,6 +468,7 @@ server_worlds_to_disk() {
 # $3->: The line or lines in the log to wait for
 # returns: When the line is found
 server_log_get_line() {
+	unset RETURN
 	# Make sure there is a server log to check
 	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
@@ -455,7 +481,7 @@ server_log_get_line() {
 				local regex="${LOG_REGEX} ${search_line}"
 				# and matches the regular expression
 				if [[ "$line" =~ $regex ]]; then
-					echo "${line}"
+					RETURN="${line}"
 					return 0
 				fi
 			done
@@ -494,12 +520,6 @@ server_log_dots_for_lines() {
 	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
 }
 
-# The same as server_log_get_line, but does not print the line to stdout
-# when found.
-server_log_wait_for_line() {
-	server_log_get_line "$@" > /dev/null
-}
-
 # Sends as string to a server for execution
 # $1: The ID of the server
 # $2: The line of text to enter into the server console
@@ -511,16 +531,21 @@ server_eval() {
 # $1: The ID of the server
 # $2: A line of text to enter into the server console
 # $3->: The line or lines of text in the log to wait for
-# stdout: The full entry found in the logs
+# RETURN: The full entry found in the logs
 server_eval_and_get_line() {
+	unset RETURN
+
 	time_now="$(now)"
 	server_eval "$1" "$2"
 	server_log_get_line "$1" "$time_now" "${@:3}"
+
+	RETURN="$RETURN"
 }
 
-# The same as server_eval_and_get_line, but does not print anything to stdout
+# The same as server_eval_and_get_line, but does not set RETURN
 server_eval_and_wait() {
-	server_eval_and_get_line "$@" > /dev/null
+	server_eval_and_get_line "$@"
+	unset RETURN # Do not return anything
 }
 
 # Gets the process ID for a server if running, otherwise it outputs nothing
@@ -648,7 +673,9 @@ jargroup_getlatest() {
 				
 					local file_name="$(ls -1 "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR")"
 					local new_name="$(date +%F-%H-%M-%S)-$file_name"
-					local most_recent_jar="$(get_latest_file "$SETTINGS_JAR_STORAGE_PATH/$1")"
+
+					get_latest_file "$SETTINGS_JAR_STORAGE_PATH/$1"
+					local most_recent_jar="$RETURN"
 					
 				
 					if [[ ! -f "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR/$file_name" > /dev/null; then
@@ -802,7 +829,8 @@ server_create() {
 			# TODO: Handle server default setup stuff better than just using
 			#       the "minecraft" jar group. And make it configurable.
 			if [ -d "$SETTINGS_JAR_STORAGE_PATH/minecraft" ]; then
-				server_set_jar "$(server_get_id "$1")" "minecraft"
+				server_get_id "$1"
+				server_set_jar "$RETURN" "minecraft"
 			fi
 		fi
 	fi
@@ -837,7 +865,8 @@ server_rename() {
 		if [ -d "$SETTINGS_SERVER_STORAGE_PATH/$1" ]; then
 			# If the server name is valid and exists
 			
-			local existing_id="$(server_get_id "$1")"
+			server_get_id "$1"
+			local existing_id="$RETURN"
 			if server_is_running "$existing_id"; then
 				error_exit SERVER_RUNNING "Can only rename a stopped server."
 			else
@@ -1104,7 +1133,8 @@ server_set_jar() {
 			
 			# Download the latest version
 			jargroup_getlatest "$2"
-			local jar="$(get_latest_file "$SETTINGS_JAR_STORAGE_PATH/$2")"
+			get_latest_file "$SETTINGS_JAR_STORAGE_PATH/$2"
+			local jar="$RETURN"
 		else
 			# If a specific jar IS mentioned use that
 			local jar="$SETTINGS_JAR_STORAGE_PATH/$2/$3"
@@ -1127,7 +1157,8 @@ server_set_jar() {
 # $1: The ID of the server
 server_connected() {
 	if server_is_running "$1"; then
-		local line="$(server_eval_and_get_line "$1" "list" "Connected players:")"
+		server_eval_and_get_line "$1" "list" "Connected players:"
+		local line="$RETURN"
 		
 		# Cuts the start off the line
 		local players="${line:46}"
@@ -1665,10 +1696,10 @@ command_server_jar() {
 command_server_whitelist_on() {
 	if server_is_running "$1"; then
 		server_eval "$1" "whitelist on"
-		echo "Whitelist enabled"
 	else
-		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
+		command_server_config "$1" "white-list" "true"
 	fi
+	echo "Whitelist enabled"
 }
 
 # Turns a server's whitelist protection off
@@ -1676,10 +1707,10 @@ command_server_whitelist_on() {
 command_server_whitelist_off() {
 	if server_is_running "$1"; then
 		server_eval "$1" "whitelist off"
-		echo "Whitelist disabled"
 	else
-		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
+		command_server_config "$1" "white-list" "false"
 	fi
+	echo "Whitelist disabled"
 }
 
 # Adds a player name to a server's whitelist
@@ -1900,7 +1931,8 @@ command_server_gamemode() {
 			*) error_exit INVALID_ARGUMENT "Invalid gamemode type \"$2\" options are \"survival\", \"creative\", \"0\" or \"1\".";;
 		esac
 
-		line="$(server_eval_and_get_line "$1" "gamemode $3 $mode" "${SERVER_CONFIRM_GAMEMODE[$1]}" "${SERVER_CONFIRM_GAMEMODE_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_GAMEMODE_FAIL_NO_CHANGE[$1]}")"
+		server_eval_and_get_line "$1" "gamemode $3 $mode" "${SERVER_CONFIRM_GAMEMODE[$1]}" "${SERVER_CONFIRM_GAMEMODE_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_GAMEMODE_FAIL_NO_CHANGE[$1]}"
+		line="$RETURN"
 
 		regex="${LOG_REGEX} ${SERVER_CONFIRM_GAMEMODE[$1]}"
 		if [[ "$line" =~ $regex ]]; then
@@ -1926,7 +1958,8 @@ command_server_kick() {
 	# TODO: Support multiple player names
 	if server_is_running "$1"; then
 		local line regex
-		line="$(server_eval_and_get_line "$1" "kick $2" "${SERVER_CONFIRM_KICK[$1]}" "${SERVER_CONFIRM_KICK_FAIL[$1]}")"
+		server_eval_and_get_line "$1" "kick $2" "${SERVER_CONFIRM_KICK[$1]}" "${SERVER_CONFIRM_KICK_FAIL[$1]}"
+		line="$RETURN"
 
 		regex="${LOG_REGEX} ${SERVER_CONFIRM_KICK[$1]}"
 		if [[ "$line" =~ $regex ]]; then
@@ -1959,7 +1992,8 @@ command_server_say() {
 command_server_time_set() {
 	if server_is_running "$1"; then
 		local line regex
-		line="$(server_eval_and_get_line "$1" "time set $2" "${SERVER_CONFIRM_TIME_SET[$1]}" "${SERVER_CONFIRM_TIME_SET_FAIL[$1]}")"
+		server_eval_and_get_line "$1" "time set $2" "${SERVER_CONFIRM_TIME_SET[$1]}" "${SERVER_CONFIRM_TIME_SET_FAIL[$1]}"
+		line="$RETURN"
 
 		regex="${LOG_REGEX} ${SERVER_CONFIRM_TIME_SET[$1]}"
 		if [[ "$line" =~ $regex ]]; then
@@ -1980,7 +2014,8 @@ command_server_time_set() {
 command_server_time_add() {
 	if server_is_running "$1"; then
 		local line regex
-		line="$(server_eval_and_get_line "$1" "time add $2" "${SERVER_CONFIRM_TIME_ADD[$1]}" "${SERVER_CONFIRM_TIME_ADD_FAIL[$1]}")"
+		server_eval_and_get_line "$1" "time add $2" "${SERVER_CONFIRM_TIME_ADD[$1]}" "${SERVER_CONFIRM_TIME_ADD_FAIL[$1]}"
+		line="$RETURN"
 
 		regex="${LOG_REGEX} ${SERVER_CONFIRM_TIME_ADD[$1]}"
 		if [[ "$line" =~ $regex ]]; then
@@ -2000,7 +2035,8 @@ command_server_time_add() {
 command_server_toggledownfall() {
 	if server_is_running "$1"; then
 		local line regex
-		line="$(server_eval_and_get_line "$1" "toggledownfall" "${SERVER_CONFIRM_TOGGLEDOWNFALL[$1]}" "${SERVER_CONFIRM_TOGGLEDOWNFALL_FAIL[$1]}")"
+		server_eval_and_get_line "$1" "toggledownfall" "${SERVER_CONFIRM_TOGGLEDOWNFALL[$1]}" "${SERVER_CONFIRM_TOGGLEDOWNFALL_FAIL[$1]}"
+		line="$RETURN"
 
 		regex="${LOG_REGEX} ${SERVER_CONFIRM_TOGGLEDOWNFALL[$1]}"
 		if [[ "$line" =~ $regex ]]; then
@@ -2029,7 +2065,8 @@ command_server_give() {
 			error_exit INVALID_ARGUMENT "Item ID \"$3\" must be a positive integer or string."
 		fi
 
-		line="$(server_eval_and_get_line "$1" "give $2 $3 $4 $5" "${SERVER_CONFIRM_GIVE[$1]}" "${SERVER_CONFIRM_GIVE_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_GIVE_FAIL_NO_ITEM[$1]}")"
+		server_eval_and_get_line "$1" "give $2 $3 $4 $5" "${SERVER_CONFIRM_GIVE[$1]}" "${SERVER_CONFIRM_GIVE_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_GIVE_FAIL_NO_ITEM[$1]}"
+		line="$RETURN"
 
 		regex="${LOG_REGEX} ${SERVER_CONFIRM_GIVE[$1]}"
 		if [[ "$line" =~ $regex ]]; then
@@ -2055,7 +2092,8 @@ command_server_give() {
 command_server_xp() {
 	if server_is_running "$1"; then
 		local line regex
-		line="$(server_eval_and_get_line "$1" "xp $2 $3" "${SERVER_CONFIRM_XP[$1]}" "${SERVER_CONFIRM_XP_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_XP_FAIL_INVALID_AMOUNT[$1]}")"
+		server_eval_and_get_line "$1" "xp $2 $3" "${SERVER_CONFIRM_XP[$1]}" "${SERVER_CONFIRM_XP_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_XP_FAIL_INVALID_AMOUNT[$1]}"
+		line="$RETURN"
 
 		regex="${LOG_REGEX} ${SERVER_CONFIRM_XP[$1]}"
 		if [[ "$line" =~ $regex ]]; then
@@ -2148,24 +2186,26 @@ command_server_config() {
 				echo "Changes to config may require a server restart to take effect: sudo $0 ${SERVER_NAME[$1]} restart";
 			fi
 		fi
+
+		return 0
 	fi
 
 	# If only a setting name is given
 	if [ ! -z "$2" ]; then
 
 		# Convert name into upper-case with underscores
-		local setting_name="$(echo "$2" | tr '[a-z\-]' '[A-Z\_]')"
+		to_global_name "$2"
 
 		# Display the value of that setting
-		echo "$(server_property "$1" "$setting_name")"
+		echo "$(server_property "$1" "$RETURN")"
 	fi
 
 	# If no paramter name is given
 	if [ -z "$2" ]; then
 		# List all parameters
 		for ((i=0; i<$SERVER_SETTING_COUNT; i++)); do
-			local setting_name="$(echo "${SERVER_SETTING_NAME[$i]}" | tr '[A-Z\_]' '[a-z\-]')"
-			echo "msm-$setting_name=\"$(server_property "$1" "${SERVER_SETTING_NAME[$i]}")\""
+			to_global_name "${SERVER_SETTING_NAME[$i]}"
+			echo "msm-$setting_name=\"$(server_property "$1" "$RETURN")\""
 		done
 	fi
 }
@@ -2243,15 +2283,8 @@ server_load_properties() {
 				# Only one of 3,4 or 5 will match:
 				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
 
-				# Translate to uppercase, and replace dashes with underscores
-				if is_bash_version 4; then
-					# Much faster than the `tr` command
-					name="${name//-/_}"
-					name="${name//./_}"
-					name="${name^^}"
-				else
-					name="$(echo "$name" | tr '[\-\.a-z]' '[\_\_A-Z]')"
-				fi
+				to_global_name "$name"
+				name="$RETURN"
 
 				# Create variables
 				if [[ "$name" =~ ^msm-[\-\_a-zA-Z0-9]+$ ]]; then
@@ -2384,13 +2417,8 @@ load_conf() {
 				# Only one of 3,4 or 5 will match:
 				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
 
-				# Translate to uppercase, and replace dashes with underscores
-				if is_bash_version 4; then
-					name="${name//-/_}"
-					name="${name^^}"
-				else
-					name="$(echo "$name" | tr '[\-a-z]' '[\_A-Z]')"
-				fi
+				to_global_name "$name"
+				name="$RETURN"
 
 				# Create variables in uppercase
 				eval SETTINGS_${name}=\"$value\"
@@ -2662,7 +2690,8 @@ call_command() {
 						else
 							if is_valid_name "$specified_name"; then
 								if [ -d "$SETTINGS_SERVER_STORAGE_PATH/$specified_name" ]; then
-									sid="$(server_get_id "$specified_name")"
+									server_get_id "$specified_name"
+									sid="$RETURN"
 								fi
 							fi
 
@@ -2698,7 +2727,8 @@ call_command() {
 						if [[ "$sid" -ge "0" ]]; then
 							if is_valid_name "$specified_name"; then
 								if [ -d "${SERVER_WORLD_STORAGE_PATH[$sid]}/$specified_name" ] || [ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH2[$sid]}/$specified_name" ]; then
-									wid="$(server_world_get_id "$sid" "$specified_name")"
+									server_world_get_id "$sid" "$specified_name"
+									wid="$RETURN"
 								fi
 							fi
 
