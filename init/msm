@@ -18,7 +18,10 @@
 # this script.
 
 
-### The configuration file
+# Source, if it exists, the msm profile.d script
+if [ -f "/etc/profile.d/msm.sh" ]; then
+	source "/etc/profile.d/msm.sh"
+fi
 
 # Get the MSM_CONF environment variable or use the default location
 CONF="${MSM_CONF:-/etc/msm.conf}"

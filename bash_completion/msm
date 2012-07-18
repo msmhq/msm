@@ -1,6 +1,12 @@
+
+# Source, if it exists, the msm profile.d script
+if [ -f "/etc/profile.d/msm.sh" ]; then
+	source "/etc/profile.d/msm.sh"
+fi
+
 ### Utility Functions
 
-MSM="/etc/init.d/msm"
+MSM="${MSM_SCRIPT:-/etc/init.d/msm}"
 
 # Loads variables
 __init() {
