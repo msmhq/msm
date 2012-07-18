@@ -1,60 +1,57 @@
 ### Utility Functions
 
-CONFIG="/etc/msm.conf"
+MSM="/etc/init.d/msm"
 
 # Loads variables
 __init() {
-	source "$CONFIG"
+	source "$MSM"
 }
 
 # Loads server variables
 # $1: The name of a server
 __init_server() {
-	SERVER_PATH="$SERVER_STORAGE_PATH/$1"
-	SERVER_CONF="$SERVER_STORAGE_PATH/$1/$DEFAULT_PROPERTIES"
+	# Load some useful defaults
+	SERVER_NAME="$1"
+	SERVER_CONF="$SETTINGS_SERVER_STORAGE_PATH/$SERVER_NAME/$SETTINGS_SERVER_PROPERTIES"
 
-	SERVER_USER="$DEFAULT_SERVER_USER"
-	SCREEN_NAME="${DEFAULT_SCREEN_NAME//\{SERVER_NAME\}/${1}}"
-	WORLD_STORAGE_PATH="$SERVER_PATH/$DEFAULT_WORLD_STORAGE_PATH"
-	WORLD_STORAGE_INACTIVE_PATH="$SERVER_PATH/$DEFAULT_WORLD_STORAGE_INACTIVE_PATH"
+	SERVER_PATH="$SETTINGS_SERVER_STORAGE_PATH/$SERVER_NAME"
+	WORLD_STORAGE_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH"
+	WORLD_STORAGE_INACTIVE_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WORLD_STORAGE_INACTIVE_PATH"
 
-	WHITELIST="$SERVER_PATH/$DEFAULT_WHITELIST"
-	BANNED_PLAYERS="$SERVER_PATH/$DEFAULT_BANNED_PLAYERS"
-	BANNED_IPS="$SERVER_PATH/$DEFAULT_BANNED_IPS"
-	OPS="$SERVER_PATH/$DEFAULT_OPS"
-
-	JAR="$DEFAULT_JAR"
-	RAM="$DEFAULT_RAM"
-	INVOCATION="$DEFAULT_INVOCATION"
+	WHITELIST_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WHITELIST_PATH"
+	BANNED_PLAYERS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_BANNED_PLAYERS_PATH"
+	BANNED_IPS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_BANNED_IPS_PATH"
+	OPS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_OPS_PATH"
 
 	if [[ -f "$SERVER_CONF" ]]; then
-		local name value
+		local name value name_upper_case
 	
 		while read line; do 
 		 	# ignore comment lines
-			echo "$line" | grep "^#" >/dev/null 2>&1 && continue
-	
-		   	# if not empty, get the name and value of the setting
-		   	if [ ! -z "$line" ]; then
-			 	name="$(echo $line | awk -F '=' '{print $1}')"
-				value="$(echo $line | awk -F '\"' '{print $2}')"
+		 	if [[ "$line" =~ ^# ]]; then
+				continue
 			fi
-		
-			case "$name" in
-				SERVER_USER) SERVER_USER="$value";;
-				SCREEN_NAME) SCREEN_NAME="$value";;
-				WORLD_STORAGE_PATH) WORLD_STORAGE_PATH="$SERVER_PATH/$value";;
-				WORLD_STORAGE_INACTIVE_PATH) WORLD_STORAGE_INACTIVE_PATH="$SERVER_PATH/$value";;
-			
-				WHITELIST) WHITELIST="$SERVER_PATH/$value";;
-				BANNED_PLAYERS) BANNED_PLAYERS="$SERVER_PATH/$value";;
-				BANNED_IPS) BANNED_IPS="$SERVER_PATH/$value";;
-				OPS) OPS="$SERVER_PATH/$value";;
-			
-				JAR) JAR="$SERVER_PATH/$value";;
-				RAM) RAM="$value";;
-				INVOCATION) INVOCATION="$value";;
-			esac
+
+			if [[ "$line" =~ ^msm-([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
+				name="${BASH_REMATCH[1]}"
+				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
+
+				if is_bash_version 4; then
+					name="${name//-/_}"
+					name="${name//./_}"
+					name="${name^^}"
+				else
+					name="$(echo "$name" | tr '[\-\.a-z]' '[\_\_A-Z]')"
+				fi
+				
+				# Make relative paths absolute by combining with server directory
+				if [[ "$name" =~ \-path$ ]] && [[ ! "$value" =~ ^\/ ]]; then
+					value="${SERVER_PATH[$1]}/$value"
+				fi
+
+				# Create the variable
+				eval ${name}=\"$value\"
+			fi
 		done < "$SERVER_CONF"
 	fi
 }
@@ -71,8 +68,8 @@ _msm() {
 	current="${COMP_WORDS[$COMP_CWORD]}"
 	
 	if [[ $COMP_CWORD == 1 ]]; then
-		if [ -d "$SERVER_STORAGE_PATH" ]; then
-			local servers="$(ls -1 "$SERVER_STORAGE_PATH")"
+		if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
+			local servers="$(ls -1 "$SETTINGS_SERVER_STORAGE_PATH")"
 		fi
 		options="help start stop restart version server jargroup all config $servers"
 	else
@@ -88,8 +85,8 @@ _msm() {
 				else
 					case "${COMP_WORDS[2]}" in
 						delete|rename)
-							if [[ $COMP_CWORD == 3 && -d "$SERVER_STORAGE_PATH" ]]; then
-								options="$(ls -1 "$SERVER_STORAGE_PATH")"
+							if [[ $COMP_CWORD == 3 && -d "$SETTINGS_SERVER_STORAGE_PATH" ]]; then
+								options="$(ls -1 "$SETTINGS_SERVER_STORAGE_PATH")"
 							fi
 							;;
 					esac
@@ -101,8 +98,8 @@ _msm() {
 				else
 					case "${COMP_WORDS[2]}" in
 						delete|rename|changeurl|getlatest)
-							if [[ $COMP_CWORD == 3 && -d "$JAR_STORAGE_PATH" ]]; then
-								options="$(ls -1 "$JAR_STORAGE_PATH")"
+							if [[ $COMP_CWORD == 3 && -d "$SETTINGS_JAR_STORAGE_PATH" ]]; then
+								options="$(ls -1 "$SETTINGS_JAR_STORAGE_PATH")"
 							fi
 							;;
 					esac
@@ -111,7 +108,7 @@ _msm() {
 			*)
 				# Server options
 				
-				local server_path="$SERVER_STORAGE_PATH/${COMP_WORDS[1]}"
+				local server_path="$SETTINGS_SERVER_STORAGE_PATH/${COMP_WORDS[1]}"
 				if [[ "${COMP_WORDS[1]}" == "all" ]] || [ -e "$server_path" ]; then
 					# If the server exists
 					
@@ -156,12 +153,12 @@ _msm() {
 								fi
 								;;
 							jar)
-								if [[ $COMP_CWORD == 3 && -d "$JAR_STORAGE_PATH" ]]; then
-									options="$(ls -1 "$JAR_STORAGE_PATH")"
+								if [[ $COMP_CWORD == 3 && -d "$SETTINGS_JAR_STORAGE_PATH" ]]; then
+									options="$(ls -1 "$SETTINGS_JAR_STORAGE_PATH")"
 								fi
 								
-								if [[ $COMP_CWORD == 4 && -d "$JAR_STORAGE_PATH/${COMP_WORDS[3]}" ]]; then
-									options="$(find "$JAR_STORAGE_PATH/${COMP_WORDS[3]}" -type f -name "*.jar" -exec basename {} \;)"
+								if [[ $COMP_CWORD == 4 && -d "$SETTINGS_JAR_STORAGE_PATH/${COMP_WORDS[3]}" ]]; then
+									options="$(find "$SETTINGS_JAR_STORAGE_PATH/${COMP_WORDS[3]}" -type f -name "*.jar" -exec basename {} \;)"
 								fi
 								;;
 							whitelist|wl)
@@ -171,8 +168,8 @@ _msm() {
 									case "${COMP_WORDS[3]}" in
 										remove)
 											if [[ $COMP_CWORD == 4 ]]; then
-												if [ -f "$WHITELIST" ]; then
-													options="$(cat "$WHITELIST")"
+												if [ -f "$WHITELIST_PATH" ]; then
+													options="$(cat "$WHITELIST_PATH")"
 												fi
 											fi
 											;;
@@ -191,8 +188,8 @@ _msm() {
 												case "${COMP_WORDS[4]}" in
 													remove)
 														if [[ $COMP_CWORD == 5 ]]; then
-															if [ -f "$BANNED_PLAYERS" ]; then
-																options="$(cat "$BANNED_PLAYERS")"
+															if [ -f "$BANNED_PLAYERS_PATH" ]; then
+																options="$(cat "$BANNED_PLAYERS_PATH")"
 															fi
 														fi
 														;;
@@ -206,8 +203,8 @@ _msm() {
 												case "${COMP_WORDS[4]}" in
 													remove)
 														if [[ $COMP_CWORD == 5 ]]; then
-															if [ -f "$BANNED_IPS" ]; then
-																options="$(cat "$BANNED_IPS")"
+															if [ -f "$BANNED_IPS_PATH" ]; then
+																options="$(cat "$BANNED_IPS_PATH")"
 															fi
 														fi
 														;;
@@ -224,8 +221,8 @@ _msm() {
 									case "${COMP_WORDS[3]}" in
 										remove)
 											if [[ $COMP_CWORD == 4 ]]; then
-												if [ -f "$OPS" ]; then
-													options="$(cat "$OPS")"
+												if [ -f "$OPS_PATH" ]; then
+													options="$(cat "$OPS_PATH")"
 												fi
 											fi
 											;;

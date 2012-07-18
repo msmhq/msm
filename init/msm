@@ -31,16 +31,7 @@ VERSION="0.6.4"
 ### Config variables the user should not need/want to change
 
 # The start of a regex to find a log line
-declare -r LOG_REGEX="^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\]"
-
-
-### Script State Variables
-
-# "true" whilst the script is counting down a delay to stop the server
-declare STOP_COUNTDOWN
-
-# "true" whilst the script is counting down a delay to restart the server
-declare RESTART_COUNTDOWN
+LOG_REGEX="^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\]"
 
 # Variables used for registration
 COMMAND_COUNT=0
@@ -96,6 +87,16 @@ error_exit() {
 	exit "${code:-$1}"
 }
 
+# Tests the bash version installed
+# $1: The bash version required
+is_bash_version() {
+	if [[ "$BASH_VERSION" =~ ^$1 ]]; then
+		return 0;
+	fi
+
+	return 1;
+}
+
 # A function used to print debug messages to stdout. Prevents messages from
 # appearing unless in debug mode, and allows debug statements to be easily
 # distinguished from necessary echo statements.
@@ -113,11 +114,11 @@ debug() {
 # $1: The name to check
 is_valid_name() {
 	local valid="^[a-zA-Z0-9\_\-]+$"
-	local invalid="^(start|stop|restart|version|server|jargroup|all|config)$"
+	local invalid="^(start|stop|restart|version|server|jargroup|all|config|\-\-.*)$"
 	
 	if [[ "$1" =~ $valid ]]; then
 		if [[ "$1" =~ $invalid ]]; then
-			error_exit INVALID_ARGUMENT "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"version\", \"jargroup\", \"all\" or \"config\"."
+			error_exit INVALID_ARGUMENT "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"version\", \"jargroup\", \"all\", \"config\" or start with two dashes (--)."
 		else
 			return 0
 		fi
@@ -1641,7 +1642,12 @@ command_server_whitelist_add() {
 		server_eval "$1" "whitelist add $2"
 		echo "Added \"$2\" to the whitelist."
 	else
-		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
+		if grep "$2" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
+			echo "Player \"$2\" is already whitelisted for server \"${SERVER_NAME[$1]}\"."
+		else
+			echo "$2" >> "${SERVER_WHITELIST_PATH[$1]}"
+			echo "Player \"$2\" has been added to the whitelisted for server \"${SERVER_NAME[$1]}\"."
+		fi
 	fi
 }
 
@@ -1654,7 +1660,12 @@ command_server_whitelist_remove() {
 		server_eval "$1" "whitelist remove $2"
 		echo "Removed \"$2\" from the whitelist."
 	else
-		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
+		if grep "$2" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
+			sed -i "/$2/d" "${SERVER_WHITELIST_PATH[$1]}"
+			echo "Player \"$2\" has been removed from the whitelisted for server \"${SERVER_NAME[$1]}\"."
+		else
+			echo "Player \"$2\" is not whitelisted for server \"${SERVER_NAME[$1]}\"."
+		fi
 	fi
 }
 
@@ -2168,29 +2179,37 @@ server_load_properties() {
 			fi
 
 		   	# if not empty, get the name and value of the setting
-		   	if [[ "$line" =~ ^(.*)=(.*)$ ]]; then
+		   	if [[ "$line" =~ ^([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
 				name="${BASH_REMATCH[1]}"
-				value="${BASH_REMATCH[2]}"
+				# Only one of 3,4 or 5 will match:
+				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
+
+				# Translate to uppercase, and replace dashes with underscores
+				if is_bash_version 4; then
+					# Much faster than the `tr` command
+					name="${name//-/_}"
+					name="${name//./_}"
+					name="${name^^}"
+				else
+					name="$(echo "$name" | tr '[\-\.a-z]' '[\_\_A-Z]')"
+				fi
 
 				# Create variables
 				if [[ "$name" =~ ^msm-[\-\_a-zA-Z0-9]+$ ]]; then
-					local name_upper_case="$(echo ${name:4} | tr '[a-z\-]' '[A-Z\_]')"
+					# Regex for MSM custom variables
 
-					if [[ "$name" =~ ^msm-[\-\_a-zA-Z0-9]+-path$ ]]; then
-						if [[ ! "$value" =~ ^\/ ]]; then
-							value="${SERVER_PATH[$1]}/$value"
-						fi
+					# Make relative paths absolute to server directory
+					if [[ "$name" =~ ^msm-[\-\_a-zA-Z0-9]+-path$ ]] && [[ ! "$value" =~ ^\/ ]]; then
+						value="${SERVER_PATH[$1]}/$value"
 					fi
 
-					if [[ "$value" =~ ^\"(.*)\"$ ]] || [[ "$value" =~ ^\'(.*)\'$ ]]; then
-						value="${BASH_REMATCH[1]}"
-					fi
-
-					eval SERVER_${name_upper_case}[$1]=\"$value\"
+					# Create the variable
+					eval SERVER_${name}[$1]=\"$value\"
 				else
 					if [[ "$name" =~ ^[\-\_a-zA-Z0-9]+$ ]]; then
-						local name_upper_case="$(echo $name | tr '[a-z\-\.]' '[A-Z\_\_]')"
-						eval SERVER_PROPERTIES_${name_upper_case}[$1]=\"$value\"
+						# Regex for standard Minecraft variables
+
+						eval SERVER_PROPERTIES_${name}[$1]=\"$value\"
 					fi
 				fi
 			fi
@@ -2219,10 +2238,8 @@ server_init() {
 
 		# Make relative paths absolute, assuming the server directory
 		# as the current directory.
-		if [[ "$name" =~ _PATH$ ]]; then
-			if [[ ! "$value" =~ ^\/ ]]; then
-				value="${SERVER_PATH[$1]}/$value"
-			fi
+		if [[ "$name" =~ _PATH$ ]] && [[ ! "$value" =~ ^\/ ]]; then
+			value="${SERVER_PATH[$1]}/$value"
 		fi
 
 		eval SERVER_${name}[$1]=\"${value}\"
@@ -2390,28 +2407,22 @@ register_settings() {
 load_conf() {
 	if [[ -f "$CONF" ]]; then
 		while read line; do
-			# ignore comment lines
-			if [[ "$line" =~ ^# ]]; then
-				continue
-			fi
-
-			# if not empty, get the name and value of the setting
-			if [[ "$line" =~ ^(.*)=(.*)$ ]]; then
+			# Get the name and value of the setting
+			if [[ "$line" =~ ^([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
 				name="${BASH_REMATCH[1]}"
-				value="${BASH_REMATCH[2]}"
+				# Only one of 3,4 or 5 will match:
+				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
 
-				# If the value is wrapped in double or single quotations
-				# remove them from the value.
-				if [[ "$value" =~ ^\".*\"$ ]] || [[ "$value" =~ ^\'.*\'$ ]]; then
-					value="${value:1:${#value}-2}"
+				# Translate to uppercase, and replace dashes with underscores
+				if is_bash_version 4; then
+					name="${name//-/_}"
+					name="${name^^}"
+				else
+					name="$(echo "$name" | tr '[\-a-z]' '[\_A-Z]')"
 				fi
 
-				name="$(echo "$name" | tr '[\-a-z]' '[\_A-Z]')"
-
-				# Create variables
-				if [[ "$name" =~ ^[\_A-Z0-9]+$ ]]; then
-					eval SETTINGS_${name}=\"$value\"
-				fi
+				# Create variables in uppercase
+				eval SETTINGS_${name}=\"$value\"
 			fi
 		done < "$CONF"
 	fi
@@ -2840,5 +2851,15 @@ main() {
 
 ### Start point
 
-main "$@"
-exit 0
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+	# MSM was called from the command line
+
+	main "$@"
+	exit 0
+else
+	# MSM was sourced from another script.
+	# Just load registered settings instead.
+
+	register_settings
+	load_conf
+fi
