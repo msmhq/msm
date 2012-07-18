@@ -50,6 +50,10 @@ COMMAND_COUNT=0
 SETTING_COUNT=0
 SERVER_SETTING_COUNT=0
 
+# Other global variables
+NUM_WORLDS=0
+NUM_SERVERS=0
+
 
 ### Utility Functions
 
@@ -112,7 +116,7 @@ is_bash_version() {
 # Converts a string to be ready for use as a global
 # variable name.
 # $1: The string to convert
-# returns: The name in uppercase and with underscores
+# RETURN: The name in uppercase and with underscores
 to_global_name() {
 	unset RETURN
 	# Translate to uppercase, and replace dashes with underscores
@@ -121,7 +125,7 @@ to_global_name() {
 		# Much faster than the `tr` command
 		result="${result//-/_}"
 		result="${result//./_}"
-		result="${result^^}"
+		result="${result^^}" # to uppercase
 	else
 		result="$(echo "$result" | tr '[\-\.a-z]' '[\_\_A-Z]')"
 	fi
@@ -129,12 +133,42 @@ to_global_name() {
 	RETURN="$result"
 }
 
+# Converts a global BASH variable name to a server.properties file
+# varibale name.
+# $1: The string to convert
+# RETURN: The name in lowercase and with dashes
+to_properties_name() {
+	unset RETURN
+	# Translate to uppercase, and replace dashes with underscores
+	local result="$1"
+	if is_bash_version 4; then
+		# Much faster than the `tr` command
+		result="${result//_/-}"
+		result="${result,,}" # to lowercase
+	else
+		result="$(echo "$result" | tr '[\_A-Z]' '[\-a-z]')"
+	fi
+
+	RETURN="$result"
+}
+
+# A custom basename function which is faster
+# than opening a subshell
+# $1: The path to get the basename of
+# RETURN: The basename of the path
+quick_basename() {
+	unset RETURN
+	if [[ "$1" =~ \/([^\/]*)$ ]]; then
+		RETURN="${BASH_REMATCH[1]}"
+	fi
+}
+
 # A function used to print debug messages to stdout. Prevents messages from
 # appearing unless in debug mode, and allows debug statements to be easily
 # distinguished from necessary echo statements.
 # $1: The message to output
 debug() {
-	if [[ "$DEBUG" == "true" ]]; then
+	if [[ "$SETTINGS_DEBUG" == "true" ]]; then
 		echoerr "$1"
 	fi
 }
@@ -302,9 +336,9 @@ world_deactivate() {
 # $1: The name of the server
 server_get_id() {
 	unset RETURN
-	for ((i=0; i<$NUM_SERVERS; i++)); do
-		if [[ "${SERVER_NAME[$i]}" == "$1" ]]; then
-			RETURN="$i"
+	for ((server=0; server<$NUM_SERVERS; server++)); do
+		if [[ "${SERVER_NAME[$server]}" == "$1" ]]; then
+			RETURN="$server"
 			return 0
 		fi
 	done
@@ -822,9 +856,9 @@ server_create() {
 			as_user "$USERNAME" "echo \"MSM requires all your worlds be moved into this directory.\" > '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH/readme.txt'"
 			echo "Done."
 			
-			# Now that the new server has been created, we must call init again
+			# Now that the new server has been created, we must call load_all again
 			# to ensure it is recognised.
-			init
+			load_all
 			
 			# TODO: Handle server default setup stuff better than just using
 			#       the "minecraft" jar group. And make it configurable.
@@ -867,6 +901,7 @@ server_rename() {
 			
 			server_get_id "$1"
 			local existing_id="$RETURN"
+
 			if server_is_running "$existing_id"; then
 				error_exit SERVER_RUNNING "Can only rename a stopped server."
 			else
@@ -2206,8 +2241,8 @@ command_server_config() {
 	if [ -z "$2" ]; then
 		# List all parameters
 		for ((i=0; i<$SERVER_SETTING_COUNT; i++)); do
-			to_global_name "${SERVER_SETTING_NAME[$i]}"
-			echo "msm-$setting_name=\"$(server_property "$1" "$RETURN")\""
+			to_properties_name "${SERVER_SETTING_NAME[$i]}"
+			echo "msm-$RETURN=\"$(server_property "$1" "${SERVER_SETTING_NAME[$i]}")\""
 		done
 	fi
 }
@@ -2224,11 +2259,11 @@ command_server_config() {
 ### Init and Misc Functions
 ### -----------------------
 
-# Initialises a server's world
+# Load a server's world
 # $1: The server id
 # $2: The world id to use
 # $3: The name of the world
-server_world_init() {
+load_server_world() {
 	WORLD_SERVER_ID[$2]="$1"
 	WORLD_NAME[$2]="$3"
 	WORLD_ACTIVE_PATH[$2]="${SERVER_WORLD_STORAGE_PATH[$1]}/${WORLD_NAME[$2]}"
@@ -2267,57 +2302,47 @@ server_world_init() {
 	fi
 }
 
-# Load a the server.properties file for a server
+# Load the server.properties file for a server
 # $1: The id of the server to load
-server_load_properties() {
-	local name value
+load_server_properties() {
+	local name value name_prefix
 	
 	if [[ -f "${SERVER_PATH[$1]}/$SETTINGS_SERVER_PROPERTIES" ]]; then
-		while read line; do 
-		 	# ignore comment lines
-			if [[ "$line" =~ ^# ]]; then
-				continue
-			fi
-
+		while read line; do
 		   	# if not empty, get the name and value of the setting
-		   	if [[ "$line" =~ ^([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
-				name="${BASH_REMATCH[1]}"
+		   	if [[ "$line" =~ ^(msm\-)?([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
+		   		msm_prefix="${BASH_REMATCH[1]}"
+				name="${BASH_REMATCH[2]}"
 				# Only one of 3,4 or 5 will match:
-				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
+				value="${BASH_REMATCH[4]}${BASH_REMATCH[5]}${BASH_REMATCH[6]}"
 
 				to_global_name "$name"
 				name="$RETURN"
 
 				# Create variables
-				if [[ "$name" =~ ^msm-[\-\_a-zA-Z0-9]+$ ]]; then
-					# Regex for MSM custom variables
-
+				if [ ! -z "$msm_prefix" ]; then
 					# Make relative paths absolute to server directory
-					if [[ "$name" =~ ^msm-[\-\_a-zA-Z0-9]+-path$ ]] && [[ ! "$value" =~ ^\/ ]]; then
+					if [[ "$name" =~ \_PATH$ ]] && [ "${value:0:1}" != '/' ]; then
 						value="${SERVER_PATH[$1]}/$value"
 					fi
 
-					# Create the variable
-					eval SERVER_${name}[$1]=\"$value\"
+					name_prefix="SERVER_"
 				else
-					if [[ "$name" =~ ^[\-\_a-zA-Z0-9]+$ ]]; then
-						# Regex for standard Minecraft variables
-
-						eval SERVER_PROPERTIES_${name}[$1]=\"$value\"
-					fi
+					name_prefix="SERVER_PROPERTIES_"
 				fi
+
+				# Create the variable
+				eval ${name_prefix}${name}[$1]=\"$value\"
 			fi
 		done < "${SERVER_PATH[$1]}/$SETTINGS_SERVER_PROPERTIES"
 	fi
 }
 
-# Initialise a server's variables
-# $1: The id to use for this server
-# $2: The name of the server
-server_init() {
+# Load a server's variables
+# $1: The id of the server to load
+load_server() {
 	# Non-configurable Variables
-	SERVER_NAME[$1]="$2"
-	SERVER_PATH[$1]="$SETTINGS_SERVER_STORAGE_PATH/$2"
+	SERVER_PATH[$1]="$SETTINGS_SERVER_STORAGE_PATH/${SERVER_NAME[$1]}"
 	SERVER_BACKUP_PATH[$1]="$SETTINGS_BACKUP_ARCHIVE_PATH/${SERVER_NAME[$1]}"
 	SERVER_LOG_ARCHIVE_PATH[$1]="$SETTINGS_LOG_ARCHIVE_PATH/${SERVER_NAME[$1]}"
 
@@ -2326,9 +2351,10 @@ server_init() {
 	# from /etc/msm.conf
 	local name value
 
-	for ((i=0; i<$SERVER_SETTING_COUNT; i++)); do
-		name="${SERVER_SETTING_NAME[$i]}"
-		value="$(eval echo \$SETTINGS_DEFAULT_${name})"
+	# Make a server version of all default server settings
+	for ((server_setting=0; server_setting<$SERVER_SETTING_COUNT; server_setting++)); do
+		name="${SERVER_SETTING_NAME[$server_setting]}"
+		eval value=\"\$SETTINGS_DEFAULT_${name}\"
 
 		# Make relative paths absolute, assuming the server directory
 		# as the current directory.
@@ -2346,7 +2372,7 @@ server_init() {
 	fi
 
 	# Load setting overrides from server.properties
-	server_load_properties "$1"
+	load_server_properties "$1"
 	
 	# Perform tag replacements on specific variables
 	SERVER_SCREEN_NAME[$1]="${SERVER_SCREEN_NAME[$1]//\{SERVER_NAME\}/${SERVER_NAME[$1]}}" # Replace tags now, they cannot change
@@ -2374,7 +2400,7 @@ server_init() {
 		# Load active worlds
 		while IFS= read -r -d $'\0' path; do
 			local name="$(basename "$path")"
-			server_world_init "$1" "$id" "$name"
+			load_server_world "$1" "$id" "$name"
 			
 			# Build the server_worlds comma separated list
 			if [[ "$id" == "${SERVER_WORLD_OFFSET[$1]}" ]]; then
@@ -2392,7 +2418,7 @@ server_init() {
 		# Load inactive worlds
 		while IFS= read -r -d $'\0' path; do
 			local name="$(basename "$path")"
-			server_world_init "$1" "$id" "$name"
+			load_server_world "$1" "$id" "$name"
 			
 			# Build the server_worlds_inactive comma separated list
 			if [[ "$id" == "${SERVER_WORLD_OFFSET[$1]}" ]]; then
@@ -2410,7 +2436,11 @@ server_init() {
 	SERVER_NUM_WORLDS[$1]="$(( $id - ${SERVER_WORLD_OFFSET[$1]} ))"
 }
 
-load_conf() {
+# Load settings for MSM
+load_msm() {
+	register_settings
+
+	# Override settings with values from /etc/msm.conf
 	if [[ -f "$CONF" ]]; then
 		while read line; do
 			# Get the name and value of the setting
@@ -2427,24 +2457,30 @@ load_conf() {
 			fi
 		done < "$CONF"
 	fi
-}
 
-init() {
-	register_settings
-	load_conf
-	
-	NUM_WORLDS=0
-	NUM_SERVERS=0
-	
+	# Dermine server names (but don't load them)
 	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
 		local id=0
 		while IFS= read -r -d $'\0' path; do
-			local name="$(basename "$path")"
-			server_init "$id" "$name"
+			quick_basename "$path"
+			SERVER_NAME[$id]="$RETURN"
 			id="$(($id+1))"
-			NUM_SERVERS="$id"
 		done < <(find "$SETTINGS_SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
+		NUM_SERVERS="$id"
 	fi
+}
+
+# Load settings for all servers
+load_all_servers() {
+	for ((server=0; server<$NUM_SERVERS; server++)); do
+		load_server "$server"
+	done
+}
+
+# Load settings for MSM and all servers
+load_all() {
+	load_msm
+	load_all_servers
 }
 
 
@@ -2482,6 +2518,8 @@ register_server_setting() {
 
 # Register possible settings
 register_settings() {
+	register_setting DEBUG "false"
+
 	register_setting USERNAME "minecraft"
 	register_setting SERVER_STORAGE_PATH "/opt/msm/servers"
 	register_setting JAR_STORAGE_PATH "/opt/msm/jars"
@@ -2551,6 +2589,7 @@ register_settings() {
 # $1: The command signature, a coded string describing the structure of the
 #     command.
 # $2: The handler function to call, if this command is identified.
+# $3: Optional flags
 register_command() {
 	# Here we build a regular expression which will match any user input
 	# that could be passed to the given handler function. It is derrived
@@ -2592,6 +2631,12 @@ register_command() {
 		COMMAND_SIGNATURE[$COMMAND_COUNT]="$1"
 		COMMAND_REGEX[$COMMAND_COUNT]="$regex"
 		COMMAND_HANDLER[$COMMAND_COUNT]="$2"
+
+		if [[ "$3" =~ \<load_all_servers\> ]]; then
+			COMMAND_LOAD_ALL_SERVERS[$COMMAND_COUNT]="true"
+		else
+			COMMAND_LOAD_ALL_SERVERS[$COMMAND_COUNT]="false"
+		fi
 		
 		COMMAND_COUNT=$(( $COMMAND_COUNT + 1 ))
 	else
@@ -2602,7 +2647,6 @@ register_command() {
 # Match and call a command from user input
 # $*: User input
 call_command() {
-
 	local args
 	local space="\ "
 	for arg in "$@"; do
@@ -2617,8 +2661,15 @@ call_command() {
 		args="${args:0:${#args}-1}"
 	fi
 
-	for ((i=0; i<$COMMAND_COUNT; i++)); do
-		if [[ "$args" =~ ${COMMAND_REGEX[$i]} ]]; then
+	for ((command=0; command<$COMMAND_COUNT; command++)); do
+		if [[ "$args" =~ ${COMMAND_REGEX[$command]} ]]; then
+
+			# If this command has the load_all_servers flag set
+			# load all server configuration
+			if [[ "${COMMAND_LOAD_ALL_SERVERS[$command]}" == "true" ]]; then
+				load_all_servers
+			fi
+
 			unset args
 			local word_offset=1
 			local args
@@ -2637,7 +2688,7 @@ call_command() {
 			# matched command handler function. Rather than passing all args
 			# given to the script, to the handler (which may contain constant
 			# strings), it only includes variables.
-			for word in ${COMMAND_SIGNATURE[$i]}; do
+			for word in ${COMMAND_SIGNATURE[$command]}; do
 				# Whether a positional argument is a varibale or not is
 				# determined by the respective element in the command signature
 				# given when registering.
@@ -2750,7 +2801,15 @@ call_command() {
 			# built. But there are several ways to call a handler. Either just
 			# once, or multiple times based upon if multiple servers or worlds
 			# were specified.
-			
+
+			# Load server variables if a server has been specified
+			if [[ "$sid" == "server:all" ]]; then
+				load_all_servers
+			fi
+
+			if [[ "$sid" =~ ^[0-9]+$ ]]; then
+				load_server "$sid"
+			fi
 
 			# This code block calls the handler for all possible servers and
 			# all possible worlds.
@@ -2764,7 +2823,7 @@ call_command() {
 					done
 					
 					# Call the function with the specific replaced args
-					${COMMAND_HANDLER[$i]} "${replaced_args[@]}"
+					${COMMAND_HANDLER[$command]} "${replaced_args[@]}"
 				done
 				
 				# Prevent the default singular call later on.
@@ -2780,7 +2839,7 @@ call_command() {
 						replaced_args[$k]="${args[$k]//server\:all/$j}"
 					done
 					
-					${COMMAND_HANDLER[$i]} "${replaced_args[@]}"
+					${COMMAND_HANDLER[$command]} "${replaced_args[@]}"
 				done
 				
 				return
@@ -2795,14 +2854,14 @@ call_command() {
 						replaced_args[$k]="${args[$k]//world:all/$j}"
 					done
 					
-					${COMMAND_HANDLER[$i]} "${replaced_args[@]}"
+					${COMMAND_HANDLER[$command]} "${replaced_args[@]}"
 				done
 				
 				return
 			fi
 			
 			# Otherwise it's a simple single call of the handler.
-			${COMMAND_HANDLER[$i]} "${args[@]}"
+			${COMMAND_HANDLER[$command]} "${args[@]}"
 			return
 		fi
 	done
@@ -2846,9 +2905,9 @@ interrupt() {
 
 # The main function which starts the script
 main() {
-	# Initialises variables that represent system state
-	init
-	
+	# Loads MSM variables
+	load_msm
+
 	# Trap interrupts to the script by calling the interrupt function
 	trap interrupt EXIT
 	
@@ -2887,17 +2946,17 @@ main() {
 	# Variables passed to handler functions are of course positional and there
 	# position matches the position of that element in the command signature.
 	
-	register_command "start" "command_start"
-	register_command "stop" "command_stop"
-	register_command "stop now" "command_stop_now"
-	register_command "restart" "command_restart"
-	register_command "restart now" "command_restart_now"
+	register_command "start" "command_start" "<load_all_servers>"
+	register_command "stop" "command_stop" "<load_all_servers>"
+	register_command "stop now" "command_stop_now" "<load_all_servers>"
+	register_command "restart" "command_restart" "<load_all_servers>"
+	register_command "restart now" "command_restart_now" "<load_all_servers>"
 	register_command "version" "command_version"
 	register_command "config" "command_config"
-	register_command "server list" "command_server_list"
+	register_command "server list" "command_server_list" "<load_all_servers>"
 	register_command "server create <name>" "command_server_create"
 	register_command "server delete <name>" "command_server_delete"
-	register_command "server rename <name> <name>" "command_server_rename"
+	register_command "server rename <name> <name>" "command_server_rename" "<load_all_servers>"
 	register_command "jargroup list" "command_jargroup_list"
 	register_command "jargroup create <name> <string>" "command_jargroup_create"
 	register_command "jargroup delete <name>" "command_jargroup_delete"
@@ -2972,6 +3031,5 @@ else
 	# MSM was sourced from another script.
 	# Just load registered settings instead.
 
-	register_settings
-	load_conf
+	load_msm
 fi
