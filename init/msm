@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Minecraft Server Manager
+# ========================
+#
+# A single init script for managing multiple Minecraft servers.
+# Created by Marcus Whybrow
+#
+# http://marcuswhybrow.net/minecraft-server-manager/
+#
+
 ### BEGIN INIT INFO
 # Provides:	  msm
 # Required-Start: $local_fs $remote_fs
@@ -8,8 +17,8 @@
 # Should-Stop:	  $network
 # Default-Start:  2 3 4 5
 # Default-Stop:	  0 1 6
-# Short-Description:	
-# Description:	  
+# Short-Description: MSM: Minecraft init script
+# Description: Minecraft Server Manager, an init script for Minecraft/Bukkit servers
 ### END INIT INFO
 
 
@@ -27,7 +36,7 @@ fi
 CONF="${MSM_CONF:-/etc/msm.conf}"
 
 
-### The Minecraft Server Manager version, use "msm version" to check yours.
+# The Minecraft Server Manager version, use "msm version" to check yours.
 VERSION="0.6.4"
 
 
@@ -555,7 +564,16 @@ server_set_active() {
 }
 
 
+
+
+
+
+
+
+
+
 ### Jar Group Functions
+### -------------------
 
 # Lists the jar files grouped by jar groups.
 jargroup_list() {
@@ -716,7 +734,16 @@ jargroup_rename() {
 }
 
 
+
+
+
+
+
+
+
+
 ### Server Functions
+### ----------------
 
 # Echos a list of servers in the SETTINGS_SERVER_STORAGE_PATH
 server_list() {
@@ -1123,7 +1150,16 @@ server_property() {
 }
 
 
+
+
+
+
+
+
+
+
 ### Manager Functions
+### -----------------
 
 # Stops all running servers after a servers specified delay
 # $1: String containing "stop" or "restart". Represents whether the stop is 
@@ -1262,7 +1298,17 @@ manager_property() {
 }
 
 
-### Command Functions
+
+
+
+
+
+
+
+
+### Command Handler Functions
+### -------------------------
+
 
 # Starts all servers
 command_start() {
@@ -2124,7 +2170,17 @@ command_server_config() {
 	fi
 }
 
-### Main Functions
+
+
+
+
+
+
+
+
+
+### Init and Misc Functions
+### -----------------------
 
 # Initialises a server's world
 # $1: The server id
@@ -2319,6 +2375,60 @@ server_init() {
 	SERVER_NUM_WORLDS[$1]="$(( $id - ${SERVER_WORLD_OFFSET[$1]} ))"
 }
 
+load_conf() {
+	if [[ -f "$CONF" ]]; then
+		while read line; do
+			# Get the name and value of the setting
+			if [[ "$line" =~ ^([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
+				name="${BASH_REMATCH[1]}"
+				# Only one of 3,4 or 5 will match:
+				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
+
+				# Translate to uppercase, and replace dashes with underscores
+				if is_bash_version 4; then
+					name="${name//-/_}"
+					name="${name^^}"
+				else
+					name="$(echo "$name" | tr '[\-a-z]' '[\_A-Z]')"
+				fi
+
+				# Create variables in uppercase
+				eval SETTINGS_${name}=\"$value\"
+			fi
+		done < "$CONF"
+	fi
+}
+
+init() {
+	register_settings
+	load_conf
+	
+	NUM_WORLDS=0
+	NUM_SERVERS=0
+	
+	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
+		local id=0
+		while IFS= read -r -d $'\0' path; do
+			local name="$(basename "$path")"
+			server_init "$id" "$name"
+			id="$(($id+1))"
+			NUM_SERVERS="$id"
+		done < <(find "$SETTINGS_SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
+	fi
+}
+
+
+
+
+
+
+
+
+
+
+### Register Functions
+### ------------------
+
 # Registers a setting that can be defined in /etc/msm.conf
 # $1: Setting name to register
 # $2: Optionally a default value for this setting
@@ -2405,73 +2515,6 @@ register_settings() {
 	register_server_setting CONFIRM_XP "CONSOLE: Giving .+ exp to .+"
 	register_server_setting CONFIRM_XP_FAIL_NO_USER "Can't find user .+"
 	register_server_setting CONFIRM_XP_FAIL_INVALID_AMOUNT "Invalid exp count: .+"
-}
-
-load_conf() {
-	if [[ -f "$CONF" ]]; then
-		while read line; do
-			# Get the name and value of the setting
-			if [[ "$line" =~ ^([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
-				name="${BASH_REMATCH[1]}"
-				# Only one of 3,4 or 5 will match:
-				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
-
-				# Translate to uppercase, and replace dashes with underscores
-				if is_bash_version 4; then
-					name="${name//-/_}"
-					name="${name^^}"
-				else
-					name="$(echo "$name" | tr '[\-a-z]' '[\_A-Z]')"
-				fi
-
-				# Create variables in uppercase
-				eval SETTINGS_${name}=\"$value\"
-			fi
-		done < "$CONF"
-	fi
-}
-
-init() {
-	register_settings
-	load_conf
-	
-	NUM_WORLDS=0
-	NUM_SERVERS=0
-	
-	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
-		local id=0
-		while IFS= read -r -d $'\0' path; do
-			local name="$(basename "$path")"
-			server_init "$id" "$name"
-			id="$(($id+1))"
-			NUM_SERVERS="$id"
-		done < <(find "$SETTINGS_SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
-	fi
-}
-
-# Called if the script is interrupted before exiting naturally
-interrupt() {
-	local exit_message="false"
-	for ((i=0; $i<$NUM_SERVERS; i++)); do
-		if [[ "${STOP_COUNTDOWN[$i]}" == "true" ]] && server_is_running "$i"; then
-			if [[ "$exit_message" == "false" ]]; then
-				echo -e "\nInterrupted..."
-				exit_message="true"
-			fi
-			server_eval "$i" "say ${SERVER_MESSAGE_STOP_ABORT[$i]}"
-			echo "Server \"${SERVER_NAME[$i]}\" shutdown was aborted."
-		fi
-		
-		if [[ "${RESTART_COUNTDOWN[$i]}" == "true" ]] && server_is_running "$i"; then
-			if [[ "$exit_message" == "false" ]]; then
-				echo -e "\nInterrupted..."
-				exit_message="true"
-			fi
-			server_eval "$i" "say ${SERVER_MESSAGE_RESTART_ABORT[$i]}"
-			echo "Server \"${SERVER_NAME[$i]}\" restart was aborted."
-		fi
-	done
-	exit
 }
 
 # Adds a command to the list, allowing it to be called from the command line.
@@ -2733,6 +2776,40 @@ call_command() {
 	done
 	
 	echo "No such command. See $0 help"
+}
+
+
+
+
+
+
+
+
+
+
+# Called if the script is interrupted before exiting naturally
+interrupt() {
+	local exit_message="false"
+	for ((i=0; $i<$NUM_SERVERS; i++)); do
+		if [[ "${STOP_COUNTDOWN[$i]}" == "true" ]] && server_is_running "$i"; then
+			if [[ "$exit_message" == "false" ]]; then
+				echo -e "\nInterrupted..."
+				exit_message="true"
+			fi
+			server_eval "$i" "say ${SERVER_MESSAGE_STOP_ABORT[$i]}"
+			echo "Server \"${SERVER_NAME[$i]}\" shutdown was aborted."
+		fi
+		
+		if [[ "${RESTART_COUNTDOWN[$i]}" == "true" ]] && server_is_running "$i"; then
+			if [[ "$exit_message" == "false" ]]; then
+				echo -e "\nInterrupted..."
+				exit_message="true"
+			fi
+			server_eval "$i" "say ${SERVER_MESSAGE_RESTART_ABORT[$i]}"
+			echo "Server \"${SERVER_NAME[$i]}\" restart was aborted."
+		fi
+	done
+	exit
 }
 
 # The main function which starts the script

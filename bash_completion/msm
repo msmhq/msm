@@ -1,4 +1,14 @@
 
+# Minecraft Server Manager: Bash Completion script
+# ================================================
+#
+# This script provides tab completion support for the
+# Minecraft Server Manager command.
+#
+# http://marcuswhybrow.net/minecraft-server-manager/
+#
+
+
 # Source, if it exists, the msm profile.d script
 if [ -f "/etc/profile.d/msm.sh" ]; then
 	source "/etc/profile.d/msm.sh"
