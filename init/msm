@@ -422,7 +422,7 @@ world_property() {
 				manager_property RAMDISK_STORAGE_PATH
 				# If the ramdisk path is set, get the path for this world
 				if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
-					WORLD_RAMDISK_PATH[$2]="${SETTINGS_RAMDISK_STORAGE_PATH}/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
+					WORLD_RAMDISK_PATH[$1]="${SETTINGS_RAMDISK_STORAGE_PATH}/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
 				fi
 				;;
 			INRAM)
