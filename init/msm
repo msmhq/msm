@@ -1691,7 +1691,7 @@ manager_property() {
 
 	# If this property has not yet been loaded, load it:
 	eval local loaded=\"\$LOADED_$1\"
-	if ! "$loaded"; then
+	if [ ! -z "$loaded" ] && ! "$loaded"; then
 		if [ ! -z "$from_conf" ]; then
 			# Override the default value
 			eval SETTINGS_$1=\"$from_conf\"
