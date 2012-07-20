@@ -1345,7 +1345,7 @@ server_log_roll() {
 	server_property "$1" LOG_ARCHIVE_PATH
 
 	# Moves and Gzips the logfile, a big log file slows down the
-	# server A LOT (what was notch thinking?)
+	# server A LOT
 
 	printf "Rolling server logs... "
 	
