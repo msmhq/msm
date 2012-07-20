@@ -18,70 +18,67 @@ fi
 
 MSM="${MSM_SCRIPT:-/etc/init.d/msm}"
 
-# Loads variables
-__init() {
-	source "$MSM"
-}
+# # Loads server variables
+# # $1: The name of a server
+# __init_server() {
+# 	# Load some useful defaults
+# 	SERVER_NAME="$1"
+# 	SERVER_CONF="$SETTINGS_SERVER_STORAGE_PATH/$SERVER_NAME/$SETTINGS_SERVER_PROPERTIES"
 
-# Loads server variables
-# $1: The name of a server
-__init_server() {
-	# Load some useful defaults
-	SERVER_NAME="$1"
-	SERVER_CONF="$SETTINGS_SERVER_STORAGE_PATH/$SERVER_NAME/$SETTINGS_SERVER_PROPERTIES"
+# 	SERVER_PATH="$SETTINGS_SERVER_STORAGE_PATH/$SERVER_NAME"
+# 	WORLD_STORAGE_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH"
+# 	WORLD_STORAGE_INACTIVE_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WORLD_STORAGE_INACTIVE_PATH"
 
-	SERVER_PATH="$SETTINGS_SERVER_STORAGE_PATH/$SERVER_NAME"
-	WORLD_STORAGE_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH"
-	WORLD_STORAGE_INACTIVE_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WORLD_STORAGE_INACTIVE_PATH"
+# 	WHITELIST_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WHITELIST_PATH"
+# 	BANNED_PLAYERS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_BANNED_PLAYERS_PATH"
+# 	BANNED_IPS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_BANNED_IPS_PATH"
+# 	OPS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_OPS_PATH"
 
-	WHITELIST_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WHITELIST_PATH"
-	BANNED_PLAYERS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_BANNED_PLAYERS_PATH"
-	BANNED_IPS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_BANNED_IPS_PATH"
-	OPS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_OPS_PATH"
-
-	if [[ -f "$SERVER_CONF" ]]; then
-		local name value name_upper_case
+# 	if [[ -f "$SERVER_CONF" ]]; then
+# 		local name value name_upper_case
 	
-		while read line; do 
-		 	# ignore comment lines
-		 	if [[ "$line" =~ ^# ]]; then
-				continue
-			fi
+# 		while read line; do 
+# 		 	# ignore comment lines
+# 		 	if [[ "$line" =~ ^# ]]; then
+# 				continue
+# 			fi
 
-			if [[ "$line" =~ ^msm-([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
-				name="${BASH_REMATCH[1]}"
-				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
+# 			if [[ "$line" =~ ^msm-([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
+# 				name="${BASH_REMATCH[1]}"
+# 				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
 
-				if is_bash_version 4; then
-					name="${name//-/_}"
-					name="${name//./_}"
-					name="${name^^}"
-				else
-					name="$(echo "$name" | tr '[\-\.a-z]' '[\_\_A-Z]')"
-				fi
+# 				if is_bash_version 4; then
+# 					name="${name//-/_}"
+# 					name="${name//./_}"
+# 					name="${name^^}"
+# 				else
+# 					name="$(echo "$name" | tr '[\-\.a-z]' '[\_\_A-Z]')"
+# 				fi
 				
-				# Make relative paths absolute by combining with server directory
-				if [[ "$name" =~ \-path$ ]] && [[ ! "$value" =~ ^\/ ]]; then
-					value="${SERVER_PATH[$1]}/$value"
-				fi
+# 				# Make relative paths absolute by combining with server directory
+# 				if [[ "$name" =~ \-path$ ]] && [[ ! "$value" =~ ^\/ ]]; then
+# 					value="${SERVER_PATH[$1]}/$value"
+# 				fi
 
-				# Create the variable
-				eval ${name}=\"$value\"
-			fi
-		done < "$SERVER_CONF"
-	fi
-}
+# 				# Create the variable
+# 				eval ${name}=\"$value\"
+# 			fi
+# 		done < "$SERVER_CONF"
+# 	fi
+# }
 
 
 ### Auto Completion Function
 
 _msm() {
-	__init
+	source "$MSM"
 	
 	local base current options
 	COMPREPLY=()
 	
 	current="${COMP_WORDS[$COMP_CWORD]}"
+
+	manager_property SERVER_STORAGE_PATH
 	
 	if [[ $COMP_CWORD == 1 ]]; then
 		if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
@@ -114,6 +111,7 @@ _msm() {
 				else
 					case "${COMP_WORDS[2]}" in
 						delete|rename|changeurl|getlatest)
+							manager_property JAR_STORAGE_PATH
 							if [[ $COMP_CWORD == 3 && -d "$SETTINGS_JAR_STORAGE_PATH" ]]; then
 								options="$(ls -1 "$SETTINGS_JAR_STORAGE_PATH")"
 							fi
@@ -127,8 +125,9 @@ _msm() {
 				local server_path="$SETTINGS_SERVER_STORAGE_PATH/${COMP_WORDS[1]}"
 				if [[ "${COMP_WORDS[1]}" == "all" ]] || [ -e "$server_path" ]; then
 					# If the server exists
-					
-					__init_server "${COMP_WORDS[1]}"
+
+					server_get_id "${COMP_WORDS[1]}"
+					local sid="$RETURN"
 					
 					if [[ $COMP_CWORD == 2 ]]; then
 						options="start stop restart status connected worlds logroll backup jar whitelist blacklist operator gamemode kick say time toggledownfall give xp save cmd cmdlog console config"
@@ -143,25 +142,29 @@ _msm() {
 								if [[ $COMP_CWORD == 3 ]]; then
 									options="list load ram todisk backup on off"
 								else
+
 									case "${COMP_WORDS[3]}" in
 										ram)
 											if [[ $COMP_CWORD == 4 ]]; then
-												if [ -d "$WORLD_STORAGE_PATH" ]; then
-													options="$(ls -1 "$WORLD_STORAGE_PATH")"
+												server_property "$sid" WORLD_STORAGE_PATH
+												if [ -d "${SERVER_WORLD_STORAGE_PATH[$sid]}" ]; then
+													options="$(ls -1 "${SERVER_WORLD_STORAGE_PATH[$sid]}")"
 												fi
 											fi
 											;;
 										on)
 											if [[ $COMP_CWORD == 4 ]]; then
-												if [ -d "$WORLD_STORAGE_INACTIVE_PATH" ]; then
-													options="$(ls -1 "$WORLD_STORAGE_INACTIVE_PATH")"
+												server_property "$sid" WORLD_STORAGE_INACTIVE_PATH
+												if [ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$sid]}" ]; then
+													options="$(ls -1 "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$sid]}")"
 												fi
 											fi
 											;;
 										off)
 											if [[ $COMP_CWORD == 4 ]]; then
-												if [ -d "$WORLD_STORAGE_PATH" ]; then
-													options="$(ls -1 "$WORLD_STORAGE_PATH")"
+												server_property "$sid" WORLD_STORAGE_PATH
+												if [ -d "${SERVER_WORLD_STORAGE_PATH[$sid]}" ]; then
+													options="$(ls -1 "${SERVER_WORLD_STORAGE_PATH[$sid]}")"
 												fi
 											fi
 											;;
@@ -169,6 +172,7 @@ _msm() {
 								fi
 								;;
 							jar)
+								manager_property JAR_STORAGE_PATH
 								if [[ $COMP_CWORD == 3 && -d "$SETTINGS_JAR_STORAGE_PATH" ]]; then
 									options="$(ls -1 "$SETTINGS_JAR_STORAGE_PATH")"
 								fi
@@ -184,8 +188,9 @@ _msm() {
 									case "${COMP_WORDS[3]}" in
 										remove)
 											if [[ $COMP_CWORD == 4 ]]; then
-												if [ -f "$WHITELIST_PATH" ]; then
-													options="$(cat "$WHITELIST_PATH")"
+												server_property "$sid" WHITELIST_PATH
+												if [ -f "${SERVER_WHITELIST_PATH[$sid]}" ]; then
+													options="$(cat "${SERVER_WHITELIST_PATH[$sid]}")"
 												fi
 											fi
 											;;
@@ -204,8 +209,9 @@ _msm() {
 												case "${COMP_WORDS[4]}" in
 													remove)
 														if [[ $COMP_CWORD == 5 ]]; then
-															if [ -f "$BANNED_PLAYERS_PATH" ]; then
-																options="$(cat "$BANNED_PLAYERS_PATH")"
+															server_property "$sid" BANNED_PLAYERS_PATH
+															if [ -f "${SERVER_BANNED_PLAYERS_PATH[$sid]}" ]; then
+																options="$(cat "${SERVER_BANNED_PLAYERS_PATH[$sid]}")"
 															fi
 														fi
 														;;
@@ -219,8 +225,9 @@ _msm() {
 												case "${COMP_WORDS[4]}" in
 													remove)
 														if [[ $COMP_CWORD == 5 ]]; then
-															if [ -f "$BANNED_IPS_PATH" ]; then
-																options="$(cat "$BANNED_IPS_PATH")"
+															server_property "$sid" BANNED_PLAYERS_PATH
+															if [ -f "${SERVER_BANNED_IPS_PATH[$sid]}" ]; then
+																options="$(cat "${SERVER_BANNED_IPS_PATH[$sid]}")"
 															fi
 														fi
 														;;
@@ -237,8 +244,9 @@ _msm() {
 									case "${COMP_WORDS[3]}" in
 										remove)
 											if [[ $COMP_CWORD == 4 ]]; then
+												server_property "$sid" OPS_PATH
 												if [ -f "$OPS_PATH" ]; then
-													options="$(cat "$OPS_PATH")"
+													options="$(cat "${SERVER_OPS_PATH[$sid]}")"
 												fi
 											fi
 											;;
@@ -262,7 +270,8 @@ _msm() {
 								;;
 							config)
 								if [[ $COMP_CWORD == 3 ]]; then
-									options="$(more "$SERVER_CONF" | sed 's/=.*$//' | grep -v '#')";
+									server_property "$sid" SERVER_CONF
+									options="$(more "${SERVER_CONF[$sid]}" | sed 's/=.*$//' | grep -v '#')";
 								fi
 								;;
 						esac
