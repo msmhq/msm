@@ -2338,14 +2338,31 @@ command_server_blacklist_list() {
 
 # Adds a player name to a server's list of operators
 # $1: The server ID
-# $2: The player name
+# $2->: The player name
 command_server_operator_add() {
-	# TODO: Support multiple player names
 	if server_is_running "$1"; then
-		server_eval "$1" "op $2"
-		echo "The player \"$2\" is now an operator for the server."
+		for player in "${@:2}"; do
+			server_eval "$1" "op $player"
+		done
 	else
-		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
+		server_property "$1" OPS_PATH
+
+		for player in "${@:2}"; do
+			if ! grep "^$player\$" "${SERVER_OPS_PATH[$1]}" >/dev/null; then
+				echo "$player" >> "${SERVER_OPS_PATH[$1]}"
+			fi
+		done
+	fi
+
+	if [[ $# -gt 2 ]]; then
+		echo -n "The following players are now operators: "
+		echo -n "$2"
+		for player in "${@:3}"; do
+		 	echo -n ", $player"
+		done
+		echo "."
+	else
+		echo "\"$2\" is now an operator."
 	fi
 }
 
@@ -2355,24 +2372,46 @@ command_server_operator_add() {
 command_server_operator_remove() {
 	# TODO: Support multiple player names
 	if server_is_running "$1"; then
-		server_eval "$1" "deop $2"
-		echo "The player \"$2\" is no longer an operator for the server."
+		for player in "${@:2}"; do
+			server_eval "$1" "deop $player"
+		done
 	else
-		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
+		server_property "$1" OPS_PATH
+
+		for player in "${@:2}"; do
+			for player in "${@:2}"; do
+				sed -ri "/^$player\$/d" "${SERVER_OPS_PATH[$1]}"
+			done
+		done
+	fi
+
+	if [[ $# -gt 2 ]]; then
+		echo -n "The following players are no longer operators: "
+		echo -n "$2"
+		for player in "${@:3}"; do
+		 	echo -n ", $player"
+		done
+		echo "."
+	else
+		echo "\"$2\" is no longer an operator."
 	fi
 }
 
 # Displays a list of operators for an individual server
 # $1: The server ID
 command_server_operator_list() {
-	# TODO: Protect against non-existent files
-	local players="$(cat "${SERVER_OPS_PATH[$1]}")"
+	server_property "$1" OPS_PATH
 
-	if [ -z "$players" ]; then
-		echo "No players are operators."
-	else
-		echo "$players"
+	if [ -f "${SERVER_OPS_PATH[$1]}" ]; then
+		local players="$(cat "${SERVER_OPS_PATH[$1]}")"
+
+		if [ ! -z "$players" ]; then
+			echo "$players"
+			return 0
+		fi
 	fi
+
+	echo "No players are operators."
 }
 
 # Sets the game mode for

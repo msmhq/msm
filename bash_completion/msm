@@ -243,9 +243,9 @@ _msm() {
 								else
 									case "${COMP_WORDS[3]}" in
 										remove)
-											if [[ $COMP_CWORD == 4 ]]; then
+											if [[ $COMP_CWORD -ge 4 ]]; then
 												server_property "$sid" OPS_PATH
-												if [ -f "$OPS_PATH" ]; then
+												if [ -f "${SERVER_OPS_PATH[$sid]}" ]; then
 													options="$(cat "${SERVER_OPS_PATH[$sid]}")"
 												fi
 											fi
