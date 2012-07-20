@@ -412,8 +412,8 @@ world_property() {
 				;;
 			FLAG_INRAM)
 				world_property "$1" PATH
-				server_property "$sid" WORLD_FLAG_INRAM
-				WORLD_FLAG_INRAM[$1]="${WORLD_PATH[$1]}/${SERVER_WORLD_FLAG_INRAM[$sid]}"
+				server_property "$sid" WORLDS_FLAG_INRAM
+				WORLD_FLAG_INRAM[$1]="${WORLD_PATH[$1]}/${SERVER_WORLDS_FLAG_INRAM[$sid]}"
 				;;
 			LINK)
 				server_property "$sid" PATH
