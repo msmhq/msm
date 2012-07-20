@@ -2869,7 +2869,7 @@ allocate() {
 					WORLD_SERVER_ID[$world_id]="$server_id"
 					WORLD_NAME[$world_id]="$name"
 					
-					world_id="$(($id+1))"
+					world_id="$(($world_id+1))"
 				done < <(find "${SERVER_WORLD_STORAGE_PATH[$server_id]}" -mindepth 1 -maxdepth 1 -type d -print0)
 			fi
 			
@@ -2882,7 +2882,7 @@ allocate() {
 					WORLD_SERVER_ID[$world_id]="$server_id"
 					WORLD_NAME[$world_id]="$name"
 					
-					world_id="$(($id+1))"
+					world_id="$(($world_id+1))"
 				done < <(find "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$server_id]}" -mindepth 1 -maxdepth 1 -type d -print0)
 			fi
 
