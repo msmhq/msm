@@ -2105,7 +2105,7 @@ command_server_whitelist_off() {
 
 # Adds a player name to a server's whitelist
 # $1: The server ID
-# $2->: The player name
+# $2->: The player names
 command_server_whitelist_add() {
 	# TODO: Support whitelisting multiple players (see blacklist player add)
 	if server_is_running "$1"; then
@@ -2117,7 +2117,7 @@ command_server_whitelist_add() {
 		server_property "$1" WHITELIST_PATH
 
 		for player in "${@:2}"; do
-			if ! grep "$player" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
+			if ! grep "^$player\$" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
 				echo "$player" >> "${SERVER_WHITELIST_PATH[$1]}"
 			fi
 		done
@@ -2138,7 +2138,7 @@ command_server_whitelist_add() {
 
 # Removes a player name from a server's whitelist
 # $1: The server ID
-# $2: The player name
+# $2->: The player names
 command_server_whitelist_remove() {
 	# TODO: Support multiple player names
 	if server_is_running "$1"; then
@@ -2149,9 +2149,7 @@ command_server_whitelist_remove() {
 		server_property "$1" WHITELIST_PATH
 
 		for player in "${@:2}"; do
-			if grep "$player" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
-				sed -i "/$player/d" "${SERVER_WHITELIST_PATH[$1]}"
-			fi
+			sed -ri "/^$player\$/d" "${SERVER_WHITELIST_PATH[$1]}"
 		done
 	fi
 
@@ -2198,21 +2196,21 @@ command_server_blacklist_player_add() {
 		server_property "$1" BANNED_PLAYERS_PATH
 
 		for player in "${@:2}"; do
-			if ! grep "$player" "${SERVER_BANNED_PLAYERS_PATH[$1]}" >/dev/null; then
+			if ! grep "^$player\$" "${SERVER_BANNED_PLAYERS_PATH[$1]}" >/dev/null; then
 				echo "$player" >> "${SERVER_BANNED_PLAYERS_PATH[$1]}"
 			fi
 		done
 	fi
 	
 	if [[ $# -gt 2 ]]; then
-		echo -n "Blacklisted the following players: "
+		echo -n "Added the following players to the blacklist: "
 		echo -n "$2"
 		for player in "${@:3}"; do
 		 	echo -n ", $player"
 		done
 		echo "."
 	else
-		echo "Blacklisted \"$2\"."
+		echo "Added \"$2\" to the blacklist."
 	fi
 }
 
@@ -2228,9 +2226,7 @@ command_server_blacklist_player_remove() {
 		server_property "$1" BANNED_PLAYERS_PATH
 
 		for player in "${@:2}"; do
-			if grep "$player" "${SERVER_BANNED_PLAYERS_PATH[$1]}" >/dev/null; then
-				sed -i "/$player/d" "${SERVER_BANNED_PLAYERS_PATH[$1]}"
-			fi
+			sed -ri "/^$player\$/d" "${SERVER_BANNED_PLAYERS_PATH[$1]}"
 		done
 	fi
 	
@@ -2250,19 +2246,29 @@ command_server_blacklist_player_remove() {
 # $1: The server ID
 # $2->: The ip addresses
 command_server_blacklist_ip_add() {
-	for address in "${@:2}"; do
-	 	server_eval "$1" "ban-ip $address"
-	done
+	if server_is_running "$1"; then
+		for address in "${@:2}"; do
+			server_eval "$1" "ban-ip $address"
+		done
+	else
+		server_property "$1" BANNED_IPS_PATH
+
+		for address in "${@:2}"; do
+			if ! grep "^$address\$" "${SERVER_BANNED_IPS_PATH[$1]}" >/dev/null; then
+				echo "$address" >> "${SERVER_BANNED_IPS_PATH[$1]}"
+			fi
+		done
+	fi
 	
 	if [[ $# -gt 2 ]]; then
-		echo -n "Blacklisted the following ip addresses: "
+		echo -n "Added the following ip addresses to the blacklist: "
 		echo -n "$2"
-		for player in "${@:3}"; do
+		for address in "${@:3}"; do
 		 	echo -n ", $address"
 		done
 		echo "."
 	else
-		echo "Blacklisted \"$2\"."
+		echo "Added \"$2\" to the blacklist."
 	fi
 }
 
@@ -2270,19 +2276,27 @@ command_server_blacklist_ip_add() {
 # $1: The server ID
 # $2->: The ip addresses
 command_server_blacklist_ip_remove() {
-	for address in "${@:2}"; do
-	 	server_eval "$1" "pardon-ip $address"
-	done
+	if server_is_running "$1"; then
+		for address in "${@:2}"; do
+			server_eval "$1" "pardon-ip $address"
+		done
+	else
+		server_property "$1" BANNED_PLAYERS_PATH
+
+		for address in "${@:2}"; do
+			sed -ri "/^$address\$/d" "${SERVER_BANNED_PLAYERS_PATH[$1]}"
+		done
+	fi
 	
 	if [[ $# -gt 2 ]]; then
-		echo -n "Removed the following ip addresses from the blacklist: "
+		echo -n "Removed the following players from the blacklist: "
 		echo -n "$2"
-		for player in "${@:3}"; do
+		for address in "${@:3}"; do
 		 	echo -n ", $address"
 		done
 		echo "."
 	else
-		echo "Removed \"$2\" from the ip blacklist."
+		echo "Removed \"$2\" from the blacklist."
 	fi
 }
 
