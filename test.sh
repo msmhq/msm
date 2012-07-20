@@ -27,13 +27,11 @@ oneTimeSetUp() {
 
 
 setUp() {
-	source "$DEFUALT_CONF"
-	
 	# Create the testing conf from the default one
 	mkdir -p "$TMP_DIR" && chown "$USERNAME" "$TMP_DIR"
 	cp "$DEFUALT_CONF" "$MSM_CONF" && chown "$USERNAME" "$MSM_CONF"
 	
-	# Overwrite the directories to use for testin purposes
+	# Overwrite the directories to use for testing purposes
 	echo "" >> "$MSM_CONF"
 	echo "# Auto appended by test script:" >> "$MSM_CONF"
 	echo "SERVER_STORAGE_PATH=\"${TMP_DIR}/servers\"" >> "$MSM_CONF"
@@ -45,8 +43,6 @@ setUp() {
 	echo "DEBUG=\"true\"" >> "$MSM_CONF"
 	echo "DEFAULT_SCREEN_NAME=\"msmtest-{SERVER_NAME}\"" >> "$MSM_CONF"
 	echo "DEFAULT_INVOCATION=\"java -Xmx${TEST_RAM}M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:+AggressiveOpts -jar {JAR} nogui\"" >> "$MSM_CONF"
-	
-	source "$MSM_CONF"
 	
 	# Variables accessible by all tests, which are set by the stdall, stderr,
 	# stdout and quiet utility functions.
