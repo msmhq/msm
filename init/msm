@@ -269,7 +269,7 @@ world_to_ram() {
 # Moves a world in RAM to disk
 # $1: the ID of the world to move
 world_to_disk() {
-	server_property "{$WORLD_SERVER_ID[$1]}" USERNAME
+	server_property "${WORLD_SERVER_ID[$1]}" USERNAME
 	world_property "$1" FLAG_INRAM
 	world_property "$1" RAMDISK_PATH
 	world_property "$1" PATH
