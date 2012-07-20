@@ -88,21 +88,6 @@ Sends a command to the server, for example: `creativeserver cmd "tp craftysaurus
 
 Like the previous command, sends a string to the server to execute, but in addition outputs the server log to the screen afterwards. You can stop watching the log output by pressing Ctrl+C.
 
-    <server> console
-
-Resumes and connects the user to the underlying screen session which runs the server. "screen" is a tool which allows a terminal to run in the background and be returned to when necessary. The `<server> console` command "resumes" the screen session allow direct access to the server console.
-
-**Warning: Pressing Control+C in a screen session will terminate/stop/kill the Minecraft server.** To leave a screen session (and the server) running use the "Control+A then D" key combination.
-
-    <server> config <setting> <value>
-
-Each vanilla Minecraft server has a `server.properties` file which controls aspects from which map to load, to the game difficulty, to special settings understandable only to Minecraft Server Manager. These values can be change by editing the file directly, or by using this command.
-
-If a setting already exists in the file, it will be updated with the new value, if it does not yet exist a new entry will be appended to the end of the file.
-
-This command may be a good entry point for admins not familiar with command line file editors such as vim or emacs.
-
-
 
 [op]: http://www.minecraftwiki.net/wiki/Operator
 [survival]: http://www.minecraftwiki.net/wiki/Survival

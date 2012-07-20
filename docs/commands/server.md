@@ -78,6 +78,21 @@ Backing up a server's worlds is covered by the `<server> worlds backup` command,
 
 Sets a the jar file a server will use when starting up. If only a jar group is specified the latest jar in that group will be used. However if a file name is also given, it will be looked for in the jar group and used instead.
 
+    <server> console
+
+Resumes and connects the user to the underlying screen session which runs the server. "screen" is a tool which allows a terminal to run in the background and be returned to when necessary. The `<server> console` command "resumes" the screen session allow direct access to the server console.
+
+**Warning: Pressing Control+C in a screen session will terminate/stop/kill the Minecraft server.** To leave a screen session (and the server) running use the "Control+A then D" key combination.
+
+    <server> config <setting> <value>
+
+Each vanilla Minecraft server has a `server.properties` file which controls aspects from which map to load, to the game difficulty, to special settings understandable only to Minecraft Server Manager. These values can be change by editing the file directly, or by using this command.
+
+If a setting already exists in the file, it will be updated with the new value, if it does not yet exist a new entry will be appended to the end of the file.
+
+This command may be a good entry point for admins not familiar with command line file editors such as vim or emacs.
+
+
 
 [we-snapshots]: http://wiki.sk89q.com/wiki/WorldEdit/Snapshots
 [active-vs-inactive]: {{ site.baseurl }}docs/concepts/active-vs-inactive.html

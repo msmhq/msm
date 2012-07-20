@@ -38,6 +38,8 @@ You can always get a quick list of commands by typing `msm help`, which outputs 
 	  <server> logroll                              Move a server log to a gziped archive, to reduce lag
 	  <server> backup                               Makes a backup of an entire server directory
 	  <server> jar <jargroup> [<file>]              Sets a server's jar file
+	  <server> console                              Connects to the interactive console. Access may be limited
+	  <server> config [<setting> <value>]           Lists server settings, or sets a specific setting.
 
 	--Server Pass Through Commands----------------------------------
 	  <server> wl on|off                            Enables/disables server whitelist checking
@@ -59,8 +61,6 @@ You can always get a quick list of commands by typing `msm help`, which outputs 
 	  <server> save all                             Force the writing of all non-saved world changes to file
 	  <server> cmd <command>                        Send a command string to the server and return
 	  <server> cmdlog <command>                     Same as 'cmd' but shows log output afterwards (Ctrl+C to exit)
-	  <server> console                              Connects to the interactive console. Access may be limited
-	  <server> config [<setting> <value>]           Lists server settings, or sets a specific setting.
 
 	--Jar Commands--------------------------------------------------
 	  jargroup list                                 List the stored jar files.
