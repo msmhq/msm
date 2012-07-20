@@ -2105,21 +2105,34 @@ command_server_whitelist_off() {
 
 # Adds a player name to a server's whitelist
 # $1: The server ID
-# $2: The player name
+# $2->: The player name
 command_server_whitelist_add() {
 	# TODO: Support whitelisting multiple players (see blacklist player add)
 	if server_is_running "$1"; then
-		server_eval "$1" "whitelist add $2"
-		echo "Added \"$2\" to the whitelist."
+		# Whitelist players
+		for player in "${@:2}"; do
+			server_eval "$1" "whitelist add $player"
+		done
 	else
 		server_property "$1" WHITELIST_PATH
 
-		if grep "$2" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
-			echo "Player \"$2\" is already whitelisted for server \"${SERVER_NAME[$1]}\"."
-		else
-			echo "$2" >> "${SERVER_WHITELIST_PATH[$1]}"
-			echo "Player \"$2\" has been added to the whitelisted for server \"${SERVER_NAME[$1]}\"."
-		fi
+		for player in "${@:2}"; do
+			if ! grep "$player" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
+				echo "$player" >> "${SERVER_WHITELIST_PATH[$1]}"
+			fi
+		done
+	fi
+
+	# Confirmation display
+	if [[ $# -gt 2 ]]; then
+		echo -n "Added the following players to the whitelist: "
+		echo -n "$2"
+		for player in "${@:3}"; do
+		 	echo -n ", $player"
+		done
+		echo "."
+	else
+		echo "Added \"$2\" to the whitelist."
 	fi
 }
 
@@ -2129,17 +2142,29 @@ command_server_whitelist_add() {
 command_server_whitelist_remove() {
 	# TODO: Support multiple player names
 	if server_is_running "$1"; then
-		server_eval "$1" "whitelist remove $2"
-		echo "Removed \"$2\" from the whitelist."
+		for player in "${@:2}"; do
+			server_eval "$1" "whitelist remove $player"
+		done
 	else
 		server_property "$1" WHITELIST_PATH
 
-		if grep "$2" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
-			sed -i "/$2/d" "${SERVER_WHITELIST_PATH[$1]}"
-			echo "Player \"$2\" has been removed from the whitelisted for server \"${SERVER_NAME[$1]}\"."
-		else
-			echo "Player \"$2\" is not whitelisted for server \"${SERVER_NAME[$1]}\"."
-		fi
+		for player in "${@:2}"; do
+			if grep "$player" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
+				sed -i "/$player/d" "${SERVER_WHITELIST_PATH[$1]}"
+			fi
+		done
+	fi
+
+	# Confirmation display
+	if [[ $# -gt 2 ]]; then
+		echo -n "Removed the following players from the whitelist: "
+		echo -n "$2"
+		for player in "${@:3}"; do
+		 	echo -n ", $player"
+		done
+		echo "."
+	else
+		echo "Removed \"$2\" from the whitelist."
 	fi
 }
 
@@ -2147,7 +2172,7 @@ command_server_whitelist_remove() {
 # $1: The server ID
 command_server_whitelist_list() {
 	server_property "$1" WHITELIST_PATH
-	
+
 	if [ -f "${SERVER_WHITELIST_PATH[$1]}" ]; then
 		local players="$(cat "${SERVER_WHITELIST_PATH[$1]}")"
 
@@ -3056,19 +3081,19 @@ register_commands() {
 	register_command "<name:server> jar <name> <string>" "command_server_jar"
 	register_command "<name:server> whitelist|wl on" "command_server_whitelist_on"
 	register_command "<name:server> whitelist|wl off" "command_server_whitelist_off"
-	register_command "<name:server> whitelist|wl add <string>" "command_server_whitelist_add"
-	register_command "<name:server> whitelist|wl remove <string>" "command_server_whitelist_remove"
+	register_command "<name:server> whitelist|wl add <strings>" "command_server_whitelist_add"
+	register_command "<name:server> whitelist|wl remove <strings>" "command_server_whitelist_remove"
 	register_command "<name:server> whitelist|wl list" "command_server_whitelist_list"
-	register_command "<name:server> blacklist|bl player add <string>" "command_server_blacklist_player_add"
-	register_command "<name:server> blacklist|bl player remove <string>" "command_server_blacklist_player_remove"
-	register_command "<name:server> blacklist|bl ip add <string>" "command_server_blacklist_ip_add"
-	register_command "<name:server> blacklist|bl ip remove <string>" "command_server_blacklist_ip_remove"
+	register_command "<name:server> blacklist|bl player add <strings>" "command_server_blacklist_player_add"
+	register_command "<name:server> blacklist|bl player remove <strings>" "command_server_blacklist_player_remove"
+	register_command "<name:server> blacklist|bl ip add <strings>" "command_server_blacklist_ip_add"
+	register_command "<name:server> blacklist|bl ip remove <strings>" "command_server_blacklist_ip_remove"
 	register_command "<name:server> blacklist|bl list" "command_server_blacklist_list"
-	register_command "<name:server> operator|op add <string>" "command_server_operator_add"
-	register_command "<name:server> operator|op remove <string>" "command_server_operator_remove"
+	register_command "<name:server> operator|op add <strings>" "command_server_operator_add"
+	register_command "<name:server> operator|op remove <strings>" "command_server_operator_remove"
 	register_command "<name:server> operator|op list" "command_server_operator_list"
-	register_command "<name:server> gamemode|gm <string> <string>" "command_server_gamemode"
-	register_command "<name:server> kick <string>" "command_server_kick"
+	register_command "<name:server> gamemode|gm <string> <strings>" "command_server_gamemode"
+	register_command "<name:server> kick <strings>" "command_server_kick"
 	register_command "<name:server> say <strings>" "command_server_say"
 	register_command "<name:server> time set <string>" "command_server_time_set"
 	register_command "<name:server> time add <string>" "command_server_time_add"

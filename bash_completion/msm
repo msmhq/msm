@@ -187,7 +187,7 @@ _msm() {
 								else
 									case "${COMP_WORDS[3]}" in
 										remove)
-											if [[ $COMP_CWORD == 4 ]]; then
+											if [[ $COMP_CWORD -ge 4 ]]; then
 												server_property "$sid" WHITELIST_PATH
 												if [ -f "${SERVER_WHITELIST_PATH[$sid]}" ]; then
 													options="$(cat "${SERVER_WHITELIST_PATH[$sid]}")"
