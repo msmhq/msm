@@ -45,14 +45,16 @@ VERSION="0.6.4"
 # The start of a regex to find a log line
 LOG_REGEX="^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\]"
 
-# Variables used for registration
+# Lazy allocation status
+ALLOCATED_SERVERS="false"
+ALLOCATED_WORLDS="false"
+
+# Global totals
+NUM_WORLDS=0
+NUM_SERVERS=0
 COMMAND_COUNT=0
 SETTING_COUNT=0
 SERVER_SETTING_COUNT=0
-
-# Other global variables
-NUM_WORLDS=0
-NUM_SERVERS=0
 
 
 ### Utility Functions
@@ -377,6 +379,10 @@ world_property() {
 	if [ -z "$value" ]; then
 		local sid="${WORLD_SERVER_ID[$1]}"
 		case "$2" in
+			NAME|PATH)
+				# Defined at allocation
+				return 0
+				;;
 			ACTIVE_PATH)
 				server_property "$sid" WORLD_STORAGE_PATH
 				WORLD_ACTIVE_PATH[$1]="${SERVER_WORLD_STORAGE_PATH[$sid]}/${WORLD_NAME[$1]}"
@@ -398,17 +404,6 @@ world_property() {
 						WORLD_STATUS[$1]="unknown"
 					fi
 				fi
-				;;
-			PATH)
-				world_property "$1" STATUS
-				world_property "$1" WORLD_ACTIVE_PATH
-				world_property "$1" WORLD_INACTIVE_PATH
-
-				case "${WORLD_STATUS[$1]}" in
-					active) WORLD_PATH[$1]="${WORLD_ACTIVE_PATH[$1]}";;
-					inactive) WORLD_PATH[$1]="${WORLD_INACTIVE_PATH[$1]}";;
-					*) error_exit NAME_NOT_FOUND "World cannot be found in either \"${WORLD_ACTIVE_PATH[$1]}\" or \"${WORLD_INACTIVE_PATH[$1]}\"."
-				esac
 				;;
 			FLAG_INRAM)
 				world_property "$1" PATH
@@ -1459,13 +1454,13 @@ server_property() {
 
 		# These properties are not overridable 
 		case "$2" in
-			NAME)
-				# Name is already set
+			NAME|PATH)
+				# Defined at allocation
 				return 0
 				;;
-			PATH)
-				manager_property SERVER_STORAGE_PATH
-				server_set_property "$1" "$2" "$SETTINGS_SERVER_STORAGE_PATH/${SERVER_NAME[$1]}"
+			CONF)
+				manager_property SERVER_PROPERTIES
+				server_set_property "$1" "$2" "${SERVER_PATH[$1]}/$SETTINGS_SERVER_PROPERTIES"
 				return 0
 				;;
 			BACKUP_PATH)
@@ -1496,6 +1491,8 @@ server_property() {
 		if [[ ! "$2" =~ ^PROPERTIES_ ]]; then
 			name="msm-$name"
 		fi
+
+		server_property "$1" CONF
 
 		local from_conf="$(sed -rn "s/^$name=('|\"|)(.*)\1/\2/ip" "${SERVER_CONF[$1]}" | tail -n 1)"
 
@@ -3073,69 +3070,88 @@ register_commands() {
 
 
 
+# $1: Server path
+server_allocate() {
+	unset RETURN
+
+	# Get an ID for this new server
+	local server_id="$NUM_SERVERS"
+
+	# Store the path for this new server
+	SERVER_PATH[$server_id]="$1"
+	# Store the name for this server
+	quick_basename "${SERVER_PATH[$server_id]}"
+	SERVER_NAME[$server_id]="$RETURN"
+	# Store the ID for this server name (for quick lookup)
+	eval SERVER_ID_${SERVER_NAME[$server_id]}=\"$server_id\"
+
+	NUM_SERVERS=$(( $NUM_SERVERS + 1 ))
+
+	RETURN="$server_id"
+}
+
+# $1: Server ID
+server_worlds_allocate() {
+	local world_id
+
+	# A server's worlds require contiguous ID's
+	# thus they are loaded one after another all at once.
+
+	# $1: Server ID
+	# $2: World path
+	world_allocate() {
+		# Get an ID for this new world
+		world_id="$NUM_WORLDS"
+
+		# Store the path for this new world
+		WORLD_PATH[$world_id]="$2"
+		# Store the name for this world
+		quick_basename "${WORLD_PATH[$world_id]}"
+		WORLD_NAME[$world_id]="$RETURN"
+		# Store the server ID this world belongs to
+		WORLD_SERVER_ID[$world_id]="$1"
+		# Store the ID for this world (for quick lookup)
+		eval WORLD_ID_${SERVER_NAME[$1]}_${WORLD_NAME[$world_id]}=\"$world_id\"
+
+		NUM_WORLDS=$(( $NUM_WORLDS + 1 ))
+	}
+
+	server_property "$1" WORLD_STORAGE_PATH
+	server_property "$1" WORLD_STORAGE_INACTIVE_PATH
+
+	local world_name
+
+	# Record the index at which worlds for this server will start
+	SERVER_WORLD_OFFSET[$server_id]="$NUM_WORLDS"
+
+	if [[ -d "${SERVER_WORLD_STORAGE_PATH[$1]}" ]]; then
+		while IFS= read -r -d $'\0' path; do
+			world_allocate "$1" "$path"
+		done < <(find "${SERVER_WORLD_STORAGE_PATH[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
+	fi
+
+	if [[ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}" ]]; then
+		while IFS= read -r -d $'\0' path; do
+			world_allocate "$1" "$path"
+		done < <(find "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
+	fi
+
+	# Record the number fo worlds this server has
+	SERVER_NUM_WORLDS[$server_id]="$(( $NUM_WORLDS - ${SERVER_WORLD_OFFSET[$server_id]} ))"
+}
+
 # Allocates stub varibales, in this context a stub is
 # enough data to be able to load in more data via
 # the *_property functions.
 allocate() {
 	manager_property SERVER_STORAGE_PATH
-	manager_property SERVER_PROPERTIES
 
 	# Dermine server names (but don't load them)
 	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
-		local server_id=0
 		while IFS= read -r -d $'\0' path; do
-			quick_basename "$path"
-
-			# Set some inexpensive variables
-			SERVER_NAME[$server_id]="$RETURN"
-			SERVER_PATH[$server_id]="$path"
-			SERVER_CONF[$server_id]="${SERVER_PATH[$server_id]}/$SETTINGS_SERVER_PROPERTIES"
-			
-			# Start world id's for this server's worlds at the end of the array
-			local world_id="$NUM_WORLDS"
-			
-			# Record the index at which worlds for this server start
-			SERVER_WORLD_OFFSET[$server_id]="$world_id"
-
-			server_property "$server_id" WORLD_STORAGE_PATH
-			server_property "$server_id" WORLD_STORAGE_INACTIVE_PATH
-			
-			# Allocate memory for active worlds
-			if [[ -d "${SERVER_WORLD_STORAGE_PATH[$server_id]}" ]]; then
-				while IFS= read -r -d $'\0' path; do
-					quick_basename "$path"
-					local name="$RETURN"
-
-					WORLD_SERVER_ID[$world_id]="$server_id"
-					WORLD_NAME[$world_id]="$name"
-					
-					world_id="$(($world_id+1))"
-				done < <(find "${SERVER_WORLD_STORAGE_PATH[$server_id]}" -mindepth 1 -maxdepth 1 -type d -print0)
-			fi
-			
-			# Allocate memory for inactive worlds
-			if [[ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$server_id]}" ]]; then
-				while IFS= read -r -d $'\0' path; do
-					quick_basename "$path"
-					local name="$RETURN"
-
-					WORLD_SERVER_ID[$world_id]="$server_id"
-					WORLD_NAME[$world_id]="$name"
-					
-					world_id="$(($world_id+1))"
-				done < <(find "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$server_id]}" -mindepth 1 -maxdepth 1 -type d -print0)
-			fi
-
-			# Update the total number of worlds
-			NUM_WORLDS="$world_id"
-			
-			# Record the number of worlds this server has
-			SERVER_NUM_WORLDS[$server_id]="$(( $world_id - ${SERVER_WORLD_OFFSET[$server_id]} ))"
-
-			server_id="$(($server_id+1))"
+			server_allocate "$path"
+			server_worlds_allocate "$RETURN"
 		done < <(find "$SETTINGS_SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
-
-		NUM_SERVERS="$server_id"
 	fi
 }
 
@@ -3194,4 +3210,5 @@ else
 	# Just register settings instead.
 
 	register_settings
+	allocate
 fi
