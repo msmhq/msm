@@ -441,8 +441,6 @@ world_property() {
 				;;
 		esac
 	fi
-
-	eval debug \"world_property\($1, $2\) \: \${WORLD_$2[$1]}\"
 }
 
 
