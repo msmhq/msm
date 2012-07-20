@@ -3052,7 +3052,7 @@ call_command() {
 								fi
 							fi
 
-							if [ -z "$wid" ]; then
+							if [[ "$wid" -eq "-1" ]]; then
 								error_exit NAME_NOT_FOUND "There is no world with the name \"$specified_name\"."
 							fi
 
