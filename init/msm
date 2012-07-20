@@ -444,6 +444,30 @@ world_property() {
 	fi
 }
 
+# $1: The world ID
+world_dirty_properties() {
+	local index
+
+	# Removes properties for all servers if an index
+	# is not specified
+	if [ ! -z "$1" ] && [[ "$1" -ge 0 ]]; then
+		index="[$1]"
+	else
+		index=""
+	fi
+
+	unset WORLD_NAME$index
+	unset WORLD_PATH$index
+	unset WORLD_ACTIVE_PATH$index
+	unset WORLD_INACTIVE_PATH$index
+	unset WORLD_STATUS$index
+	unset WORLD_FLAG_INRAM$index
+	unset WORLD_LINK$index
+	unset WORLD_BACKUP_PATH$index
+	unset WORLD_RAMDISK_PATH$index
+	unset WORLD_INRAM$index
+}
+
 
 
 
@@ -1559,6 +1583,28 @@ server_property() {
 	fi
 }
 
+# $1: The server ID
+server_dirty_properties() {
+	local index
+
+	# Removes properties for all servers if an index
+	# is not specified
+	if [ ! -z "$1" ] && [[ "$1" -ge 0 ]]; then
+		index="[$1]"
+	else
+		index=""
+	fi
+
+	for ((i=0; i<$SERVER_SETTING_COUNT; i++)); do
+		eval unset SERVER_${SERVER_SETTING_NAME[$i]}$index
+	done
+
+	unset SERVER_CONF$index
+	unset SERVER_BACKUP_PATH$index
+	unset SERVER_LOG_ARCHIVE_PATH$index
+	unset SERVER_ACTIVE$index
+}
+
 
 
 
@@ -1717,6 +1763,18 @@ manager_property() {
 		# State that this property has now been loaded
 		eval LOADED_$1=\"true\"
 	fi
+}
+
+manager_dirty_properties() {
+	for ((i=0; i<$SETTING_COUNT; i++)); do
+		eval LOADED_${SETTING_NAME[$i]}=\"false\"
+	done
+}
+
+manager_dirty_all() {
+	manager_dirty_properties
+	server_dirty_properties
+	world_dirty_properties
 }
 
 
