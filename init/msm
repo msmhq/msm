@@ -1990,10 +1990,16 @@ command_server_worlds_ram() {
 # Synchronises all inram worlds back to disk for an individual server
 # $1: The server ID
 command_server_worlds_todisk() {
-	server_save_off "$1"
-	server_save_all "$1"
+	if server_is_running "$1"; then
+		server_save_off "$1"
+		server_save_all "$1"
+	fi
+
 	server_worlds_to_disk "$1"
-	server_save_on "$1"
+
+	if server_is_running "$1"; then
+		server_save_on "$1"
+	fi
 }
 
 # Makes a backup of all worlds for an individual server
