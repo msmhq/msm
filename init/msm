@@ -1347,7 +1347,14 @@ server_log_roll() {
 	# Moves and Gzips the logfile, a big log file slows down the
 	# server A LOT
 
-	printf "Rolling server logs... "
+	local log_lines="$(cat "${SERVER_LOG_PATH[$1]}" | wc -l )"
+
+	if [ "$log_lines" -le '1' ]; then
+		echo "No new log enteries to roll. No change made."
+		return 0
+	fi
+
+	echo -n "Rolling server logs... "
 	
 	if [ -e "${SERVER_LOG_PATH[$1]}" ]; then
 		file_name="${SERVER_NAME[$1]}-$(date +%F-%H-%M-%S).log"
