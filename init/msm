@@ -287,6 +287,10 @@ world_toggle_ramdisk_state() {
 
 
 	if [ -f "${WORLD_FLAG_INRAM[$1]}" ]; then
+		echo -n "Synchronising world \"${WORLD_NAME[$1]}\" to disk... "
+		world_to_disk "$1"
+		echo "Done."
+
 		echo -n "Removing RAM flag from world \"${WORLD_NAME[$1]}\"... "
 		as_user "${SERVER_USERNAME[$sid]}" "rm -f \"${WORLD_FLAG_INRAM[$1]}\""
 		echo "Done."
