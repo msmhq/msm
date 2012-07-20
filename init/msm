@@ -1157,9 +1157,9 @@ server_start() {
 # Sends the "save-all" command to a server
 # $1: The ID of the server
 server_save_all() {
-	server_property "$1" CONFIRM_SAVE_ALL
-
 	if server_is_running "$1"; then
+		server_property "$1" CONFIRM_SAVE_ALL
+
 		echo -n "Forcing save... "
 		
 		# Send the "save-all" command and wait for it to finish
@@ -1174,9 +1174,9 @@ server_save_all() {
 # Sends the "save-off" command to a server
 # $1: The ID of the server
 server_save_off() {
-	server_property "$1" CONFIRM_SAVE_OFF
-
 	if server_is_running "$1"; then
+		server_property "$1" CONFIRM_SAVE_OFF
+
 		echo -n "Disabling level saving... "
 		
 		# Send the "save-off" command and wait for it to finish
@@ -1194,9 +1194,9 @@ server_save_off() {
 # Sends the "save-on" command to a server
 # $1: The ID of the server
 server_save_on() {
-	server_property "$1" CONFIRM_SAVE_ON
-
 	if server_is_running "$1"; then
+		server_property "$1" CONFIRM_SAVE_ON
+
 		echo -n "Enabling level saving... "
 		
 		# Send the "save-on" command and wait for it to finish
@@ -1501,7 +1501,9 @@ server_property() {
 		to_properties_name "$2"
 		local name="$RETURN"
 
-		if [[ ! "$2" =~ ^PROPERTIES_ ]]; then
+		if [[ "$name" =~ ^properties\-(.*)$ ]]; then
+			name="${BASH_REMATCH[1]}"
+		else
 			name="msm-$name"
 		fi
 
@@ -2500,6 +2502,10 @@ command_server_say() {
 command_server_time_set() {
 	if server_is_running "$1"; then
 		local line regex
+
+		server_property "$1" CONFIRM_TIME_SET
+		server_property "$1" CONFIRM_TIME_SET_FAIL
+
 		server_eval_and_get_line "$1" "time set $2" "${SERVER_CONFIRM_TIME_SET[$1]}" "${SERVER_CONFIRM_TIME_SET_FAIL[$1]}"
 		line="$RETURN"
 
@@ -2522,6 +2528,10 @@ command_server_time_set() {
 command_server_time_add() {
 	if server_is_running "$1"; then
 		local line regex
+
+		server_property "$1" CONFIRM_TIME_ADD
+		server_property "$1" CONFIRM_TIME_ADD_FAIL
+
 		server_eval_and_get_line "$1" "time add $2" "${SERVER_CONFIRM_TIME_ADD[$1]}" "${SERVER_CONFIRM_TIME_ADD_FAIL[$1]}"
 		line="$RETURN"
 
@@ -2543,6 +2553,10 @@ command_server_time_add() {
 command_server_toggledownfall() {
 	if server_is_running "$1"; then
 		local line regex
+
+		server_property "$1" CONFIRM_TOGGLEDOWNFALL
+		server_property "$1" CONFIRM_TOGGLEDOWNFALL_FAIL
+
 		server_eval_and_get_line "$1" "toggledownfall" "${SERVER_CONFIRM_TOGGLEDOWNFALL[$1]}" "${SERVER_CONFIRM_TOGGLEDOWNFALL_FAIL[$1]}"
 		line="$RETURN"
 
@@ -2573,6 +2587,10 @@ command_server_give() {
 			error_exit INVALID_ARGUMENT "Item ID \"$3\" must be a positive integer or string."
 		fi
 
+		server_property "$1" CONFIRM_GIVE
+		server_property "$1" CONFIRM_GIVE_FAIL_NO_USER
+		server_property "$1" CONFIRM_GIVE_FAIL_NO_ITEM
+
 		server_eval_and_get_line "$1" "give $2 $3 $4 $5" "${SERVER_CONFIRM_GIVE[$1]}" "${SERVER_CONFIRM_GIVE_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_GIVE_FAIL_NO_ITEM[$1]}"
 		line="$RETURN"
 
@@ -2600,6 +2618,11 @@ command_server_give() {
 command_server_xp() {
 	if server_is_running "$1"; then
 		local line regex
+
+		server_property "$1" CONFIRM_XP
+		server_property "$1" CONFIRM_XP_FAIL_NO_USER
+		server_property "$1" CONFIRM_XP_FAIL_INVALID_AMOUNT
+
 		server_eval_and_get_line "$1" "xp $2 $3" "${SERVER_CONFIRM_XP[$1]}" "${SERVER_CONFIRM_XP_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_XP_FAIL_INVALID_AMOUNT[$1]}"
 		line="$RETURN"
 
@@ -2656,8 +2679,10 @@ command_server_cmd() {
 # $2->: A command, separate arguments are concatinated with spaces
 command_server_cmdlog() {
 	if server_is_running "$1"; then
-		server_eval "$1" "${*:2}"
+		server_property "$1" LOG_PATH
+
 		echo "Now watching logs (press Ctrl+C to exit):"
+		server_eval "$1" "${*:2}"
 		as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=0 --sleep-interval=0.1 ${SERVER_LOG_PATH[$1]}"
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
