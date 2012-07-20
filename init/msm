@@ -330,6 +330,7 @@ world_backup() {
 # Activates a world
 # $1: The ID of the world
 world_activate() {
+	server_property "${WORLD_SERVER_ID[$1]}" USERNAME
 	world_property "$1" INACTIVE_PATH
 	world_property "$1" ACTIVE_PATH
 
@@ -350,6 +351,7 @@ world_activate() {
 # Deactivates a world
 # $1: The ID of the world
 world_deactivate() {
+	server_property "${WORLD_SERVER_ID[$1]}" USERNAME
 	world_property "$1" ACTIVE_PATH
 	world_property "$1" INACTIVE_PATH
 	world_property "$1" PATH
