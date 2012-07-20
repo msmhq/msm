@@ -2456,22 +2456,27 @@ command_server_gamemode() {
 
 # Kicks a connected player from a server
 # $1: The server ID
-# $2: The player name
+# $2->: The player name
 command_server_kick() {
-	# TODO: Support multiple player names
 	if server_is_running "$1"; then
 		local line regex
-		server_eval_and_get_line "$1" "kick $2" "${SERVER_CONFIRM_KICK[$1]}" "${SERVER_CONFIRM_KICK_FAIL[$1]}"
-		line="$RETURN"
 
-		regex="${LOG_REGEX} ${SERVER_CONFIRM_KICK[$1]}"
-		if [[ "$line" =~ $regex ]]; then
-			echo "Kicked \"$2\" from game."
-		fi
-		regex="${LOG_REGEX} ${SERVER_CONFIRM_KICK_FAIL[$1]}"
-		if [[ "$line" =~ $regex ]]; then
-			echo "The player \"$2\" is not connected."
-		fi
+		server_property "$1" CONFIRM_KICK
+		server_property "$1" CONFIRM_KICK_FAIL
+
+		for player in "${@:2}"; do
+			server_eval_and_get_line "$1" "kick $player" "${SERVER_CONFIRM_KICK[$1]}" "${SERVER_CONFIRM_KICK_FAIL[$1]}"
+			line="$RETURN"
+
+			regex="${LOG_REGEX} ${SERVER_CONFIRM_KICK[$1]}"
+			if [[ "$line" =~ $regex ]]; then
+				echo "Kicked \"$player\" from game."
+			fi
+			regex="${LOG_REGEX} ${SERVER_CONFIRM_KICK_FAIL[$1]}"
+			if [[ "$line" =~ $regex ]]; then
+				echo "The player \"$player\" is not connected."
+			fi
+		done
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
