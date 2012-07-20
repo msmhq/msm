@@ -1352,6 +1352,9 @@ server_log_roll() {
 	# Moves and Gzips the logfile, a big log file slows down the
 	# server A LOT
 
+	# Creates the server log if not already present. Prevents errors.
+	as_user "${SERVER_USERNAME[$1]}" "touch \"${SERVER_LOG_PATH[$1]}\""
+
 	local log_lines="$(cat "${SERVER_LOG_PATH[$1]}" | wc -l )"
 
 	if [ "$log_lines" -le '1' ]; then
