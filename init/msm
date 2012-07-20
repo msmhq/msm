@@ -2190,9 +2190,19 @@ command_server_whitelist_list() {
 # $1: The server ID
 # $2->: The player names
 command_server_blacklist_player_add() {
-	for player in "${@:2}"; do
-	 	server_eval "$1" "ban $player"
-	done
+	if server_is_running "$1"; then
+		for player in "${@:2}"; do
+			server_eval "$1" "ban $player"
+		done
+	else
+		server_property "$1" BANNED_PLAYERS_PATH
+
+		for player in "${@:2}"; do
+			if ! grep "$player" "${SERVER_BANNED_PLAYERS_PATH[$1]}" >/dev/null; then
+				echo "$player" >> "${SERVER_BANNED_PLAYERS_PATH[$1]}"
+			fi
+		done
+	fi
 	
 	if [[ $# -gt 2 ]]; then
 		echo -n "Blacklisted the following players: "
@@ -2210,9 +2220,19 @@ command_server_blacklist_player_add() {
 # $1: The server ID
 # $2->: The player names
 command_server_blacklist_player_remove() {
-	for player in "${@:2}"; do
-	 	server_eval "$1" "pardon $player"
-	done
+	if server_is_running "$1"; then
+		for player in "${@:2}"; do
+			server_eval "$1" "pardon $player"
+		done
+	else
+		server_property "$1" BANNED_PLAYERS_PATH
+
+		for player in "${@:2}"; do
+			if grep "$player" "${SERVER_BANNED_PLAYERS_PATH[$1]}" >/dev/null; then
+				sed -i "/$player/d" "${SERVER_BANNED_PLAYERS_PATH[$1]}"
+			fi
+		done
+	fi
 	
 	if [[ $# -gt 2 ]]; then
 		echo -n "Removed the following players from the blacklist: "

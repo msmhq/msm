@@ -208,7 +208,7 @@ _msm() {
 											else
 												case "${COMP_WORDS[4]}" in
 													remove)
-														if [[ $COMP_CWORD == 5 ]]; then
+														if [[ $COMP_CWORD -ge 5 ]]; then
 															server_property "$sid" BANNED_PLAYERS_PATH
 															if [ -f "${SERVER_BANNED_PLAYERS_PATH[$sid]}" ]; then
 																options="$(cat "${SERVER_BANNED_PLAYERS_PATH[$sid]}")"
@@ -224,7 +224,7 @@ _msm() {
 											else
 												case "${COMP_WORDS[4]}" in
 													remove)
-														if [[ $COMP_CWORD == 5 ]]; then
+														if [[ $COMP_CWORD -ge 5 ]]; then
 															server_property "$sid" BANNED_PLAYERS_PATH
 															if [ -f "${SERVER_BANNED_IPS_PATH[$sid]}" ]; then
 																options="$(cat "${SERVER_BANNED_IPS_PATH[$sid]}")"
