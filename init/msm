@@ -1308,6 +1308,11 @@ server_restart_now() {
 # List the worlds available for a server
 # $1: The ID of the server
 server_worlds_list() {
+	if [[ "${SERVER_NUM_WORLDS[$1]}" -eq 0 ]]; then
+		echo "There are no worlds in world storage."
+		return 0
+	fi
+
 	local i="${SERVER_WORLD_OFFSET[$1]}"
 	local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
 	
