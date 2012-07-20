@@ -2595,316 +2595,6 @@ command_server_config() {
 
 
 
-### Init and Misc Functions
-### -----------------------
-
-# Load a server's world
-# $1: The server id
-# $2: The world id to use
-# $3: The name of the world
-# load_server_world() {
-# 	manager_property WORLD_ARCHIVE_PATH
-# 	manager_property RAMDISK_STORAGE_PATH
-
-# 	WORLD_SERVER_ID[$2]="$1"
-# 	WORLD_NAME[$2]="$3"
-# 	WORLD_ACTIVE_PATH[$2]="${SERVER_WORLD_STORAGE_PATH[$1]}/${WORLD_NAME[$2]}"
-# 	WORLD_INACTIVE_PATH[$2]="${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}/${WORLD_NAME[$2]}"
-	
-# 	# Set the status of this world (active/inactive)
-# 	if [ -d "${WORLD_ACTIVE_PATH[$2]}" ]; then
-# 		WORLD_STATUS[$2]="active"
-# 		WORLD_PATH[$2]="${WORLD_ACTIVE_PATH[$2]}"
-# 	else
-# 		if [ -d "${WORLD_INACTIVE_PATH[$2]}" ]; then
-# 			WORLD_STATUS[$2]="inactive"
-# 			WORLD_PATH[$2]="${WORLD_INACTIVE_PATH[$2]}"
-# 		else
-# 			WORLD_STATUS[$2]="unknown"
-			
-# 			error_exit NAME_NOT_FOUND "World cannot be found in either \"${WORLD_ACTIVE_PATH[$2]}\" or \"${WORLD_INACTIVE_PATH[$2]}\"."
-# 		fi
-# 	fi
-	
-# 	# TODO: Allow the inram flag location to be overridable.
-# 	WORLD_FLAG_INRAM[$2]="${WORLD_PATH[$2]}/inram"
-# 	WORLD_LINK[$2]="${SERVER_PATH[$1]}/${WORLD_NAME[$2]}"
-# 	WORLD_BACKUP_PATH[$2]="$SETTINGS_WORLD_ARCHIVE_PATH/${SERVER_NAME[$1]}/${WORLD_NAME[$2]}"
-
-# 	# If the ramdisk path is set, get the path for this world
-# 	if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
-# 		WORLD_RAMDISK_PATH[$2]="${SETTINGS_RAMDISK_STORAGE_PATH}/${SERVER_NAME[$1]}/${WORLD_NAME[$2]}"
-# 	fi
-
-# 	# Detect whether this world should be in ram
-# 	if [[ -e "${WORLD_FLAG_INRAM[$2]}" ]]; then
-# 		WORLD_INRAM[$2]="true"
-# 	else
-# 		WORLD_INRAM[$2]="false"
-# 	fi
-# }
-
-# # Load the server.properties file for a server
-# # $1: The id of the server to load
-# load_server_properties() {
-# 	manager_property SERVER_PROPERTIES
-
-# 	local name value name_prefix
-	
-# 	if [[ -f "${SERVER_PATH[$1]}/$SETTINGS_SERVER_PROPERTIES" ]]; then
-# 		while read line; do
-# 		   	# if not empty, get the name and value of the setting
-# 		   	if [[ "$line" =~ ^(msm\-)?([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
-# 		   		msm_prefix="${BASH_REMATCH[1]}"
-# 				name="${BASH_REMATCH[2]}"
-# 				# Only one of 3,4 or 5 will match:
-# 				value="${BASH_REMATCH[4]}${BASH_REMATCH[5]}${BASH_REMATCH[6]}"
-
-# 				to_global_name "$name"
-# 				name="$RETURN"
-
-# 				# Create variables
-# 				if [ ! -z "$msm_prefix" ]; then
-# 					# Make relative paths absolute to server directory
-# 					if [[ "$name" =~ \_PATH$ ]] && [ "${value:0:1}" != '/' ]; then
-# 						value="${SERVER_PATH[$1]}/$value"
-# 					fi
-
-# 					name_prefix="SERVER_"
-# 				else
-# 					name_prefix="SERVER_PROPERTIES_"
-# 				fi
-
-# 				# Create the variable
-# 				eval ${name_prefix}${name}[$1]=\"$value\"
-# 			fi
-# 		done < "${SERVER_PATH[$1]}/$SETTINGS_SERVER_PROPERTIES"
-# 	fi
-# }
-
-# Load a server's variables
-# $1: The id of the server to load
-# load_server() {
-	# manager_property SERVER_STORAGE_PATH
-	# manager_property BACKUP_ARCHIVE_PATH
-	# manager_property LOG_ARCHIVE_PATH
-
-	# # Non-configurable Variables
-	# SERVER_PATH[$1]="$SETTINGS_SERVER_STORAGE_PATH/${SERVER_NAME[$1]}"
-	# SERVER_BACKUP_PATH[$1]="$SETTINGS_BACKUP_ARCHIVE_PATH/${SERVER_NAME[$1]}"
-	# SERVER_LOG_ARCHIVE_PATH[$1]="$SETTINGS_LOG_ARCHIVE_PATH/${SERVER_NAME[$1]}"
-
-
-	# # Setup default values for this server's variables using default settings
-	# # from /etc/msm.conf
-	# local name value
-
-	# # Make a server version of all default server settings
-	# for ((server_setting=0; server_setting<$SERVER_SETTING_COUNT; server_setting++)); do
-	# 	name="${SERVER_SETTING_NAME[$server_setting]}"
-	# 	eval value=\"\$SETTINGS_DEFAULT_${name}\"
-
-	# 	# Make relative paths absolute, assuming the server directory
-	# 	# as the current directory.
-	# 	if [[ "$name" =~ _PATH$ ]] && [[ ! "$value" =~ ^\/ ]]; then
-	# 		value="${SERVER_PATH[$1]}/$value"
-	# 	fi
-
-	# 	eval SERVER_${name}[$1]=\"${value}\"
-	# done
-
-	# if [[ -e "${SERVER_FLAG_ACTIVE_PATH[$1]}" ]]; then
-	# 	SERVER_ACTIVE[$1]="true"
-	# else
-	# 	SERVER_ACTIVE[$1]="false"
-	# fi
-
-	# # Load setting overrides from server.properties
-	# load_server_properties "$1"
-	
-	# # Perform tag replacements on specific variables
-	# SERVER_SCREEN_NAME[$1]="${SERVER_SCREEN_NAME[$1]//\{SERVER_NAME\}/${SERVER_NAME[$1]}}" # Replace tags now, they cannot change
-	
-	# # Replace tags in delay messages
-	# SERVER_MESSAGE_STOP[$1]="${SERVER_MESSAGE_STOP[$1]//\{DELAY\}/${SERVER_STOP_DELAY[$1]}}"
-	# SERVER_MESSAGE_RESTART[$1]="${SERVER_MESSAGE_RESTART[$1]//\{DELAY\}/${SERVER_RESTART_DELAY[$1]}}"
-	
-	# # Replace tags in server invocation
-	# SERVER_INVOCATION[$1]="${SERVER_INVOCATION[$1]//\{RAM\}/${SERVER_RAM[$1]}}"
-	# SERVER_INVOCATION[$1]="${SERVER_INVOCATION[$1]//\{JAR\}/${SERVER_JAR_PATH[$1]}}"
-	
-	
-	# Load worlds if there is a world storage directory present
-# 	SERVER_WORLD_OFFSET[$1]=0
-# 	SERVER_NUM_WORLDS[$1]=0
-	
-# 	# Start world id's for this server's worlds at the end of the array
-# 	local id="$NUM_WORLDS"
-	
-# 	# Record the index at which worlds for this server start
-# 	SERVER_WORLD_OFFSET[$1]="$id"
-	
-# 	if [[ -d "${SERVER_WORLD_STORAGE_PATH[$1]}" ]]; then
-# 		# Load active worlds
-# 		while IFS= read -r -d $'\0' path; do
-# 			local name="$(basename "$path")"
-# 			load_server_world "$1" "$id" "$name"
-			
-# 			# Build the server_worlds comma separated list
-# 			if [[ "$id" == "${SERVER_WORLD_OFFSET[$1]}" ]]; then
-# 				SERVER_WORLDS[$1]="$name"
-# 			else
-# 				SERVER_WORLDS[$1]="${SERVER_WORLDS[$1]}, $name"
-# 			fi
-			
-# 			id="$(($id+1))"
-# 			NUM_WORLDS="$id"
-# 		done < <(find "${SERVER_WORLD_STORAGE_PATH[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
-# 	fi
-	
-# 	if [[ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}" ]]; then
-# 		# Load inactive worlds
-# 		while IFS= read -r -d $'\0' path; do
-# 			local name="$(basename "$path")"
-# 			load_server_world "$1" "$id" "$name"
-			
-# 			# Build the server_worlds_inactive comma separated list
-# 			if [[ "$id" == "${SERVER_WORLD_OFFSET[$1]}" ]]; then
-# 				SERVER_WORLDS[$1]="$name"
-# 			else
-# 				SERVER_WORLDS[$1]="${SERVER_WORLDS[$1]}, $name"
-# 			fi
-			
-# 			id="$(($id+1))"
-# 			NUM_WORLDS="$id"
-# 		done < <(find "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
-# 	fi
-	
-# 	# Record the number of worlds this server has
-# 	SERVER_NUM_WORLDS[$1]="$(( $id - ${SERVER_WORLD_OFFSET[$1]} ))"
-# }
-
-# # Load settings for MSM
-# load_msm() {
-# 	manager_property SERVER_STORAGE_PATH
-
-# 	register_settings
-
-# 	# Override settings with values from /etc/msm.conf
-# 	if [[ -f "$CONF" ]]; then
-# 		while read line; do
-# 			# Get the name and value of the setting
-# 			if [[ "$line" =~ ^([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
-# 				name="${BASH_REMATCH[1]}"
-# 				# Only one of 3,4 or 5 will match:
-# 				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
-
-# 				to_global_name "$name"
-# 				name="$RETURN"
-
-# 				# Create variables in uppercase
-# 				eval SETTINGS_${name}=\"$value\"
-# 			fi
-# 		done < "$CONF"
-# 	fi
-
-# 	# Dermine server names (but don't load them)
-# 	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
-# 		local id=0
-# 		while IFS= read -r -d $'\0' path; do
-# 			quick_basename "$path"
-# 			SERVER_NAME[$id]="$RETURN"
-# 			id="$(($id+1))"
-# 		done < <(find "$SETTINGS_SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
-# 		NUM_SERVERS="$id"
-# 	fi
-# }
-
-# # Load settings for all servers
-# load_all_servers() {
-# 	for ((server=0; server<$NUM_SERVERS; server++)); do
-# 		load_server "$server"
-# 	done
-# }
-
-# # Load settings for MSM and all servers
-# load_all() {
-# 	load_msm
-# 	load_all_servers
-# }
-
-allocate() {
-	manager_property SERVER_STORAGE_PATH
-	manager_property SERVER_PROPERTIES
-
-	# Dermine server names (but don't load them)
-	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
-		local server_id=0
-		while IFS= read -r -d $'\0' path; do
-			quick_basename "$path"
-
-			# Set some inexpensive variables
-			SERVER_NAME[$server_id]="$RETURN"
-			SERVER_PATH[$server_id]="$path"
-			SERVER_CONF[$server_id]="${SERVER_PATH[$server_id]}/$SETTINGS_SERVER_PROPERTIES"
-			
-			# Start world id's for this server's worlds at the end of the array
-			local world_id="$NUM_WORLDS"
-			
-			# Record the index at which worlds for this server start
-			SERVER_WORLD_OFFSET[$server_id]="$world_id"
-
-			server_property "$server_id" WORLD_STORAGE_PATH
-			server_property "$server_id" WORLD_STORAGE_INACTIVE_PATH
-			
-			# Allocate memory for active worlds
-			if [[ -d "${SERVER_WORLD_STORAGE_PATH[$server_id]}" ]]; then
-				while IFS= read -r -d $'\0' path; do
-					quick_basename "$path"
-					local name="$RETURN"
-
-					WORLD_SERVER_ID[$world_id]="$server_id"
-					WORLD_NAME[$world_id]="$name"
-					
-					world_id="$(($world_id+1))"
-				done < <(find "${SERVER_WORLD_STORAGE_PATH[$server_id]}" -mindepth 1 -maxdepth 1 -type d -print0)
-			fi
-			
-			# Allocate memory for inactive worlds
-			if [[ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$server_id]}" ]]; then
-				while IFS= read -r -d $'\0' path; do
-					quick_basename "$path"
-					local name="$RETURN"
-
-					WORLD_SERVER_ID[$world_id]="$server_id"
-					WORLD_NAME[$world_id]="$name"
-					
-					world_id="$(($world_id+1))"
-				done < <(find "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$server_id]}" -mindepth 1 -maxdepth 1 -type d -print0)
-			fi
-
-			# Update the total number of worlds
-			NUM_WORLDS="$world_id"
-			
-			# Record the number of worlds this server has
-			SERVER_NUM_WORLDS[$server_id]="$(( $world_id - ${SERVER_WORLD_OFFSET[$server_id]} ))"
-
-			server_id="$(($server_id+1))"
-		done < <(find "$SETTINGS_SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
-
-		NUM_SERVERS="$server_id"
-	fi
-}
-
-
-
-
-
-
-
-
-
-
 ### Register Functions
 ### ------------------
 
@@ -3383,6 +3073,71 @@ register_commands() {
 
 
 
+# Allocates stub varibales, in this context a stub is
+# enough data to be able to load in more data via
+# the *_property functions.
+allocate() {
+	manager_property SERVER_STORAGE_PATH
+	manager_property SERVER_PROPERTIES
+
+	# Dermine server names (but don't load them)
+	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
+		local server_id=0
+		while IFS= read -r -d $'\0' path; do
+			quick_basename "$path"
+
+			# Set some inexpensive variables
+			SERVER_NAME[$server_id]="$RETURN"
+			SERVER_PATH[$server_id]="$path"
+			SERVER_CONF[$server_id]="${SERVER_PATH[$server_id]}/$SETTINGS_SERVER_PROPERTIES"
+			
+			# Start world id's for this server's worlds at the end of the array
+			local world_id="$NUM_WORLDS"
+			
+			# Record the index at which worlds for this server start
+			SERVER_WORLD_OFFSET[$server_id]="$world_id"
+
+			server_property "$server_id" WORLD_STORAGE_PATH
+			server_property "$server_id" WORLD_STORAGE_INACTIVE_PATH
+			
+			# Allocate memory for active worlds
+			if [[ -d "${SERVER_WORLD_STORAGE_PATH[$server_id]}" ]]; then
+				while IFS= read -r -d $'\0' path; do
+					quick_basename "$path"
+					local name="$RETURN"
+
+					WORLD_SERVER_ID[$world_id]="$server_id"
+					WORLD_NAME[$world_id]="$name"
+					
+					world_id="$(($world_id+1))"
+				done < <(find "${SERVER_WORLD_STORAGE_PATH[$server_id]}" -mindepth 1 -maxdepth 1 -type d -print0)
+			fi
+			
+			# Allocate memory for inactive worlds
+			if [[ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$server_id]}" ]]; then
+				while IFS= read -r -d $'\0' path; do
+					quick_basename "$path"
+					local name="$RETURN"
+
+					WORLD_SERVER_ID[$world_id]="$server_id"
+					WORLD_NAME[$world_id]="$name"
+					
+					world_id="$(($world_id+1))"
+				done < <(find "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$server_id]}" -mindepth 1 -maxdepth 1 -type d -print0)
+			fi
+
+			# Update the total number of worlds
+			NUM_WORLDS="$world_id"
+			
+			# Record the number of worlds this server has
+			SERVER_NUM_WORLDS[$server_id]="$(( $world_id - ${SERVER_WORLD_OFFSET[$server_id]} ))"
+
+			server_id="$(($server_id+1))"
+		done < <(find "$SETTINGS_SERVER_STORAGE_PATH" -mindepth 1 -maxdepth 1 -type d -print0)
+
+		NUM_SERVERS="$server_id"
+	fi
+}
 
 # Called if the script is interrupted before exiting naturally
 interrupt() {
