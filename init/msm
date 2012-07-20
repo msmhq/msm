@@ -476,9 +476,9 @@ server_world_get_id() {
 	unset RETURN
 	if [ -d "${SERVER_WORLD_STORAGE_PATH[$1]}/$2" ] || [ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}/$2" ]; then
 		# If the directory exists
-		
+
 		local start="${SERVER_WORLD_OFFSET[$1]}"
-		local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
+		local max="$(( $start + ${SERVER_NUM_WORLDS[$1]} ))"
 	
 		# For each of the servers worlds:
 		for ((i=$start; i<$max; i++)); do
@@ -3082,8 +3082,6 @@ server_allocate() {
 	# Store the name for this server
 	quick_basename "${SERVER_PATH[$server_id]}"
 	SERVER_NAME[$server_id]="$RETURN"
-	# Store the ID for this server name (for quick lookup)
-	eval SERVER_ID_${SERVER_NAME[$server_id]}=\"$server_id\"
 
 	NUM_SERVERS=$(( $NUM_SERVERS + 1 ))
 
@@ -3110,8 +3108,6 @@ server_worlds_allocate() {
 		WORLD_NAME[$world_id]="$RETURN"
 		# Store the server ID this world belongs to
 		WORLD_SERVER_ID[$world_id]="$1"
-		# Store the ID for this world (for quick lookup)
-		eval WORLD_ID_${SERVER_NAME[$1]}_${WORLD_NAME[$world_id]}=\"$world_id\"
 
 		NUM_WORLDS=$(( $NUM_WORLDS + 1 ))
 	}
@@ -3122,7 +3118,7 @@ server_worlds_allocate() {
 	local world_name
 
 	# Record the index at which worlds for this server will start
-	SERVER_WORLD_OFFSET[$server_id]="$NUM_WORLDS"
+	SERVER_WORLD_OFFSET[$1]="$NUM_WORLDS"
 
 	if [[ -d "${SERVER_WORLD_STORAGE_PATH[$1]}" ]]; then
 		while IFS= read -r -d $'\0' path; do
@@ -3137,7 +3133,7 @@ server_worlds_allocate() {
 	fi
 
 	# Record the number fo worlds this server has
-	SERVER_NUM_WORLDS[$server_id]="$(( $NUM_WORLDS - ${SERVER_WORLD_OFFSET[$server_id]} ))"
+	SERVER_NUM_WORLDS[$1]="$(( $NUM_WORLDS - ${SERVER_WORLD_OFFSET[$1]} ))"
 }
 
 # Allocates stub varibales, in this context a stub is
