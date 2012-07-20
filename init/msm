@@ -2417,9 +2417,8 @@ command_server_operator_list() {
 # Sets the game mode for
 # $1: The server ID
 # $2: The game mode
-# $3: The player name
+# $3->: The player name
 command_server_gamemode() {
-	# TODO: Support multiple player names
 	if server_is_running "$1"; then
 		local mode line regex
 		case "$2" in
@@ -2428,21 +2427,28 @@ command_server_gamemode() {
 			*) error_exit INVALID_ARGUMENT "Invalid gamemode type \"$2\" options are \"survival\", \"creative\", \"0\" or \"1\".";;
 		esac
 
-		server_eval_and_get_line "$1" "gamemode $3 $mode" "${SERVER_CONFIRM_GAMEMODE[$1]}" "${SERVER_CONFIRM_GAMEMODE_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_GAMEMODE_FAIL_NO_CHANGE[$1]}"
-		line="$RETURN"
+		server_property "$1" CONFIRM_GAMEMODE
+		server_property "$1" CONFIRM_GAMEMODE_FAIL_NO_USER
+		server_property "$1" CONFIRM_GAMEMODE_FAIL_NO_CHANGE
 
-		regex="${LOG_REGEX} ${SERVER_CONFIRM_GAMEMODE[$1]}"
-		if [[ "$line" =~ $regex ]]; then
-			echo "Changed game mode of \"$3\" to \"$2\"."
-		fi
-		regex="${LOG_REGEX} ${SERVER_CONFIRM_GAMEMODE_FAIL_NO_USER[$1]}"
-		if [[ "$line" =~ $regex ]]; then
-			echo "The player \"$3\" was not found to be logged on."
-		fi
-		regex="${LOG_REGEX} ${SERVER_CONFIRM_GAMEMODE_FAIL_NO_CHANGE[$1]}"
-		if [[ "$line" =~ $regex ]]; then
-			echo "The player \"$3\" was already in mode \"$2\"."
-		fi
+		for player in "${@:3}"; do
+			server_eval_and_get_line "$1" "gamemode $player $mode" "${SERVER_CONFIRM_GAMEMODE[$1]}" "${SERVER_CONFIRM_GAMEMODE_FAIL_NO_USER[$1]}" "${SERVER_CONFIRM_GAMEMODE_FAIL_NO_CHANGE[$1]}"
+
+			line="$RETURN"
+
+			regex="${LOG_REGEX} ${SERVER_CONFIRM_GAMEMODE[$1]}"
+			if [[ "$line" =~ $regex ]]; then
+				echo "Changed game mode of \"$player\" to \"$2\"."
+			fi
+			regex="${LOG_REGEX} ${SERVER_CONFIRM_GAMEMODE_FAIL_NO_USER[$1]}"
+			if [[ "$line" =~ $regex ]]; then
+				echo "The player \"$player\" was not found to be logged on."
+			fi
+			regex="${LOG_REGEX} ${SERVER_CONFIRM_GAMEMODE_FAIL_NO_CHANGE[$1]}"
+			if [[ "$line" =~ $regex ]]; then
+				echo "The player \"$player\" was already in mode \"$2\"."
+			fi
+		done
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
