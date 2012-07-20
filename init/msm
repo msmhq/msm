@@ -2112,6 +2112,8 @@ command_server_whitelist_add() {
 		server_eval "$1" "whitelist add $2"
 		echo "Added \"$2\" to the whitelist."
 	else
+		server_property "$1" WHITELIST_PATH
+
 		if grep "$2" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
 			echo "Player \"$2\" is already whitelisted for server \"${SERVER_NAME[$1]}\"."
 		else
@@ -2130,6 +2132,8 @@ command_server_whitelist_remove() {
 		server_eval "$1" "whitelist remove $2"
 		echo "Removed \"$2\" from the whitelist."
 	else
+		server_property "$1" WHITELIST_PATH
+
 		if grep "$2" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
 			sed -i "/$2/d" "${SERVER_WHITELIST_PATH[$1]}"
 			echo "Player \"$2\" has been removed from the whitelisted for server \"${SERVER_NAME[$1]}\"."
@@ -2142,6 +2146,8 @@ command_server_whitelist_remove() {
 # Displays a list of whitelisted players for an individual server
 # $1: The server ID
 command_server_whitelist_list() {
+	server_property "$1" WHITELIST_PATH
+	
 	if [ -f "${SERVER_WHITELIST_PATH[$1]}" ]; then
 		local players="$(cat "${SERVER_WHITELIST_PATH[$1]}")"
 
