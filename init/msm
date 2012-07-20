@@ -1314,9 +1314,9 @@ server_worlds_list() {
 	for ((i=$i; i<$max; i++)); do
 		world_property "$i" INRAM
 		if "${WORLD_INRAM[$i]}"; then
-			echo "[RAM] ${WORLD_NAME[$i]}"
+			echo "RAM  ${WORLD_NAME[$i]}"
 		else
-			echo "[DSK] ${WORLD_NAME[$i]}"
+			echo "     ${WORLD_NAME[$i]}"
 		fi
 	done
 }
