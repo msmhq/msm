@@ -11,6 +11,20 @@ Maintainers:
 Change Log
 ----------
 
+### [0.7.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.6.4...0.7.0)
+
+* Added `/etc/profile.d/msm.sh` support. Define environment variables there, and both MSM and bash completion scripts will see it. At this point you can add the `MSM_SCRIPT` and `MSM_CONF` environment variables to tell MSM where you have installed your MSM files:
+	* Add `export MSM_SCRIPT="/path/to/msm"` if you have changed it from `/etc/init.d/msm`.
+	* Add `export MSM_CONF="/path/to/msm.conf"` if you have changed it from `/etc/msm.conf`.
+* Added some simple stopped server unit tests for half the commands.
+* Refactored config property loading to be "lazy". Speeds up all commands by only loading from file what is needed.
+* Improved whitelist, operator, player ban, ip ban, gamemode and kick commands to support multiple space-separated users.
+* Improved whitelist, operator, player ban and ip ban commands to also work when the server is stopped.
+* Improved MSM script speed for BASH 4 users (loading config properties is now much faster.)
+* Improved BASH completion to also use default settings specified in MSM.
+* Removed use of subshells in script (using less means faster code.)
+
+
 ### [0.6.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.6.3...0.6.4)
 
 * Closes issue [#25][#25] by improving the `msm <server> start` command to be more robust. It now alerts the user when the server jar to be started cannot be found, and prints out dots for each log line created during startup. The absence of these dots make it simple to spot a hanging server.
