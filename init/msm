@@ -2683,6 +2683,7 @@ command_server_console() {
 command_server_config() {
 	# If both a setting name and value are given
 	if [ ! -z "$2" ] && [ ! -z "$3" ]; then
+		server_property "$1" CONF
 		if [[ -f "${SERVER_CONF[$1]}" ]]; then
 			if grep "$2" "${SERVER_CONF[$1]}" >/dev/null; then
 				sed -i /$2=/s/.*/"$2=$3"/g "${SERVER_CONF[$1]}"
@@ -2702,10 +2703,18 @@ command_server_config() {
 	if [ ! -z "$2" ]; then
 
 		# Convert name into upper-case with underscores
-		to_global_name "$2"
+		# msm-setting => SERVER_SETTING
+		# setting => SERVER_PROPERTIES_SETTING
+		if [[ "$2" =~ ^msm\-(.*)$ ]]; then
+			to_global_name "${BASH_REMATCH[1]}"
+		else
+			to_global_name "PROPERTIES_$2"
+		fi
+		local name="$RETURN"
 
 		# Display the value of that setting
-		echo "$(server_property "$1" "$RETURN")"
+		server_property "$1" "$name"
+		eval echo \"\${SERVER_$name[$1]}\"
 	fi
 
 	# If no paramter name is given
@@ -3137,17 +3146,21 @@ register_commands() {
 	register_command "restart now" "command_restart_now"
 	register_command "version" "command_version"
 	register_command "config" "command_config"
+
 	register_command "server list" "command_server_list"
 	register_command "server create <name>" "command_server_create"
 	register_command "server delete <name>" "command_server_delete"
 	register_command "server rename <name> <name>" "command_server_rename"
+
 	register_command "jargroup list" "command_jargroup_list"
 	register_command "jargroup create <name> <string>" "command_jargroup_create"
 	register_command "jargroup delete <name>" "command_jargroup_delete"
 	register_command "jargroup rename <name> <name>" "command_jargroup_rename"
 	register_command "jargroup changetarget <name> <string>" "command_jargroup_changetarget"
 	register_command "jargroup getlatest <name>" "command_jargroup_getlatest"
+
 	register_command "help" "command_help"
+
 	register_command "<name:server> start" "command_server_start"
 	register_command "<name:server> stop" "command_server_stop"
 	register_command "<name:server> stop now" "command_server_stop_now"
@@ -3166,6 +3179,11 @@ register_commands() {
 	register_command "<name:server> backup" "command_server_backup"
 	register_command "<name:server> jar <name>" "command_server_jar"
 	register_command "<name:server> jar <name> <string>" "command_server_jar"
+	register_command "<name:server> console" "command_server_console"
+	register_command "<name:server> config" "command_server_config"
+	register_command "<name:server> config <string>" "command_server_config"
+	register_command "<name:server> config <string> <string>" "command_server_config"
+
 	register_command "<name:server> whitelist|wl on" "command_server_whitelist_on"
 	register_command "<name:server> whitelist|wl off" "command_server_whitelist_off"
 	register_command "<name:server> whitelist|wl add <strings>" "command_server_whitelist_add"
@@ -3194,9 +3212,6 @@ register_commands() {
 	register_command "<name:server> save all" "command_server_save_all"
 	register_command "<name:server> cmd <strings>" "command_server_cmd"
 	register_command "<name:server> cmdlog <strings>" "command_server_cmdlog"
-	register_command "<name:server> console" "command_server_console"
-	register_command "<name:server> config" "command_server_config"
-	register_command "<name:server> config <string> <string>" "command_server_config"
 }
 
 
