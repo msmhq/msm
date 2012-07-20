@@ -1311,15 +1311,13 @@ server_worlds_list() {
 	local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
 	
 	# For each of the servers worlds:
-	while [[ "$i" -lt "$max" ]]; do
+	for ((i=$i; i<$max; i++)); do
 		world_property "$i" INRAM
 		if "${WORLD_INRAM[$i]}"; then
 			echo "[RAM] ${WORLD_NAME[$i]}"
 		else
 			echo "[DSK] ${WORLD_NAME[$i]}"
 		fi
-		
-		i="$(( $i + 1 ))"
 	done
 }
 
@@ -1330,12 +1328,11 @@ server_worlds_backup() {
 	local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
 
 	# For each of the servers worlds:
-	while [[ "$i" -lt "$max" ]]; do
+	for ((i=$i; i<$max; i++)); do
 		world_property "$i" STATUS
 		if [[ "${WORLD_STATUS[$i]}" == "active" ]]; then
 			world_backup "$i"
 		fi
-		i="$(( $i + 1 ))"
 	done
 }
 
