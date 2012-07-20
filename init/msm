@@ -2269,6 +2269,9 @@ command_server_blacklist_ip_remove() {
 # Displays a server's banned player names and ip addresses
 # $1: The server ID
 command_server_blacklist_list() {
+	server_property "$1" BANNED_PLAYERS_PATH
+	server_property "$1" BANNED_IPS_PATH
+
 	local players
 	local ips
 
