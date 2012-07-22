@@ -1433,6 +1433,7 @@ server_backup() {
 server_set_jar() {
 	manager_property JAR_STORAGE_PATH
 	server_property "$1" JAR_PATH
+	server_property "$1" USERNAME
 
 	if [ -d "$SETTINGS_JAR_STORAGE_PATH/$2" ]; then
 		
