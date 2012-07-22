@@ -11,6 +11,13 @@ Maintainers:
 Change Log
 ----------
 
+### [0.7.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.0...0.7.1)
+
+* Fixed issue [#54][#54] where setting a server's jar file would fail to create the symbolic link.
+
+[#54]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/54
+
+
 ### [0.7.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.6.4...0.7.0)
 
 * Added `/etc/profile.d/msm.sh` support. Define environment variables there, and both MSM and bash completion scripts will see it. At this point you can add the `MSM_SCRIPT` and `MSM_CONF` environment variables to tell MSM where you have installed your MSM files:
