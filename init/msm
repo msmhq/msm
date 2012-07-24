@@ -322,6 +322,8 @@ world_backup() {
 	local server_id="${WORLD_SERVER_ID[$1]}"
 	local containing_dir="$(dirname "${WORLD_PATH[$1]}")"
 	local dir_name="$(basename "${WORLD_PATH[$1]}")"
+
+	server_property "$server_id" USERNAME
 	as_user "${SERVER_USERNAME[$server_id]}" "mkdir -p \"${WORLD_BACKUP_PATH[$1]}\" && cd \"$containing_dir\" && zip -rq \"${WORLD_BACKUP_PATH[$1]}/${file_name}\" \"${dir_name}\""
 
 	echo "Done."
@@ -2747,6 +2749,7 @@ command_server_cmd() {
 command_server_cmdlog() {
 	if server_is_running "$1"; then
 		server_property "$1" LOG_PATH
+		server_property "$1" USERNAME
 
 		echo "Now watching logs (press Ctrl+C to exit):"
 		server_eval "$1" "${*:2}"
@@ -2761,6 +2764,7 @@ command_server_cmdlog() {
 # $1: The server ID
 command_server_console() {
 	if server_is_running "$1"; then
+		server_property "$1" USERNAME
 		as_user "${SERVER_USERNAME[$1]}" "screen -r ${SERVER_SCREEN_NAME[$1]}"
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
