@@ -1622,7 +1622,7 @@ server_dirty_properties() {
 
 # Stops all running servers after a servers specified delay
 # $1: String containing "stop" or "restart". Represents whether the stop is 
-#     with a mind to stop the server, or just to restart it. And effects
+#     with a mind to stop the server, or just to restart it. And affects
 #     the message issued to players on a server.
 manager_stop_all_servers() {
 	# An array of true/false for each server
@@ -1638,6 +1638,11 @@ manager_stop_all_servers() {
 			any_running="true"
 			was_running[$server]="true"
 			STOP_COUNTDOWN[$server]="true"
+
+			server_property "$server" STOP_DELAY
+			server_property "$server" MESSAGE_STOP
+			server_property "$server" MESSAGE_RESTART
+
 			if [[ "${SERVER_STOP_DELAY[$server]}" -gt "$max_countdown" ]]; then
 				max_countdown="${SERVER_STOP_DELAY[$server]}"
 			fi
@@ -1680,8 +1685,8 @@ manager_stop_all_servers() {
 				echo -n "in $tick seconds."
 			fi
 		
-			# Each second check all server, to see if its their time to
-			# stop. If so issue the stop command, and don't hang.
+			# Each second check all servers, to see if it's their time to
+			# stop. If so issue the stop command, and don't wait.
 			for ((server=0; server<${NUM_SERVERS}; server++)); do
 				if server_is_running "$server"; then
 					stop_tick="$(( ${max_countdown} - ${SERVER_STOP_DELAY[$server]} ))"
@@ -1797,6 +1802,9 @@ manager_dirty_all() {
 command_start() {
 	# Required start option, for debian init.d scripts
 	for ((server=0; server<${NUM_SERVERS}; server++)); do
+
+		server_property "$server" ACTIVE
+
 		# Only starts active servers
 		if "${SERVER_ACTIVE[$server]}"; then
 			if server_is_running "$server"; then
