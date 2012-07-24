@@ -11,6 +11,11 @@ Maintainers:
 Change Log
 ----------
 
+### [0.7.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.1...0.7.2)
+
+* Fixed several bugs where the server username was not being used. Affected the `msm <server> worlds backup`, `msm <server> cmd` and `msm <server> cmdlog` commands.
+
+
 ### [0.7.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.0...0.7.1)
 
 * Fixed issue [#54][#54] where setting a server's jar file would fail to create the symbolic link.
