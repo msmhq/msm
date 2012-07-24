@@ -11,6 +11,13 @@ Maintainers:
 Change Log
 ----------
 
+### [0.7.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.2...0.7.3)
+
+* Fixed global stop and start commands from failing since [0.7.0][0.7.0].
+
+[0.7.0]: https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.6.4...0.7.0
+
+
 ### [0.7.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.1...0.7.2)
 
 * Fixed several bugs where the server username was not being used. Affected the `msm <server> worlds backup`, `msm <server> cmd` and `msm <server> cmdlog` commands.
