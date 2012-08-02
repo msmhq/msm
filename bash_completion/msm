@@ -121,14 +121,17 @@ _msm() {
 				;;
 			*)
 				# Server options
-				
-				local server_path="$SETTINGS_SERVER_STORAGE_PATH/${COMP_WORDS[1]}"
-				if [[ "${COMP_WORDS[1]}" == "all" ]] || [ -e "$server_path" ]; then
-					# If the server exists
 
+				if [[ "${COMP_WORDS[1]}" == "all" ]]; then
+					local sid="-1"
+				else
 					server_get_id "${COMP_WORDS[1]}"
 					local sid="$RETURN"
-					
+				fi
+				
+
+				local server_path="$SETTINGS_SERVER_STORAGE_PATH/${COMP_WORDS[1]}"	
+				if [[ "${COMP_WORDS[1]}" == "all" ]] || [ -e "$server_path" ]; then
 					if [[ $COMP_CWORD == 2 ]]; then
 						options="start stop restart status connected worlds logroll backup jar whitelist blacklist operator gamemode kick say time toggledownfall give xp save cmd cmdlog console config"
 					else
@@ -142,33 +145,34 @@ _msm() {
 								if [[ $COMP_CWORD == 3 ]]; then
 									options="list load ram todisk backup on off"
 								else
-
-									case "${COMP_WORDS[3]}" in
-										ram)
-											if [[ $COMP_CWORD == 4 ]]; then
-												server_property "$sid" WORLD_STORAGE_PATH
-												if [ -d "${SERVER_WORLD_STORAGE_PATH[$sid]}" ]; then
-													options="$(ls -1 "${SERVER_WORLD_STORAGE_PATH[$sid]}")"
+									if [[ "${COMP_WORDS[1]}" != "all" ]]; then
+										case "${COMP_WORDS[3]}" in
+											ram)
+												if [[ $COMP_CWORD == 4 ]]; then
+													server_property "$sid" WORLD_STORAGE_PATH
+													if [ -d "${SERVER_WORLD_STORAGE_PATH[$sid]}" ]; then
+														options="$(ls -1 "${SERVER_WORLD_STORAGE_PATH[$sid]}")"
+													fi
 												fi
-											fi
-											;;
-										on)
-											if [[ $COMP_CWORD == 4 ]]; then
-												server_property "$sid" WORLD_STORAGE_INACTIVE_PATH
-												if [ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$sid]}" ]; then
-													options="$(ls -1 "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$sid]}")"
+												;;
+											on)
+												if [[ $COMP_CWORD == 4 ]]; then
+													server_property "$sid" WORLD_STORAGE_INACTIVE_PATH
+													if [ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$sid]}" ]; then
+														options="$(ls -1 "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$sid]}")"
+													fi
 												fi
-											fi
-											;;
-										off)
-											if [[ $COMP_CWORD == 4 ]]; then
-												server_property "$sid" WORLD_STORAGE_PATH
-												if [ -d "${SERVER_WORLD_STORAGE_PATH[$sid]}" ]; then
-													options="$(ls -1 "${SERVER_WORLD_STORAGE_PATH[$sid]}")"
+												;;
+											off)
+												if [[ $COMP_CWORD == 4 ]]; then
+													server_property "$sid" WORLD_STORAGE_PATH
+													if [ -d "${SERVER_WORLD_STORAGE_PATH[$sid]}" ]; then
+														options="$(ls -1 "${SERVER_WORLD_STORAGE_PATH[$sid]}")"
+													fi
 												fi
-											fi
-											;;
-									esac
+												;;
+										esac
+									fi
 								fi
 								;;
 							jar)
@@ -185,16 +189,18 @@ _msm() {
 								if [[ $COMP_CWORD == 3 ]]; then
 									options="on off add remove list"
 								else
-									case "${COMP_WORDS[3]}" in
-										remove)
-											if [[ $COMP_CWORD -ge 4 ]]; then
-												server_property "$sid" WHITELIST_PATH
-												if [ -f "${SERVER_WHITELIST_PATH[$sid]}" ]; then
-													options="$(cat "${SERVER_WHITELIST_PATH[$sid]}")"
+									if [[ "${COMP_WORDS[1]}" != "all" ]]; then
+										case "${COMP_WORDS[3]}" in
+											remove)
+												if [[ $COMP_CWORD -ge 4 ]]; then
+													server_property "$sid" WHITELIST_PATH
+													if [ -f "${SERVER_WHITELIST_PATH[$sid]}" ]; then
+														options="$(cat "${SERVER_WHITELIST_PATH[$sid]}")"
+													fi
 												fi
-											fi
-											;;
-									esac
+												;;
+										esac
+									fi
 								fi
 								;;
 							blacklist|bl)
@@ -206,32 +212,36 @@ _msm() {
 											if [[ $COMP_CWORD == 4 ]]; then
 												options="add remove"
 											else
-												case "${COMP_WORDS[4]}" in
-													remove)
-														if [[ $COMP_CWORD -ge 5 ]]; then
-															server_property "$sid" BANNED_PLAYERS_PATH
-															if [ -f "${SERVER_BANNED_PLAYERS_PATH[$sid]}" ]; then
-																options="$(cat "${SERVER_BANNED_PLAYERS_PATH[$sid]}")"
+												if [[ "${COMP_WORDS[1]}" != "all" ]]; then
+													case "${COMP_WORDS[4]}" in
+														remove)
+															if [[ $COMP_CWORD -ge 5 ]]; then
+																server_property "$sid" BANNED_PLAYERS_PATH
+																if [ -f "${SERVER_BANNED_PLAYERS_PATH[$sid]}" ]; then
+																	options="$(cat "${SERVER_BANNED_PLAYERS_PATH[$sid]}")"
+																fi
 															fi
-														fi
-														;;
-												esac
+															;;
+													esac
+												fi
 											fi
 											;;
 										ip)
 											if [[ $COMP_CWORD == 4 ]]; then
 												options="add remove"
 											else
-												case "${COMP_WORDS[4]}" in
-													remove)
-														if [[ $COMP_CWORD -ge 5 ]]; then
-															server_property "$sid" BANNED_PLAYERS_PATH
-															if [ -f "${SERVER_BANNED_IPS_PATH[$sid]}" ]; then
-																options="$(cat "${SERVER_BANNED_IPS_PATH[$sid]}")"
+												if [[ "${COMP_WORDS[1]}" != "all" ]]; then
+													case "${COMP_WORDS[4]}" in
+														remove)
+															if [[ $COMP_CWORD -ge 5 ]]; then
+																server_property "$sid" BANNED_PLAYERS_PATH
+																if [ -f "${SERVER_BANNED_IPS_PATH[$sid]}" ]; then
+																	options="$(cat "${SERVER_BANNED_IPS_PATH[$sid]}")"
+																fi
 															fi
-														fi
-														;;
-												esac
+															;;
+													esac
+												fi
 											fi
 											;;
 									esac
@@ -241,16 +251,18 @@ _msm() {
 								if [[ $COMP_CWORD == 3 ]]; then
 									options="add remove list"
 								else
-									case "${COMP_WORDS[3]}" in
-										remove)
-											if [[ $COMP_CWORD -ge 4 ]]; then
-												server_property "$sid" OPS_PATH
-												if [ -f "${SERVER_OPS_PATH[$sid]}" ]; then
-													options="$(cat "${SERVER_OPS_PATH[$sid]}")"
+									if [[ "${COMP_WORDS[1]}" != "all" ]]; then
+										case "${COMP_WORDS[3]}" in
+											remove)
+												if [[ $COMP_CWORD -ge 4 ]]; then
+													server_property "$sid" OPS_PATH
+													if [ -f "${SERVER_OPS_PATH[$sid]}" ]; then
+														options="$(cat "${SERVER_OPS_PATH[$sid]}")"
+													fi
 												fi
-											fi
-											;;
-									esac
+												;;
+										esac
+									fi
 								fi
 								;;
 							gamemode|gm)
@@ -270,8 +282,10 @@ _msm() {
 								;;
 							config)
 								if [[ $COMP_CWORD == 3 ]]; then
-									server_property "$sid" SERVER_CONF
-									options="$(more "${SERVER_CONF[$sid]}" | sed 's/=.*$//' | grep -v '#')";
+									if [[ "${COMP_WORDS[1]}" != "all" ]]; then
+										server_property "$sid" SERVER_CONF
+										options="$(more "${SERVER_CONF[$sid]}" | sed 's/=.*$//' | grep -v '#')";
+									fi
 								fi
 								;;
 						esac
