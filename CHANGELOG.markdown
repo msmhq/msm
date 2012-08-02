@@ -11,6 +11,13 @@ Maintainers:
 Change Log
 ----------
 
+### [0.7.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.3...0.7.4)
+
+* Fixed issue [#64][#64] where using server name `all` and tab completing caused the terminal to exit.
+
+[#64]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/64
+
+
 ### [0.7.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.2...0.7.3)
 
 * Fixed global stop and start commands from failing since [0.7.0][0.7.0].
