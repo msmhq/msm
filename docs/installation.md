@@ -12,11 +12,18 @@ This script uses the following tools: **screen**, **rsync**, **zip**
 
 *There may be a script to do this in the future, but its quite easy to do yourself, and I prefer to place things manually whenever possible so I know what's going on myself.*
 
+## Create a shell variable to the MSM download URL:
+1:  Create the variable msm_url:
+         export msm_url="https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/"
+
+2:  Verify the varible:
+         echo $msm_url
+
 ## Install The Configuration File and Create Directories
 
 1. Download the configuration file and place it in the `/etc` directory:
 
-        sudo wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/msm.conf -O /etc/msm.conf
+        sudo wget ${msm_url}msm.conf -O /etc/msm.conf
 
 2. Edit `/etc/msm.conf`, have a read through and make any adjustments, the comments will help you out.
 
@@ -38,7 +45,7 @@ This script uses the following tools: **screen**, **rsync**, **zip**
 
 1. Download the Minecraft Server Manager script (called msm) placing it in the `/etc/init.d` directory:
 
-        sudo wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/init/msm -O /etc/init.d/msm
+        sudo wget ${msm_url}init/msm -O /etc/init.d/msm
 
 2. Give the script the required permissions:
 
@@ -54,7 +61,7 @@ This script uses the following tools: **screen**, **rsync**, **zip**
 
 1. Download the cron file and place it in `/etc/cron.d` with the name `msm`:
 
-        sudo wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/cron/msm -O /etc/cron.d/msm
+        sudo wget ${msm_url}cron/msm -O /etc/cron.d/msm
 
 2. If you changed `SERVER_USER` in `/etc/msm.conf` to something other than "minecraft", edit `/etc/cron.d/msm` and change the occurrences of the username "minecraft" on each line, to the username you chose.
 
@@ -65,7 +72,7 @@ This script uses the following tools: **screen**, **rsync**, **zip**
 
 1. Download the bash_completion file and place it in `/etc/bash_completion.d` with the name `msm`:
 
-        sudo wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/bash_completion/msm -O /etc/bash_completion.d/msm
+        sudo wget ${msm_url}bash_completion/msm -O /etc/bash_completion.d/msm
 
 2. Ensure the following lines are uncommented in your `~/.bashrc` file or if you don't have that, find it in `/etc/bash.bashrc` instead:
 
@@ -112,7 +119,7 @@ This allows you to do `msm bla bla` instead of the slightly longer `/etc/init.d/
 
         sudo msm <server-name> start
 
-    Currently in version 0.2.x, servers will create new worlds in the server directory instead of directly in the `worldstorage` directory. Once a new world is created you unfortunately have to stop the server and move the world into (and probably create) the `worldstorage` directory yourself. The `worldstorage` directory should be created in the server directory. Follow issue [#26][#26] for changes to this area.
+    Servers will create new worlds in the server directory instead of directly in the `worldstorage` directory. Once a new world is created you unfortunately have to stop the server and move the world into (and probably create) the `worldstorage` directory yourself. The `worldstorage` directory should be created in the server directory. Follow issue [#26][#26] for changes to this area.
 
 
 ## Check Out The Commands
