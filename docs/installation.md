@@ -48,6 +48,7 @@ This script uses the following tools: **screen**, **rsync**, **zip**
 
         sudo update-rc.d msm defaults
 
+        For Suse operating systems use the command:  sudo /sbin/chkconfig --set msm on
 
 ## Configure Cron (Scheduled Actions)
 
