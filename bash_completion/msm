@@ -68,6 +68,9 @@ _msm() {
 					esac
 				fi
 				;;
+			start|config)
+				# Do nothing, just don't execute the server logic
+				;;
 			*)
 				# Server options
 
