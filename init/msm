@@ -27,21 +27,31 @@
 # this script.
 
 
+# The Minecraft Server Manager version, use "msm version" to check yours.
+VERSION="0.7.5"
+
+
 # Source, if it exists, the msm profile.d script
 if [ -f "/etc/profile.d/msm.sh" ]; then
 	source "/etc/profile.d/msm.sh"
 fi
 
+# $1: The file to follow links for
+follow_links() {
+	unset RETURN
+	local file="$1"
+	while [[ -L "$file" ]]; do
+		file="$(readlink "$file")"
+	done
+	RETURN="$file"
+}
+
 # Get real script file location
-SCRIPT="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
+follow_links "$0"; SCRIPT="$RETURN"
 # Get the MSM_CONF environment variable or use the default location
 CONF="${MSM_CONF:-/etc/msm.conf}"
 # Get the MSM_BASH_COMPLETION environment variable or use default location
-BASH_COMPLETION="${MSM_BASH_COMPLETION:-/etc/bash_completion.d/msm}"
-
-
-# The Minecraft Server Manager version, use "msm version" to check yours.
-VERSION="0.7.5"
+COMPLETION="${MSM_BASH_COMPLETION:-/etc/bash_completion.d/msm}"
 
 
 ### Config variables the user should not need/want to change
@@ -74,7 +84,11 @@ as_user() {
 		if [ "$user" == "root" ]; then
 			su - "$1" -s /bin/bash -c "$2"
 		else
-			error_exit INVALID_USER "This command must be executed as the user \"$1\" or \"root\"."
+			if [[ "$1" == "root" ]]; then
+				error_exit INVALID_USER "This command must be executed as the user \"$1\"."
+			else
+				error_exit INVALID_USER "This command must be executed as the user \"$1\" or \"root\"."
+			fi
 		fi
 	fi
 }
@@ -1876,6 +1890,77 @@ command_config() {
 	done
 }
 
+# Downloads latest versions of all MSM files
+command_update() {
+	echo -n "Checking for updates to version ${VERSION}... "
+
+	# Check flags, semi-colon ';' delimits flags for example
+	# COMMAND_FLAGS could contain ";--noinput;--quiet;-q;-ni;"
+	if [[ "$COMMAND_FLAGS" =~ \;--noinput\; ]]; then
+		local noinput="true"
+	fi
+
+	manager_property UPDATE_URL
+
+	# Create the temp download directory
+	local output_dir="/tmp/msmupdate"
+
+	# $1: The file name to download
+	download_file() {
+		local dir_name="$(dirname "${output_dir}/${1}")"
+		as_user "root" "mkdir -p \"${dir_name}\""
+		as_user "root" "wget --quiet --trust-server-names --no-check-certificate ${SETTINGS_UPDATE_URL}/$1 -O ${output_dir}/$1"
+	}
+
+	# Download the latest MSM script and check its verison number
+	download_file "init/msm"
+	local latest_version="$(sed -rn "s/^VERSION=('|\"|)(.*)\1/\2/ip" "${output_dir}/init/msm" | tail -n 1)"
+
+	# Download the other files if that version is different (implicitly better) to the current version
+	if [[ "$VERSION" == "$latest_version" ]]; then
+		echo "Already at latest version."
+	else
+		echo "$latest_version is available."
+
+		echo "Updating will overwrite the following files:"
+		echo "  > $COMPLETION"
+		echo "  > $SCRIPT"
+
+		if [[ ! "$noinput" ]]; then
+			echo -n "Do you want to continue [y/N]: "
+			read answer
+		else
+			answer="y"
+		fi
+
+		if [[ "$answer" =~ ^(y|Y|yes)$ ]]; then
+			echo "Updating MSM to ${latest_version}:"
+
+			# Download and overwrite bash completion file 
+			download_file "bash_completion/msm"
+			local dir="$(dirname "$COMPLETION")"
+			as_user "root" "mkdir -p \"${dir}\""
+			as_user "root" "mv -f \"${output_dir}/bash_completion/msm\" \"$COMPLETION\""
+			source "$COMPLETION"
+			echo "  > Updated: $COMPLETION"
+
+			# Overwite the MSM script itself
+			local dir="$(dirname "$SCRIPT")"
+			as_user "root" "mkdir -p \"${dir}\""
+			as_user "root" "mv -f \"${output_dir}/init/msm\" \"$SCRIPT\""
+			as_user "root" "chmod +x \"$SCRIPT\""
+			echo "  > Updated: $SCRIPT"
+
+			echo "Done."
+		else
+			echo "MSM was not updated."
+		fi
+	fi
+
+	# Clean up the temp directory created for downloads
+	as_user "root" "rm -rf \"${output_dir}\""
+}
+
 # Displays a list of servers
 command_server_list() {
 	server_list
@@ -2002,6 +2087,7 @@ command_help() {
 	echo -e "  restart [now]                                 Restarts all active servers"
 	echo -e "  version                                       Prints the Minecraft Server Manager version installed"
 	echo -e "  config                                        Displays a list of the config values used by MSM"
+	echo -e "  update [--noinput]                            Replaces MSM files with the latest recommended versions"
 }
 
 # Starts an individual server
@@ -2883,6 +2969,8 @@ register_settings() {
 	register_setting VERSIONING_STORAGE_PATH "/opt/msm/versioning"
 	register_setting RAMDISK_STORAGE_PATH "/dev/shm/msm"
 
+	register_setting UPDATE_URL "https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest"
+
 	register_setting WORLD_ARCHIVE_PATH "/opt/msm/archives/worlds"
 	register_setting LOG_ARCHIVE_PATH "/opt/msm/archives/logs"
 	register_setting BACKUP_ARCHIVE_PATH "/opt/msm/archives/backups"
@@ -2961,11 +3049,17 @@ register_command() {
 		# Variables are denoted by angle brackets (e.g. "<variable>") and can
 		# at this stage be accepted as any non-zero string
 		if [[ "$word" =~ ^\<.*\>$ ]]; then
-			if [[ "$word" == "<strings>" ]]; then
-				regex="${regex}([^ ]+|\\\"[^\\\"]*\\\")( [^ ]+|\\\"[^\\\"]*\\\")* "
-			else
-				regex="${regex}([^ ]+|\\\"[^\\\"]*\\\") "
-			fi
+			case "$word" in
+				"<strings>")
+					regex="${regex}([^ ]+|\\\"[^\\\"]*\\\")( [^ ]+|\\\"[^\\\"]*\\\")* "
+					;;
+				"<flags>")
+					regex="${regex:0:${#regex}-1}( ((--|-)[^ ]+)( (--|-)[^ ]+)*)? "
+					;;
+				*)
+					regex="${regex}([^ ]+|\\\"[^\\\"]*\\\") "
+					;;
+			esac
 			continue
 		fi
 		
@@ -3016,6 +3110,10 @@ call_command() {
 		args="${args:0:${#args}-1}"
 	fi
 
+	# Clear any command flags that might exist
+	# Start it with the delimiter necessary later on
+	COMMAND_FLAGS=";"
+
 	for ((command=0; command<$COMMAND_COUNT; command++)); do
 		if [[ "$args" =~ ${COMMAND_REGEX[$command]} ]]; then
 			unset args
@@ -3063,6 +3161,31 @@ call_command() {
 						done
 						# Break from analysing the rest of the input
 						break
+						;;
+
+					# The "<flags>" token expects any string without spaces that
+					# starts with one or two dashes: "--noinput -q" are examples.
+					# All flags are consumed and stored in the COMMAND_FLAGS
+					# variable.
+					"<flags>")
+						local num_flags=0
+						for potential_flag in "${@:$word_offset}"; do
+							if [[ "$potential_flag" =~ ^(\-\-|\-)[^\ ]+$ ]]; then
+								COMMAND_FLAGS="${COMMAND_FLAGS}${potential_flag};"
+								num_flags=$(( $num_flags + 1 ))
+							else
+								# Stop processing words, since all flags must be
+								# contiguous
+								break
+							fi
+						done
+
+						# We may have consumed more than one "word", the outer
+						# loop expects us to only take one, so must correct for
+						# this if we have take two words or more
+						if [[ "$num_flags" -ge 2 ]]; then
+							word_offset=$(( $word_offset + $num_flags - 1 ))
+						fi
 						;;
 					
 					
@@ -3169,7 +3292,7 @@ call_command() {
 				done
 				
 				# Prevent the default singular call later on.
-				return
+				unset COMMAND_FLAGS; return
 			fi
 			
 			# This calls the handler for all possible servers, and preserves 
@@ -3184,7 +3307,7 @@ call_command() {
 					${COMMAND_HANDLER[$command]} "${replaced_args[@]}"
 				done
 				
-				return
+				unset COMMAND_FLAGS; return
 			fi
 			
 			# This calls the handlers for all possible worlds for a specific
@@ -3199,12 +3322,12 @@ call_command() {
 					${COMMAND_HANDLER[$command]} "${replaced_args[@]}"
 				done
 				
-				return
+				unset COMMAND_FLAGS; return
 			fi
 			
 			# Otherwise it's a simple single call of the handler.
 			${COMMAND_HANDLER[$command]} "${args[@]}"
-			return
+			unset COMMAND_FLAGS; return
 		fi
 	done
 	
@@ -3231,6 +3354,10 @@ register_commands() {
 	#     <strings>      Same as "<string>", but matches multiple arguments,
 	#                    must be final element
 	#
+	#     <flags>        Matches a list of space separated flags, such as
+	#                    "--noinput --quiet -p -d". Not passed as a positional
+	#                    argument. Instead set as the value of COMMAND_FLAGS.
+	#
 	#     <name>         Same as "<string>", also ensures it's a valid name
 	#                    using the is_valid_name function
 	#
@@ -3255,6 +3382,7 @@ register_commands() {
 	register_command "restart now" "command_restart_now"
 	register_command "version" "command_version"
 	register_command "config" "command_config"
+	register_command "update <flags>" "command_update"
 
 	register_command "server list" "command_server_list"
 	register_command "server create <name>" "command_server_create"
