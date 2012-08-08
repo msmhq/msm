@@ -11,6 +11,13 @@ Maintainers:
 Change Log
 ----------
 
+### [0.7.5](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.4...0.7.5)
+
+* Fixed issue [#69][#69] where pressing tab after `msm config` or `msm start` would disconnect the terminal session.
+
+[#64]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/69
+
+
 ### [0.7.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.3...0.7.4)
 
 * Fixed issue [#64][#64] where using server name `all` and tab completing caused the terminal to exit.

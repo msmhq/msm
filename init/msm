@@ -37,7 +37,7 @@ CONF="${MSM_CONF:-/etc/msm.conf}"
 
 
 # The Minecraft Server Manager version, use "msm version" to check yours.
-VERSION="0.7.4"
+VERSION="0.7.5"
 
 
 ### Config variables the user should not need/want to change
