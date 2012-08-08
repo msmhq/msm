@@ -6,7 +6,7 @@ tab: overview
 
       <div class="masthead">
         <div class="new-blog-post">
-          <a href="{{ site.baseurl}}{{ paginator.posts[0].url }}">
+          <a href="{{ site.baseurl}}{{ paginator.posts[0].url }}" onclick="_gaq.push(['_trackEvent', 'Masthead Actions', 'New Blog Post', '{{ paginator.posts[0].title }}']);">
             New Blog Post: <strong>{{ paginator.posts[0].title }}</strong>
           </a>
         </div>
