@@ -32,8 +32,12 @@ if [ -f "/etc/profile.d/msm.sh" ]; then
 	source "/etc/profile.d/msm.sh"
 fi
 
+# Get real script file location
+SCRIPT="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
 # Get the MSM_CONF environment variable or use the default location
 CONF="${MSM_CONF:-/etc/msm.conf}"
+# Get the MSM_BASH_COMPLETION environment variable or use default location
+BASH_COMPLETION="${MSM_BASH_COMPLETION:-/etc/bash_completion.d/msm}"
 
 
 # The Minecraft Server Manager version, use "msm version" to check yours.
