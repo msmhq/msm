@@ -14,58 +14,7 @@ if [ -f "/etc/profile.d/msm.sh" ]; then
 	source "/etc/profile.d/msm.sh"
 fi
 
-### Utility Functions
-
 MSM="${MSM_SCRIPT:-/etc/init.d/msm}"
-
-# # Loads server variables
-# # $1: The name of a server
-# __init_server() {
-# 	# Load some useful defaults
-# 	SERVER_NAME="$1"
-# 	SERVER_CONF="$SETTINGS_SERVER_STORAGE_PATH/$SERVER_NAME/$SETTINGS_SERVER_PROPERTIES"
-
-# 	SERVER_PATH="$SETTINGS_SERVER_STORAGE_PATH/$SERVER_NAME"
-# 	WORLD_STORAGE_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH"
-# 	WORLD_STORAGE_INACTIVE_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WORLD_STORAGE_INACTIVE_PATH"
-
-# 	WHITELIST_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_WHITELIST_PATH"
-# 	BANNED_PLAYERS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_BANNED_PLAYERS_PATH"
-# 	BANNED_IPS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_BANNED_IPS_PATH"
-# 	OPS_PATH="$SERVER_PATH/$SETTINGS_DEFAULT_OPS_PATH"
-
-# 	if [[ -f "$SERVER_CONF" ]]; then
-# 		local name value name_upper_case
-	
-# 		while read line; do 
-# 		 	# ignore comment lines
-# 		 	if [[ "$line" =~ ^# ]]; then
-# 				continue
-# 			fi
-
-# 			if [[ "$line" =~ ^msm-([\-\_a-zA-Z0-9]+)\=(\"(.*)\"|\'(.*)\'|(.*)$) ]]; then
-# 				name="${BASH_REMATCH[1]}"
-# 				value="${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
-
-# 				if is_bash_version 4; then
-# 					name="${name//-/_}"
-# 					name="${name//./_}"
-# 					name="${name^^}"
-# 				else
-# 					name="$(echo "$name" | tr '[\-\.a-z]' '[\_\_A-Z]')"
-# 				fi
-				
-# 				# Make relative paths absolute by combining with server directory
-# 				if [[ "$name" =~ \-path$ ]] && [[ ! "$value" =~ ^\/ ]]; then
-# 					value="${SERVER_PATH[$1]}/$value"
-# 				fi
-
-# 				# Create the variable
-# 				eval ${name}=\"$value\"
-# 			fi
-# 		done < "$SERVER_CONF"
-# 	fi
-# }
 
 
 ### Auto Completion Function
