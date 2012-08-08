@@ -2880,6 +2880,7 @@ register_settings() {
 	register_setting USERNAME "minecraft"
 	register_setting SERVER_STORAGE_PATH "/opt/msm/servers"
 	register_setting JAR_STORAGE_PATH "/opt/msm/jars"
+	register_setting VERSIONING_STORAGE_PATH "/opt/msm/versioning"
 	register_setting RAMDISK_STORAGE_PATH "/dev/shm/msm"
 
 	register_setting WORLD_ARCHIVE_PATH "/opt/msm/archives/worlds"
