@@ -5,6 +5,11 @@ tab: overview
 ---
 
       <div class="masthead">
+        <div class="new-blog-post">
+          <a href="{{ site.baseurl}}{{ paginator.posts[0].url }}">
+            New Blog Post: <strong>{{ paginator.posts[0].title }}</strong>
+          </a>
+        </div>
         <!-- <p class="introducing">Introducing...</p> -->
         <h1>Minecraft Server Manager</h1>
         <p>A comprehensive start up script for Minecraft and Bukkit servers.</p>

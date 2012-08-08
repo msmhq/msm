@@ -239,3 +239,93 @@ body {
 .docs .nav-list {
   margin-bottom: 20px;
 }
+
+
+
+.section-blog .content.container,
+.section-blog .content .container {
+  width: 550px;
+}
+
+@media (max-width: 549px) {
+  .section-blog .content.container,
+  .section-blog .content .container {
+    width: auto;
+  }
+}
+
+.section-blog .title {
+  font-size: 40px;
+  font-weight: 300;
+  margin-bottom: 5px;
+}
+.section-blog .title a {
+  color: rgb(51, 51, 51);
+}
+.section-blog .date {
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.section-blog .full-post,
+.section-blog .inline-post {
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.5em;
+}
+
+.section-blog .full-post p,
+.section-blog .inline-post p {
+  margin-bottom: 20px;
+}
+
+.section-blog .inline-post {
+  margin-bottom: 60px;
+}
+
+.section-blog .masthead {
+  border-bottom: none;
+}
+
+.section-blog .breadcrumbs {
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: #888;
+}
+.section-blog .breadcrumbs a {
+  margin-right: 10px;
+  color: #888;
+  font-weight: 300;
+}
+.section-blog .breadcrumbs a:hover {
+  color: #000;
+}
+
+
+.new-blog-post {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 20px;
+  position: absolute;
+  top: -40px;
+  width: 100%;
+  font-weight: 300;
+}
+.new-blog-post a {
+  color: #030;
+/*  background-color: rgba(0,0,0,0.1);
+  border: 2px solid rgba(255,255,255,0.1);*/
+  padding: 10px 20px;
+  line-height: 1.2em;
+}
+
+@media (max-width: 979px) {
+  .new-blog-post {
+    position: relative;
+    top: 0;
+    padding-top: 22px;
+    margin-bottom: -5px;
+  }
+}

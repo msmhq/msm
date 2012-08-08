@@ -1,0 +1,16 @@
+---
+layout: default
+tab: blog
+footer: hide
+---
+
+<div class="breadcrumbs">
+  <a href="{{ site.baseurl }}/blog/">blog</a>/
+</div>
+
+<article class="full-post">
+  <h1 class="title">{{ page.title }}</h1>
+  <p class="date">{{ page.date | date: "%d %B %Y" }}</p>
+
+{{ content }}
+</article>

@@ -1,0 +1,18 @@
+---
+layout: default
+tab: blog
+footer: hide
+---
+
+<div class="masthead">
+  <h1>Blog</h1>
+  <p>The narrative of MSM</p>
+</div>
+
+{% for post in paginator.posts %}
+  <div class="inline-post">
+    <h2 class="title"><a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></h2>
+    <p class="date">{{ post.date | date: "%d %B %Y" }}</p>
+    {{ post.content }}
+  </div>
+{% endfor %}
