@@ -26,7 +26,7 @@ This script uses the following tools: **screen**, **rsync**, **zip**
 
         sudo mkdir /opt/msm
         sudo chown minecraft /opt/msm
-        sudo chmod -R 775 /opt/test
+        sudo chmod -R 775 /opt/msm
 
     Also be sure to create the directory for ram storage if your system supports ram disk:
 
