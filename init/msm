@@ -69,6 +69,7 @@ NUM_SERVERS=0
 COMMAND_COUNT=0
 SETTING_COUNT=0
 SERVER_SETTING_COUNT=0
+VERSIONS_COUNT=0
 
 
 ### Utility Functions
@@ -706,7 +707,7 @@ server_log_get_line() {
 	# Make sure there is a server log to check
 	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
-	while read line; do
+	while read -t 30 line; do
 		line_time="$(log_line_get_time "$line")"
 
 		# If the entry is old enough
@@ -736,7 +737,7 @@ server_log_dots_for_lines() {
 	# Make sure there is a server log to check
 	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
-	while read line; do
+	while read -t 30 line; do
 		line_time="$(log_line_get_time "$line")"
 
 		# If the entry is old enough
@@ -787,6 +788,10 @@ server_eval_and_wait() {
 	server_eval_and_get_line "$@"
 	unset RETURN # Do not return anything
 }
+
+# server_command() {
+
+# }
 
 # Gets the process ID for a server if running, otherwise it outputs nothing
 # $1: The ID of the server
@@ -1550,6 +1555,20 @@ server_property() {
 				;;
 		esac
 
+		# If its a command lookup, load from versioning files
+		if [[ "$2" =~ ^COMMAND_ ]]; then
+			to_properties_name "$2"
+			local name="$RETURN"
+
+			server_property "$1" VERSION
+
+			echo ${SERVER_VERSION[$1]}
+
+			# local from_conf="$(sed -rn "s/^log-confirmations:.*  commands:.*    ${name}:(.+)(    [\-\_a-zA-Z0-9]+:)?/\1/ip" "${SERVER_CONF[$1]}" | tail -n 1)"
+
+			return 0
+		fi
+
 		# If not a non-overridable load from conf
 		to_properties_name "$2"
 		local name="$RETURN"
@@ -1576,12 +1595,13 @@ server_property() {
 
 		### Post-changes to varibales after loading
 
-		# If it is a path 
+		# If it is a path make that path absolute
 		if [[ "$2" =~ _PATH$ ]]; then
 			server_property "$1" PATH
 			eval SERVER_$2[$1]=\"${SERVER_PATH[$1]}/\${SERVER_$2[$1]}\"
 		fi
 
+		# Replace any placeholders in a property we just loaded
 		case "$2" in
 			SCREEN_NAME)
 				server_set_property "$1" "$2" "${SERVER_SCREEN_NAME[$1]//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
@@ -2981,6 +3001,7 @@ register_settings() {
 	
 	register_server_setting USERNAME "minecraft"
 	register_server_setting SCREEN_NAME "msm-{SERVER_NAME}"
+	register_server_setting VERSION "unknown"
 
 	register_server_setting WORLD_STORAGE_PATH "worldstorage"
 	register_server_setting WORLD_STORAGE_INACTIVE_PATH "worldstorage_inactive"
@@ -3001,6 +3022,7 @@ register_settings() {
 	register_server_setting STOP_DELAY "10"
 	register_server_setting RESTART_DELAY "10"
 
+	# Message that are displayed in-game by the server
 	register_server_setting MESSAGE_STOP "SERVER SHUTTING DOWN IN {DELAY} SECONDS!"
 	register_server_setting MESSAGE_STOP_ABORT "Server shut down aborted."
 	register_server_setting MESSAGE_RESTART "SERVER REBOOT IN {DELAY} SECONDS!"
@@ -3010,27 +3032,18 @@ register_settings() {
 	register_server_setting MESSAGE_COMPLETE_BACKUP_STARTED "Backing up entire server."
 	register_server_setting MESSAGE_COMPLETE_BACKUP_FINISHED "Backup complete."
 
-	register_server_setting CONFIRM_SAVE_ON "CONSOLE: Enabling level saving.."
-	register_server_setting CONFIRM_SAVE_OFF "CONSOLE: Disabling level saving.."
-	register_server_setting CONFIRM_SAVE_ALL "CONSOLE: Save complete."
-	register_server_setting CONFIRM_START "Done"
-	register_server_setting CONFIRM_KICK "CONSOLE: Kicking "
-	register_server_setting CONFIRM_KICK_FAIL "Can't find user "
-	register_server_setting CONFIRM_TIME_SET "CONSOLE: Set time to"
-	register_server_setting CONFIRM_TIME_SET_FAIL "Unable to convert time value"
-	register_server_setting CONFIRM_TIME_ADD "CONSOLE: Added .+ to time"
-	register_server_setting CONFIRM_TIME_ADD_FAIL "Unable to convert time value"
-	register_server_setting CONFIRM_TOGGLEDOWNFALL "CONSOLE: Toggling downfall on|off for world"
-	register_server_setting CONFIRM_TOGGLEDOWNFALL_FAIL ".\[31m;1mNo world exists with the name"
-	register_server_setting CONFIRM_GAMEMODE "CONSOLE: Setting .+ to game mode (1|0)"
-	register_server_setting CONFIRM_GAMEMODE_FAIL_NO_USER "Can't find user .+"
-	register_server_setting CONFIRM_GAMEMODE_FAIL_NO_CHANGE ".+ already has game mode (1|0)"
-	register_server_setting CONFIRM_GIVE "CONSOLE: Giving .+ some .+ (.+)"
-	register_server_setting CONFIRM_GIVE_FAIL_NO_USER "Can't find user .+"
-	register_server_setting CONFIRM_GIVE_FAIL_NO_ITEM "There's no item called .+"
-	register_server_setting CONFIRM_XP "CONSOLE: Giving .+ exp to .+"
-	register_server_setting CONFIRM_XP_FAIL_NO_USER "Can't find user .+"
-	register_server_setting CONFIRM_XP_FAIL_INVALID_AMOUNT "Invalid exp count: .+"
+	# No need for defaults, values fall back on versioning file info
+	register_server_setting CONFIRM_SAVE_ON
+	register_server_setting CONFIRM_SAVE_OFF
+	register_server_setting CONFIRM_SAVE_ALL
+	register_server_setting CONFIRM_START
+	register_server_setting CONFIRM_KICK
+	register_server_setting CONFIRM_TIME_SET
+	register_server_setting CONFIRM_TIME_ADD
+	register_server_setting CONFIRM_TOGGLEDOWNFALL
+	register_server_setting CONFIRM_GAMEMODE
+	register_server_setting CONFIRM_GIVE
+	register_server_setting CONFIRM_XP
 }
 
 # Adds a command to the list, allowing it to be called from the command line.
@@ -3540,6 +3553,105 @@ allocate() {
 	fi
 }
 
+# Loads stub data for available versions
+load_versions() {
+	manager_property USERNAME
+	manager_property VERSIONING_STORAGE_PATH
+
+	as_user "$SETTINGS_USERNAME" "mkdir -p \"${SETTINGS_VERSIONING_STORAGE_PATH}\""
+	while IFS= read -r -d $'\0' path; do
+		local dir="$(dirname "$path")"
+		local file_name="$(basename "$path")"
+		local version="${file_name%.*}"
+		local version_type="$(basename "$dir")"
+
+		VERSIONS[$VERSIONS_COUNT]="${version_type}/$version"
+		VERSIONS_COUNT=$(( $VERSIONS_COUNT + 1 ))
+	done < <(find "$SETTINGS_VERSIONING_STORAGE_PATH" -mindepth 1 -type f -print0)
+
+
+}
+
+# Checks available versions MSM supports and returns the
+# closes match.
+# $1: Version name prefered
+# $RETURN: The closest available version, older or equal
+#          to the given version $1
+get_closest_version() {
+	unset RETURN
+	local given_type="${1%/*}"
+	local given_version="${1##*/}"
+
+	echo $given_type
+	echo $given_version
+
+	local closest_version cv_val
+	local v v_version v_type v_full v_val given_val
+
+	# $1: Version one
+	# $2: Verions two
+	# $RETURN: The greater version
+	newest_version() {
+		unset RETURN
+		# Compare the major versions [].0.0
+		component_one=`echo $1 | awk -F'.' '{print $1}'`
+		component_two=`echo $2 | awk -F'.' '{print $1}'`
+		if [[ "$component_one" -lt "$component_two" ]]; then
+			# Give up if the given major version is less than this one's
+			RETURN="$2"; return 0
+		fi
+
+		# Compare the minor versions 0.[].0
+		component_one=`echo $1 | awk -F'.' '{print $2}'`
+		component_two=`echo $2 | awk -F'.' '{print $2}'`
+		if [[ "$component_one" -lt "$component_two" ]]; then
+			# Give up if the given minor version is less than this one's
+			RETURN="$2"; return 0
+		fi
+
+		# Compare the patch versions 0.0.[]
+		component_one=`echo $1 | awk -F'.' '{print $3}'`
+		component_two=`echo $2 | awk -F'.' '{print $3}'`
+		if [[ "$component_one" -lt "$component_two" ]]; then
+			# Give up if the given patch version is less than this one's
+			RETURN="$2"; return 0
+		fi
+
+		RETURN="$1"
+	}
+
+	closest_version="0.0.0"
+
+	for ((v=0; v<$VERSIONS_COUNT; v++)); do
+		v_full="${VERSIONS[$v]}"
+		v_type="${v_full%/*}"
+		v_version="${v_full##*/}"
+
+		if [[ "$given_type" == "$v_type" ]]; then
+			# If this version type is the same as the given type (i.e. "minecraft")
+
+			# Then check the version is before or equal to this version:
+
+			newest_version "$given_version" "$v_version"
+			if [[ "$RETURN" == "$given_version" ]]; then
+				# This version is older than or equal to the given version
+
+				newest_version "$clostest_version" "$v_version"
+				if [[ "$RETURN" == "$v_version" ]]; then
+					# This version is newer than or equal to the closest version
+					closest_version="$v_version"
+				fi
+			fi
+		fi
+	done
+
+	if [[ "$closest_version" == "0.0.0" ]]; then
+		RETURN="unknown"
+	else
+		RETURN="${given_type}/${closest_version}"
+	fi
+}
+
 # Called if the script is interrupted before exiting naturally
 interrupt() {
 	local exit_message="false"
@@ -3566,10 +3678,23 @@ interrupt() {
 	exit
 }
 
+
+
+
+
+
+
+
+
+
+### Starting Code
+### -------------
+
 # The main function which starts the script
 main() {
 	register_settings
 	register_commands
+	load_versions
 	allocate
 
 	# Trap interrupts to the script by calling the interrupt function
