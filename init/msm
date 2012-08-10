@@ -28,7 +28,7 @@
 
 
 # The Minecraft Server Manager version, use "msm version" to check yours.
-VERSION="0.7.5"
+VERSION="0.7.4"
 
 
 # Source, if it exists, the msm profile.d script
@@ -1962,7 +1962,7 @@ command_update() {
 	download_file() {
 		local dir_name="$(dirname "${output_dir}/${1}")"
 		as_user "root" "mkdir -p \"${dir_name}\""
-		as_user "root" "wget --trust-server-names --no-check-certificate ${SETTINGS_UPDATE_URL}/$1 -O ${output_dir}/$1"
+		as_user "root" "wget --quiet --trust-server-names --no-check-certificate ${SETTINGS_UPDATE_URL}/$1 -O ${output_dir}/$1"
 	}
 
 	# $1: The newly download file (relative to download dir)
@@ -1971,10 +1971,24 @@ command_update() {
 	#          since it is different to the new version
 	compare_file() {
 		unset RETURN
-		if diff -q "${output_dir}/$1" "$2" >/dev/null 2>/dev/null; then
-			return 1
+		local new_file
+
+		# Make relative URLs absolute, using the download dir
+		if [[ "$1" =~ ^/ ]]; then
+			new_file="$1"
 		else
-			RETURN="$2"
+			new_file="${output_dir}/$1"
+		fi
+
+		# If the new file paht is wrong return
+		[ ! -e "$new_file" ] && return 1
+
+		if [ -e "$2" ]; then
+			if diff -q "$new_file" "$2" >/dev/null 2>/dev/null; then
+				return 1
+			else
+				RETURN="$2"
+			fi
 		fi
 	}
 
@@ -1988,9 +2002,13 @@ command_update() {
 	else
 		echo "$latest_version is available."
 
+
+		### BEGIN Fancy warnings
+
+
 		echo -n "Checking which files need to be updated... "
 		download_file "bash_completion/msm"
-		# download_file "versioning/versions.txt"
+		download_file "versioning/versions.txt"
 
 		# Downloads all versioning files in the latest MSM version
 		download_upstream_versions() {
@@ -2011,9 +2029,33 @@ command_update() {
 			compare_file "init/msm" "$SCRIPT"
 			[ ! -z "$RETURN" ] && return 0
 
+			manager_property VERSIONING_STORAGE_PATH
+			local version_name regex
+			regex="/(([^/]+/[^/]+)\.[^/\.]*)$"
 			while IFS= read -r -d $'\0' path; do
-				echo "$path"
-			done < <(find "${output_dir}/versioning/" -name .${SETTINGS_VERSIONING_FILE_EXTENSION} -mindepth 1 -type f -print0)
+				if [[ "$path" =~ $regex ]]; then
+					version_name="${BASH_REMATCH[1]}"
+					version_name_without_ext="${BASH_REMATCH[2]}"
+					compare_file "versioning/$version_name" "${SETTINGS_VERSIONING_STORAGE_PATH}/${version_name_without_ext}.${SETTINGS_VERSIONING_FILE_EXTENSION}"
+					[ ! -z "$RETURN" ] && return 0
+				fi
+			done < <(find "${output_dir}/versioning" -mindepth 1 -name \*.${SETTINGS_VERSIONING_FILE_EXTENSION} -type f -print0)
+
+			return 1
+		}
+
+		files_need_creating() {
+			[ ! -e "$COMPLETION" ] && return 0
+			[ ! -e "$SCRIPT" ] && return 0
+
+			manager_property VERSIONING_STORAGE_PATH
+			local version_name
+			while IFS= read -r -d $'\0' path; do
+				if [[ "$path" =~ /([^/]+/[^/]+)\.[^/\.]*$ ]]; then
+					version_name_without_ext="${BASH_REMATCH[1]}"
+					[ ! -e "${SETTINGS_VERSIONING_STORAGE_PATH}/${version_name_without_ext}.${SETTINGS_VERSIONING_FILE_EXTENSION}" ] && return 0
+				fi
+			done < <(find "${output_dir}/versioning" -mindepth 1 -name \*.${SETTINGS_VERSIONING_FILE_EXTENSION} -type f -print0)
 
 			return 1
 		}
@@ -2022,6 +2064,7 @@ command_update() {
 
 		echo "Done."
 
+		local updated="true"
 		if files_need_updating; then
 			echo "Updating will overwrite the following files:"
 
@@ -2030,42 +2073,135 @@ command_update() {
 
 			compare_file "init/msm" "$SCRIPT"
 			[ ! -z "$RETURN" ] && echo "  > The main MSM script:        $SCRIPT"
-		else
-			echo "Strangely, no files need updating. Ah well."
-		fi	
 
-		local v_full v_type v_version
-		for ((v=0; v<$VERSIONS_COUNT; v++)); do
-			echo "  > Versioning file:            ${VERSIONS_PATH[$v]}"
-		done
+			manager_property VERSIONING_STORAGE_PATH
+			local version_name version_path regex
+			regex="/(([^/]+/[^/]+)\.[^/\.]*)$"
+			while IFS= read -r -d $'\0' path; do
+				if [[ "$path" =~ $regex ]]; then
+					version_name="${BASH_REMATCH[1]}"
+					version_name_without_ext="${BASH_REMATCH[2]}"
 
-		if [[ ! "$noinput" ]]; then
-			echo -n "Do you want to continue [y/N]: "
-			read answer
+					version_path="${SETTINGS_VERSIONING_STORAGE_PATH}/${version_name_without_ext}.${SETTINGS_VERSIONING_FILE_EXTENSION}"
+					compare_file "versioning/$version_name" "$version_path"
+					[ ! -z "$RETURN" ] && echo "  > Version file:               $version_path"
+				fi
+			done < <(find "${output_dir}/versioning" -mindepth 1 -name \*.${SETTINGS_VERSIONING_FILE_EXTENSION} -type f -print0)
 		else
-			answer="y"
+			updated="true"
 		fi
 
-		if [[ "$answer" =~ ^(y|Y|yes)$ ]]; then
-			echo "Updating MSM to ${latest_version}:"
+		local created="false"
+		if files_need_creating; then
+			echo "Updating will create the following files:"
 
-			# Overwrite bash completion file 
-			local dir="$(dirname "$COMPLETION")"
-			as_user "root" "mkdir -p \"${dir}\""
-			as_user "root" "mv -f \"${output_dir}/bash_completion/msm\" \"$COMPLETION\""
-			source "$COMPLETION"
-			echo "  > Updated: $COMPLETION"
+			[ ! -e "$COMPLETION" ] && echo "  > The bash completion script: $COMPLETION"
+			[ ! -e "$SCRIPT" ] && echo "  > The main MSM script:        $SCRIPT"
 
-			# Overwite the MSM script itself
-			local dir="$(dirname "$SCRIPT")"
-			as_user "root" "mkdir -p \"${dir}\""
-			as_user "root" "mv -f \"${output_dir}/init/msm\" \"$SCRIPT\""
-			as_user "root" "chmod +x \"$SCRIPT\""
-			echo "  > Updated: $SCRIPT"
+			manager_property VERSIONING_STORAGE_PATH
 
-			echo "Done."
+			local version_name version_path
+			while IFS= read -r -d $'\0' path; do
+				if [[ "$path" =~ /([^/]+/[^/]+)\.[^/\.]*$ ]]; then
+					version_name="${BASH_REMATCH[1]}"
+					version_path="${SETTINGS_VERSIONING_STORAGE_PATH}/${version_name}.${SETTINGS_VERSIONING_FILE_EXTENSION}"
+					[ ! -e "$version_path" ] && echo "  > Version file:               $version_path"
+				fi
+			done < <(find "${output_dir}/versioning" -mindepth 1 -name \*.${SETTINGS_VERSIONING_FILE_EXTENSION} -type f -print0)
 		else
-			echo "MSM was not updated."
+			created="true"
+		fi
+
+
+		### END Fancy warnings
+
+
+		if ! "$updated" && ! "$created"; then
+			echo "Strange, no files need updating or creating. Ah well."
+		else
+			if [[ ! "$noinput" ]]; then
+				echo -n "Do you want to continue [y/N]: "
+				read answer
+			else
+				answer="y"
+			fi
+
+			if [[ "$answer" =~ ^(y|Y|yes)$ ]]; then
+				echo "Updating MSM to ${latest_version}:"
+
+				# Overwrite bash completion file
+				local created="false"
+				compare_file "bash_completion/msm" "$COMPLETION"
+				if [ ! -z "$RETURN" ] || [ ! -e "$COMPLETION" ]; then
+					[ ! -e "$COMPLETION" ] && created="true"
+
+					local dir="$(dirname "$COMPLETION")"
+					as_user "root" "mkdir -p \"${dir}\""
+					as_user "root" "mv -f \"${output_dir}/bash_completion/msm\" \"$COMPLETION\""
+					source "$COMPLETION"
+
+					if "$created"; then
+						echo "  > Created: $COMPLETION"	
+					else
+						echo "  > Updated: $COMPLETION"
+					fi
+				fi
+
+				# Overwrite the MSM script itself
+				created="false"
+				compare_file "init/msm" "$SCRIPT"
+				if [ ! -z "$RETURN" ] || [ ! -e "$SCRIPT" ]; then
+					[ ! -e "$SCRIPT" ] && created="true"
+
+					dir="$(dirname "$SCRIPT")"
+					as_user "root" "mkdir -p \"${dir}\""
+					as_user "root" "mv -f \"${output_dir}/init/msm\" \"$SCRIPT\""
+					as_user "root" "chmod +x \"$SCRIPT\""
+
+					if "$created"; then
+						echo "  > Created: $SCRIPT"	
+					else
+						echo "  > Updated: $SCRIPT"
+					fi
+				fi
+
+				# Overwrite the versioning files
+				manager_property VERSIONING_STORAGE_PATH
+				manager_property USERNAME
+
+				local version_name version_path regex
+				regex="/(([^/]+/[^/]+)\.[^/\.]*)$"
+				while IFS= read -r -d $'\0' path; do
+					created="false"
+					if [[ "$path" =~ $regex ]]; then
+						version_name="${BASH_REMATCH[1]}"
+						version_name_without_ext="${BASH_REMATCH[2]}"
+						version_path="${SETTINGS_VERSIONING_STORAGE_PATH}/${version_name_without_ext}.${SETTINGS_VERSIONING_FILE_EXTENSION}"
+
+						compare_file "${output_dir}/versioning/$version_name" "$version_path"
+						if [ ! -z "$RETURN" ] || [ ! -e "$version_path" ]; then
+							[ ! -e "$version_path" ] && created="true"
+
+							dir="$(dirname ${SETTINGS_VERSIONING_STORAGE_PATH}/${version_name})"
+							as_user "root" "mkdir -p \"${dir}\""
+							as_user "root" "mv -f \"$path\" \"$version_path\""
+							as_user "root" "chmod +x \"$version_path\""
+							as_user "root" "chown ${SETTINGS_USERNAME}:${SETTINGS_USERNAME} \"$version_path\""
+
+							if "$created"; then
+								echo "  > Created: $version_path"	
+							else
+								echo "  > Updated: $version_path"
+							fi
+						fi
+					fi
+				done < <(find "${output_dir}/versioning" -mindepth 1 -name \*.${SETTINGS_VERSIONING_FILE_EXTENSION} -type f -print0)
+
+				echo "Done."
+				return 0
+			else
+				echo "MSM was not updated."
+			fi
 		fi
 	fi
 }
@@ -2907,7 +3043,7 @@ register_settings() {
 	register_setting VERSIONING_FILE_EXTENSION "sh"
 	register_setting RAMDISK_STORAGE_PATH "/dev/shm/msm"
 
-	register_setting UPDATE_URL "https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest"
+	register_setting UPDATE_URL "https://raw.github.com/marcuswhybrow/minecraft-server-manager/versioning"
 
 	register_setting WORLD_ARCHIVE_PATH "/opt/msm/archives/worlds"
 	register_setting LOG_ARCHIVE_PATH "/opt/msm/archives/logs"
@@ -3593,7 +3729,7 @@ interrupt() {
 	done
 
 	# Clean up the temp directory created for downloads
-	# as_user "root" "rm -rf \"${output_dir}\""
+	as_user "root" "rm -rf \"${output_dir}\""
 
 	exit
 }
