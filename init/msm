@@ -52,6 +52,7 @@ follow_links "$0"; SCRIPT="$RETURN"
 CONF="${MSM_CONF:-/etc/msm.conf}"
 # Get the MSM_BASH_COMPLETION environment variable or use default location
 COMPLETION="${MSM_BASH_COMPLETION:-/etc/bash_completion.d/msm}"
+follow_links "$COMPLETION"; COMPLETION="$RETURN"
 
 
 ### Config variables the user should not need/want to change
@@ -109,8 +110,13 @@ echoerr() {
 echo_fallback() {
 	for arg in "$@"; do
 		[ -z "$arg" ] && continue
-		echo "$arg"
+		echo "$arg" && break
 	done
+}
+
+# $1: The string to echo if present
+echo_if() {
+	[ ! -z "$1" ] && echo "$1"
 }
 
 # Exit's the script 
@@ -718,16 +724,22 @@ server_log_get_line() {
 	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
 	local regex="${LOG_REGEX} ($3)"
-	while read line; do
+	local timeout_deadline=$(( $(now) + $4 ))
+
+	# Read log, break if nothing is read in $4 seconds
+	while read -t $4 line; do
 		line_time="$(log_line_get_time "$line")"
+
+		# If the time is after the timeout deadline, break
+		[[ "$(now)" -gt "$timeout_deadline" ]] && break
 
 		# If the entry is old enough
 		if [[ "$line_time" -ge "$2" ]] && [[ "$line" =~ $regex ]]; then
 			# Return the line
-			RETURN="${line}"
+			RETURN="${BASH_REMATCH[1]}"
 			return 0
 		fi
-	done < <(as_user "${SERVER_USERNAME[$1]}" "sleep $4 & tail --pid=$! --follow --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
+	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=20 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
 }
 
 # The same as server_log_get_line, but prints a dot instead of the log line
@@ -745,8 +757,14 @@ server_log_dots_for_lines() {
 	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
 	local regex="${LOG_REGEX} ($3)"
-	while read line; do
+	local timeout_deadline=$(( $(now) + $4 ))
+
+	# Read log, break if nothing is read in $4 seconds
+	while read -t $4 line; do
 		line_time="$(log_line_get_time "$line")"
+
+		# If the time is after the timeout deadline, break
+		[[ "$(now)" -gt "$timeout_deadline" ]] && break
 
 		# If the entry is old enough
 		if [[ "$line_time" -ge "$2" ]]; then
@@ -759,7 +777,7 @@ server_log_dots_for_lines() {
 				return 0
 			fi
 		fi
-	done < <(as_user "${SERVER_USERNAME[$1]}" "sleep $4 & tail --pid=$! --follow --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
+	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
 }
 
 # Sends as string to a server for execution
@@ -825,6 +843,7 @@ server_command() {
 	# and return immediately
 	if [ -z "$output_regex" ]; then
 		server_eval "$1" "$pattern"
+		unset RETURN
 	else
 		# Otherwise execute the command and wait for the specified output
 		# or the timeout
@@ -1238,8 +1257,12 @@ server_start() {
 		local time_now="$(now)"
 		
 		printf "Starting server..."
+
+		# This is the important line! Let's start this server!
 		as_user "${SERVER_USERNAME[$1]}" "cd \"${SERVER_PATH[$1]}\" && screen -dmS \"${SERVER_SCREEN_NAME[$1]}\" ${SERVER_INVOCATION[$1]}"
-		server_log_dots_for_lines "$1" "$time_now" "${SERVER_CONSOLE_EVENT_START[$1]}"
+
+		# Wait for the server to fully start
+		server_log_dots_for_lines "$1" "$time_now" "${SERVER_CONSOLE_EVENT_OUTPUT_START[$1]}" "${SERVER_CONSOLE_EVENT_TIMEOUT_START[$1]}"
 		
 		echo " Done."
 	fi
@@ -1518,17 +1541,8 @@ server_set_jar() {
 # $1: The ID of the server
 server_connected() {
 	if server_is_running "$1"; then
-		server_eval_and_get_line "$1" "list" "Connected players:"
-		local line="$RETURN"
-		
-		# Cuts the start off the line
-		local players="${line:46}"
-
-		# TODO: Use a reliable method of detecting when no players are online,
-		#       and display a different message.
-		#       This is currently hard as invisible characters make string length
-		#       always non-zero, and also may be ommitted.
-		echo "$players"
+		server_command "$1" CONNECTED
+		echo_fallback "$RETURN" "No players are connected."
 	else
 		echo "Server \"${SERVER_NAME[$1]}\" is not running. No users are connected."
 	fi
@@ -1546,6 +1560,12 @@ server_set_property() {
 # $1: The ID of the server
 # $2: The name of the server property
 server_property() {
+	# Do nothing if we want to load a property handled
+	# by a versioning file that is already loaded.
+	if [[ "$2" =~ ^CONSOLE_ ]] && [ "${SERVER_VERSIONING_LOADED[$1]}" == "true" ]; then
+		return 0
+	fi
+
 	eval local value=\"\${SERVER_$2[$1]}\"
 	if [ -z "$value" ]; then
 		# If the value is empty it has not been loaded yet
@@ -1597,6 +1617,7 @@ server_property() {
 				VERSIONING_SERVER_ID="$1"
 				source "${SERVER_VERSION_CONF[$1]}"
 				unset VERSIONING_SERVER_ID
+				SERVER_VERSIONING_LOADED[$1]="true"
 			fi
 
 			return 0
@@ -2068,11 +2089,11 @@ command_update() {
 		if files_need_updating; then
 			echo "Updating will overwrite the following files:"
 
-			compare_file "bash_completion/msm" "$COMPLETION"
-			[ ! -z "$RETURN" ] && echo "  > The bash completion script: $COMPLETION"
-
 			compare_file "init/msm" "$SCRIPT"
 			[ ! -z "$RETURN" ] && echo "  > The main MSM script:        $SCRIPT"
+
+			compare_file "bash_completion/msm" "$COMPLETION"
+			[ ! -z "$RETURN" ] && echo "  > The bash completion script: $COMPLETION"
 
 			manager_property VERSIONING_STORAGE_PATH
 			local version_name version_path regex
@@ -2095,8 +2116,8 @@ command_update() {
 		if files_need_creating; then
 			echo "Updating will create the following files:"
 
-			[ ! -e "$COMPLETION" ] && echo "  > The bash completion script: $COMPLETION"
 			[ ! -e "$SCRIPT" ] && echo "  > The main MSM script:        $SCRIPT"
+			[ ! -e "$COMPLETION" ] && echo "  > The bash completion script: $COMPLETION"
 
 			manager_property VERSIONING_STORAGE_PATH
 
@@ -2429,7 +2450,8 @@ command_server_worlds_todisk() {
 # $1: The server ID
 command_server_worlds_backup() {
 	if server_is_running "$1"; then
-		server_eval "$1" "say ${SERVER_MESSAGE_WORLD_BACKUP_STARTED[$1]}"
+		server_property "$1" MESSAGE_WORLD_BACKUP_STARTED
+		server_command "$1" SAY message="${SERVER_MESSAGE_WORLD_BACKUP_STARTED[$1]}"
 		server_save_off "$1"
 		server_save_all "$1"
 	fi
@@ -2439,7 +2461,8 @@ command_server_worlds_backup() {
 
 	if server_is_running "$1"; then
 		server_save_on "$1"
-		server_eval "$1" "say ${SERVER_MESSAGE_WORLD_BACKUP_FINISHED[$1]}"
+		server_property "$1" MESSAGE_WORLD_BACKUP_FINISHED
+		server_command "$1" SAY message="${SERVER_MESSAGE_WORLD_BACKUP_FINISHED[$1]}"
 	fi
 
 	echo "Backup took $SECONDS seconds".
@@ -2504,7 +2527,6 @@ command_server_whitelist_on() {
 	else
 		command_server_config "$1" "white-list" "true"
 	fi
-	echo "Whitelist enabled"
 }
 
 # Turns a server's whitelist protection off
@@ -2516,7 +2538,6 @@ command_server_whitelist_off() {
 	else
 		command_server_config "$1" "white-list" "false"
 	fi
-	echo "Whitelist disabled"
 }
 
 # Adds a player name to a server's whitelist
@@ -2784,7 +2805,7 @@ command_server_gamemode() {
 	if server_is_running "$1"; then
 		for player in "${@:3}"; do
 			server_command "$1" GAMEMODE player="$player" mode="$2"
-			echo_fallback "$RETURN" "Player $player has been kicked."
+			echo_fallback "$RETURN" "No output found. It may have worked."
 		done
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
@@ -3043,7 +3064,7 @@ register_settings() {
 	register_setting VERSIONING_FILE_EXTENSION "sh"
 	register_setting RAMDISK_STORAGE_PATH "/dev/shm/msm"
 
-	register_setting UPDATE_URL "https://raw.github.com/marcuswhybrow/minecraft-server-manager/versioning"
+	register_setting UPDATE_URL "https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest"
 
 	register_setting WORLD_ARCHIVE_PATH "/opt/msm/archives/worlds"
 	register_setting LOG_ARCHIVE_PATH "/opt/msm/archives/logs"
@@ -3612,19 +3633,18 @@ load_versions() {
 	manager_property USERNAME
 	manager_property VERSIONING_STORAGE_PATH
 
-	as_user "$SETTINGS_USERNAME" "mkdir -p \"${SETTINGS_VERSIONING_STORAGE_PATH}\""
-	while IFS= read -r -d $'\0' path; do
-		local dir="$(dirname "$path")"
-		local file_name="$(basename "$path")"
-		local version="${file_name%.*}"
-		local version_type="$(basename "$dir")"
+	if [ -e "$SETTINGS_VERSIONING_STORAGE_PATH" ]; then
+		while IFS= read -r -d $'\0' path; do
+			local dir="$(dirname "$path")"
+			local file_name="$(basename "$path")"
+			local version="${file_name%.*}"
+			local version_type="$(basename "$dir")"
 
-		VERSIONS[$VERSIONS_COUNT]="${version_type}/$version"
-		VERSIONS_PATH[$VERSIONS_COUNT]="$path"
-		VERSIONS_COUNT=$(( $VERSIONS_COUNT + 1 ))
-	done < <(find "$SETTINGS_VERSIONING_STORAGE_PATH" -mindepth 1 -type f -print0)
-
-
+			VERSIONS[$VERSIONS_COUNT]="${version_type}/$version"
+			VERSIONS_PATH[$VERSIONS_COUNT]="$path"
+			VERSIONS_COUNT=$(( $VERSIONS_COUNT + 1 ))
+		done < <(find "$SETTINGS_VERSIONING_STORAGE_PATH" -mindepth 1 -type f -print0)
+	fi
 }
 
 # Checks available versions MSM supports and returns the
@@ -3764,8 +3784,20 @@ console_event() {
 		lines="$lines|$line"
 	done
 
+	local event_name event_timeout
+	if [[ "$1" =~ (.*):(.*) ]]; then
+		# If there is a colon in the name, use that
+		# to extract the included delay
+		event_name="${BASH_REMATCH[1]}"
+		event_timeout="${BASH_REMATCH[2]}"
+	else
+		event_name="$1"
+		event_timeout="1"
+	fi
+
 	# Set server variable
-	eval SERVER_CONSOLE_EVENT_$1[$VERSIONING_SERVER_ID]=\"$lines\"
+	eval SERVER_CONSOLE_EVENT_OUTPUT_${event_name}[$VERSIONING_SERVER_ID]=\"$lines\"
+	eval SERVER_CONSOLE_EVENT_TIMEOUT_${event_name}[$VERSIONING_SERVER_ID]=\"$event_timeout\"
 }
 
 # Defines a servers console command variables, VERSIONING_SERVER_ID
@@ -3775,7 +3807,6 @@ console_event() {
 # $3->: The log lines ot accept as confirmation
 console_command() {
 	local command_name command_timeout
-
 	if [[ "$1" =~ (.*):(.*) ]]; then
 		# If there is a colon in the name, use that
 		# to extract the included delay
