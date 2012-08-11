@@ -76,6 +76,7 @@ You can always get a quick list of commands by typing `msm help`, which outputs 
 	  restart [now]                                 Restarts all active servers
 	  version                                       Prints the Minecraft Server Manager version installed
 	  config                                        Displays a list of the config values used by MSM
+	  update [--noinput]                            Replaces MSM files with the latest recommended versions
 
 
 

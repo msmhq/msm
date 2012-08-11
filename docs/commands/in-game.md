@@ -14,7 +14,7 @@ These commands can also be called "server commands" but effect who can play, and
 
 A whitelist is a set of names defining who is allowed onto a server. If a player attempts to logon to a server with a whitelist enabled, and their name is not on that whitelist, they cannot join and are told why. This command turns a whitelist on or off.
 
-Note the use of the `|` character means "or", for example `creativeserver whitelist on` is acceptable or `creativeserver wl off`, but not `creativeserver wl on off` or `creativeserver whitelist wl on` or `creativeserver whitelist on|off`.
+Note the use of the `|` character means "or", for example `msm creativeserver whitelist on` is acceptable or `msm creativeserver wl off`, but not `msm creativeserver wl on off` or `msm creativeserver whitelist wl on` or `msm creativeserver whitelist on|off`.
 
     <server> whitelist|wl list
 
@@ -54,7 +54,7 @@ Forcibly disconnects a player.
 
     <server> say <message>
 
-Broadcast a message to all players which appears in bright pink, the invocation `creativeserver say "Hello all"` would produce: `[SERVER]: Hello all`.
+Broadcast a message to all players which appears in bright pink, the invocation `msm creativeserver say Hello all` would produce: `[SERVER]: Hello all`.
 
     <server> time set|add <number>
 
@@ -82,7 +82,7 @@ Forces the writing of all pending unsaved changes to file.
 
     <server> cmd <command>
 
-Sends a command to the server, for example: `creativeserver cmd "tp craftysaurus MrWizardBeef"`.
+Sends a command to the server, for example: `msm creativeserver cmd tp craftysaurus MrWizardBeef`.
 
     <server> cmdlog <command>
 

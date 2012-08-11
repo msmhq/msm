@@ -8,13 +8,15 @@ docsitem: updating
 Updating
 ========
 
-New versions of MSM contain new features, more reliable code, bug fixes, and contributions from the community. Since MSM is a single script replacing it with the new version is enough to get up to date.
+New versions of MSM contain new features, more reliable code, bug fixes, and contributions from the community. Since version `0.8.0` MSM has an inbuilt command to download and install everything for you automatically. Don't worry, **it will ask for confirmation** before overwriting your files.
 
-The MSM code repository is managed by git source control, and has tags which mark versions as well as a special tag called `latest` which always points to the recommended latest version.
+    sudo msm update
 
 
-Downloading the Latest Version
-------------------------------
+Manually updating
+-----------------
+
+If you are upgrading from a version of MSM that does not have the update command, you will have to do one thing by hand. Download and replace your MSM script file with the latest version:
 
     sudo wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/init/msm -O /etc/init.d/msm
     sudo wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/bash_completion/msm -O /etc/bash_completion.d/msm
