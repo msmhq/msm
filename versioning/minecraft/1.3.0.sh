@@ -36,7 +36,8 @@ console_command XP "xp <amount> <player>" \
   "The number you have entered (<amount>) is too small, it must be at least 0"
 
 console_command CONNECTED "list" \
-  "(.*)?(, .*)*"
+  "([^\ ]*)?(, [^\ ]+)*$" \
+  "$"
 
 console_command SAVE_ON "save-on" \
   "Turned on world auto-saving"
