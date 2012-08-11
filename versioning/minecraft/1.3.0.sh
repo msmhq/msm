@@ -5,7 +5,8 @@ extends "minecraft/1.2.0"
 console_command GAMEMODE "gamemode <mode> <player>" \
   "That player cannot be found" \
   "The number you have entered (<mode>) is too big, it must be at most 2" \
-  "The number you have entered (<mode>) is too small, it must be at least 0"
+  "The number you have entered (<mode>) is too small, it must be at least 0" \
+  "'<mode>' is not a valid number"
 
 console_command KICK "kick <player>" \
   "Kicked <player> from the game" \
