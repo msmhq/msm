@@ -34,6 +34,9 @@ console_command XP "xp <amount> <player>" \
   "'<amount>' is not a valid number" \
   "The number you have entered (<amount>) is too small, it must be at least 0"
 
+console_command CONNECTED "list" \
+  "(.*)?(, .*)*"
+
 console_command SAVE_ON "save-on" \
   "Turned on world auto-saving"
 console_command SAVE_OFF "save-off" \

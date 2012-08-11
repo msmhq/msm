@@ -38,6 +38,8 @@ console_command XP "xp <player> <amount>" \
   "CONSOLE: Giving <amount> exp to <player>" \
   "Can't find user <player>" \
   "Invalid exp count: <amount>"
+console_command CONNECTED "list" \
+  "Connected players:"
 
 console_command TIME_SET "time set <time>" \
   "CONSOLE: Set time to <time>" \
