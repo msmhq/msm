@@ -11,7 +11,7 @@ Maintainers:
 Change Log
 ----------
 
-### [0.8.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.6...0.8.0)
+### [0.8.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.5...0.8.0)
 
 * Added the `msm update` command, which downloads and installs new versions of MSM.
 * Added the `msm-version` server config setting. Add this to `server.properties` to allow MSM to interact correctly with your server (e.g. `msm-version=minecraft/1.3.1`.)
