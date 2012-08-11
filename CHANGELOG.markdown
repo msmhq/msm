@@ -11,10 +11,16 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.1...0.8.2)
+
+* Improved `msm update` output to make more sense.
+
+
 ### [0.8.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.0...0.8.1)
 
 * Added bash completion for `msm update`
 * Improved `msm update` to work when upgrading from older versions, and handle updating the update code.
+
 
 ### [0.8.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.5...0.8.0)
 
