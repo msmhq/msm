@@ -1,6 +1,6 @@
 # MSM version file for Minecraft 1.2.0 and above
 
-console_event start "Done"
+console_event START:30 "Done"
 
 console_command WHITELIST_ON "whitelist on"
 console_command WHITELIST_OFF "whitelist off"
