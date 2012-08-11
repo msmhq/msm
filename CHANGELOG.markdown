@@ -11,11 +11,27 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.6...0.8.0)
+
+* Added the `msm update` command, which downloads and installs new versions of MSM.
+* Added the `msm-version` server config setting. Add this to `server.properties` to allow MSM to interact correctly with your server (e.g. `msm-version=minecraft/1.3.1`.)
+* Removed all confirmation settings, such as `DEFAULT_CONFIRM_SAVE_ON` and `msm-confirm-save-oll` etc, this functionality is handled by new "versioning" files.
+* Fixed issues [#43][#43], [#58][#58], [#59][#59], [#60][#60], [#61][#61], [#63][#63], [#67][#67] and [#68][#68]. By accomodating different Minecraft versions using versioning files.
+
+[#43]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/43
+[#58]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/58
+[#59]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/59
+[#60]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/60
+[#61]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/61
+[#63]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/63
+[#67]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/67
+[#68]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/68
+
 ### [0.7.5](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.4...0.7.5)
 
 * Fixed issue [#69][#69] where pressing tab after `msm config` or `msm start` would disconnect the terminal session.
 
-[#64]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/69
+[#69]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/69
 
 
 ### [0.7.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.3...0.7.4)
