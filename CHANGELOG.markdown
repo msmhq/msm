@@ -11,6 +11,11 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.5](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.4...0.8.5)
+
+* Fixed `msm update` output showing the "created files" section only when files were being *updated*.
+
+
 ### [0.8.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.3...0.8.4)
 
 * Fixed logic in `msm update` which allowed MSM to think everything was already updated.
