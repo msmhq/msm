@@ -11,6 +11,11 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.9](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.8...0.8.9)
+
+* Imporve install script to update MSM without input
+
+
 ### [0.8.8](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.7...0.8.8)
 
 * Added an MSM install script.
