@@ -13,15 +13,14 @@ New versions of MSM contain new features, more reliable code, bug fixes, and con
     sudo msm update
 
 
-Manually updating
------------------
+Updating From Pre 0.8.0
+-----------------------
 
 If you are upgrading from a version of MSM that does not have the update command, you will have to do one thing by hand. Download and replace your MSM script file with the latest version:
 
     sudo wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/init/msm -O /etc/init.d/msm
-    sudo wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/bash_completion/msm -O /etc/bash_completion.d/msm
 
-Those two commands will retrive the MSM script, and the accompanying bash completion script, putting them in the recommended locations.
+Then just call the `sudo msm update` command to get all the other files automatically.
 
 
 Check Your Version
