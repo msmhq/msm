@@ -2086,7 +2086,8 @@ command_update() {
 
 	download_upstream_versions
 
-	local updating creating
+	local updating="false"
+	local creating="false"
 
 	files_need_updating && updating="true"
 	files_need_updating && creating="true"
