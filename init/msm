@@ -1977,6 +1977,7 @@ command_update() {
 	fi
 
 	manager_property UPDATE_URL
+	manager_property USERNAME
 
 	# Create the temp download directory
 	local output_dir="/tmp/msmupdate"
@@ -1985,6 +1986,7 @@ command_update() {
 	download_file() {
 		local dir_name="$(dirname "${output_dir}/${1}")"
 		as_user "root" "mkdir -p \"${dir_name}\""
+		as_user "root" "chown ${SETTINGS_USERNAME}:${SETTINGS_USERNAME} \"${dir_name}\""
 		as_user "root" "wget --quiet --trust-server-names --no-check-certificate ${SETTINGS_UPDATE_URL}/$1 -O ${output_dir}/$1"
 	}
 
@@ -2197,7 +2199,6 @@ command_update() {
 
 		# Overwrite the versioning files
 		manager_property VERSIONING_STORAGE_PATH
-		manager_property USERNAME
 
 		local version_name version_path regex
 		regex="/(([^/]+/[^/]+)\.[^/\.]*)$"
@@ -3764,7 +3765,8 @@ interrupt() {
 	done
 
 	# Clean up the temp directory created for downloads
-	as_user "root" "rm -rf \"${output_dir}\""
+	manager_property USERNAME
+	as_user "$SETTINGS_USERNAME" "rm -rf \"${output_dir}\""
 
 	exit
 }
