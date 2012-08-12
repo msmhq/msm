@@ -11,6 +11,11 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.2...0.8.3)
+
+* Fixed a bug in `msm update` checks, which caused a `command not found` error.
+
+
 ### [0.8.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.1...0.8.2)
 
 * Improved `msm update` output to make more sense.
