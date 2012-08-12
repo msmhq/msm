@@ -1993,9 +1993,8 @@ command_update() {
 	# $1: The file name to download
 	download_file() {
 		local dir_name="$(dirname "${output_dir}/${1}")"
-		as_user "root" "mkdir -p \"${dir_name}\""
-		as_user "root" "chown ${SETTINGS_USERNAME}:${SETTINGS_USERNAME} \"${dir_name}\""
-		as_user "root" "wget --quiet --trust-server-names --no-check-certificate ${SETTINGS_UPDATE_URL}/$1 -O ${output_dir}/$1"
+		as_user "${SETTINGS_USERNAME}" "mkdir -p \"${dir_name}\""
+		as_user "${SETTINGS_USERNAME}" "wget --quiet --no-check-certificate ${SETTINGS_UPDATE_URL}/$1 -O ${output_dir}/$1"
 	}
 
 	# $1: The newly download file (relative to download dir)
