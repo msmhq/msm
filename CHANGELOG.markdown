@@ -11,6 +11,12 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.8](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.7...0.8.8)
+
+* Added an MSM install script.
+* Fixed bug in update code which prevent cleaning download directory.
+
+
 ### [0.8.7](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.6...0.8.7)
 
 * Improved upon 0.8.6 to to prevent MSM complaing when not being invoked by either the "root" or MSM user.
