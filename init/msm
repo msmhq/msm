@@ -1982,6 +1982,14 @@ command_update() {
 	# Create the temp download directory
 	local output_dir="/tmp/msmupdate"
 
+	# Clean up the temp directory created for downloads
+	cleanup() {
+		as_user "$SETTINGS_USERNAME" "rm -rf \"${output_dir}\""
+	}
+
+	# Remove the directory if it exists already
+	cleanup
+
 	# $1: The file name to download
 	download_file() {
 		local dir_name="$(dirname "${output_dir}/${1}")"
@@ -2234,6 +2242,8 @@ command_update() {
 	else
 		echo "MSM was not updated."
 	fi
+
+	cleanup
 
 	# This script will now be replaced. So run the new script's
 	# update code, incase there are new things to update that
@@ -3763,10 +3773,6 @@ interrupt() {
 			echo "Server \"${SERVER_NAME[$i]}\" restart was aborted."
 		fi
 	done
-
-	# Clean up the temp directory created for downloads
-	manager_property USERNAME
-	as_user "$SETTINGS_USERNAME" "rm -rf \"${output_dir}\""
 
 	exit
 }
