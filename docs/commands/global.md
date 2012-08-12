@@ -35,4 +35,4 @@ Displays a list of values MSM is using that can be configured. Anything in this 
 Updates MSM files to the latest versions. Will ask for confirmation before overwriting your files. However one may disable this requirement with the `--noinput` flag.
 
 
-[active-vs-inactive]: {{ site.baseurl }}docs/concepts/active-vs-inactive.html
+[active-vs-inactive]: {{ site.baseurl }}/docs/concepts/active-vs-inactive.html

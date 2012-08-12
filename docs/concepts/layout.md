@@ -34,6 +34,6 @@ So a typical Bukkit server managed by MSM would look like this:
 
 MSM expects to find your worlds in the `worldstorage` folder. This allows MSM to reliably determine which folders are worlds for making backups, moving worlds into RAM and other behind the scenes stuff.
 
-**Advanced:** *You can change the location MSM expects to find world using the `msm-world-storage-path` setting in your server's `server.properties` file. See [Cofniguration &rarr; Individual Server][config-server] for more info.*
+**Advanced:** *You can change the location MSM expects to find world using the `msm-world-storage-path` setting in your server's `server.properties` file. See [Configuration &rarr; Individual Server][config-server] for more info.*
 
-[config-server]: {{ site.baseurl }}docs/configuration/server.html
+[config-server]: {{ site.baseurl }}/docs/configuration/server.html

@@ -58,4 +58,4 @@ The global restart command stops all severs, preserving the active/inactive stat
 *Again, see the [Commands Page][commands] for more information on commands.*
 
 
-[commands]: {{ site.baseurl }}docs/commands/
+[commands]: {{ site.baseurl }}/docs/commands/

@@ -25,6 +25,7 @@ Remember an absolute path is one that starts with a forwards slash, whereas a re
 These options cover starting the server in the way you want:
 
     msm-username=                    # The linux user used to start the server
+    msm-version=                     # Set the Minecraft verion so MSM knows how to talk it's language **IMPORTANT**
     msm-screen-name=                 # The name used to reference the screen session for this server
     msm-world-storage-path=          # The directory (relative to the server directory) to store worlds in
     msm-world-storage-inactive-path= # The directory to store unused worlds
@@ -61,32 +62,4 @@ When interruptions to the normal experience occur, it's nice to give players som
     msm-message-complete-backup-started=   # The message shown to players when starting to backup the entire server
     msm-message-complete-backup-finished=  # The message shown to players when finished backing up the entire server
 
-## Log Confirmation
-
-To be as responsive as possible, MSM determines exactly when a command has completed by watching the server logs for specific entries. When that entry is found, the command can return. If Minecraft server changes the messages it logs (for "save-on", "save-off", "save-all" and when starting up) these values should be altered in `/etc/msm.conf` globally if possible. However if a single server has a different version to the rest you may override what log entries to wait for in a server's `server.conf` file.
-
-Each setting value when set constitutes part of a regular expression used to look for that log entry. As such one may use any special regular expression characters to better define the entry.
-    
-    msm-confirm-save-on=                  # The log entry (following "[INFO]") which confirms the "save-on" command has completed.
-    msm-confirm-save-off=                 # The log entry that confirms the "save-off" command has completed.
-    msm-confirm-save-all=                 # The log entry that confirms the "save-all" command has completed.
-    msm-confirm-start=                    # The log entry that confirms the server has finished starting up.
-    msm-confirm-kick=                     # The log entry that confirms a user has been kicked
-    msm-confirm-kick-fail=                # The log entry that confirms a user has not been kicked
-    msm-confirm-time-set=                 # The log entry that confirms the time has been set
-    msm-confirm-time-set-fail=            # The log entry that confirms the time format was invalid
-    msm-confirm-time-add=                 # The log entry that confirms the time has been incremented
-    msm-confirm-time-add-fail=            # The log entry that confirms the time format was invalid
-    msm-confirm-toggledownfall=           # The log entry that confirms the toggle of down fall
-    msm-confirm-toggledownfall-fail=      # The log entry that confirms the world specified for toggling did not exit
-    msm-confirm-gamemode=                 # The log entry that confirms as user's game mode was changed
-    msm-confirm-gamemode-fail-no-user=    # The log entry that confirms the specified user was not found
-    msm-confirm-gamemode-fail-no-change=  # The log entry that confirms the user was already in that mode
-    msm-confirm-give=                     # The log entry that confirms a player was given an entity
-    msm-confirm-give-fail-no-user=        # The log entry that confirms the specified user was not found
-    msm-confirm-give-fail-no-item=        # The log entry that confirms the item ID/name was not found
-    msm-confirm-xp=                       # The log entry that confirms the XP was awarded to a player
-    msm-confirm-xp-fail-no-user=          # The log entry that confirms the specified user was not found
-    msm-confirm-xp-fail-invalid-amount=   # The log entry that confirms the XP amount was an invalid format
-
-[global-config]: {{ site.baseurl }}docs/configuration/msm.html
+[global-config]: {{ site.baseurl }}/docs/configuration/msm.html
