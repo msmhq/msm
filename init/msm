@@ -2090,7 +2090,7 @@ command_update() {
 	local creating="false"
 
 	files_need_updating && updating="true"
-	files_need_updating && creating="true"
+	files_need_creating && creating="true"
 
 	if [[ "$updating" == "false" ]] && [[ "$creating" == "false" ]]; then
 		echo " No. We're all done."
