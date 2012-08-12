@@ -13,6 +13,12 @@ sudo sh <<SCRIPT
 	echo "\n\033[1;32mMSM INSTALL: Installing required packages\033[m"
 	apt-get install screen rsync zip
 
+	echo "\n\033[1;32mMSM INSTALL: Downloading latest MSM configuration file\033[m"
+	wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/msm.conf -O /etc/msm.conf
+
+	echo "\n\033[1;32mMSM INSTALL: Downloading latest MSM cron file\033[m"
+	wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/cron/msm -O /etc/cron.d/msm
+
 	echo "\n\033[1;32mMSM INSTALL: Downloading latest MSM version\033[m"
 	wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/init/msm -O /etc/init.d/msm
 
