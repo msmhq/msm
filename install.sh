@@ -26,7 +26,7 @@ sudo sh <<SCRIPT
 	ln -s /etc/init.d/msm /usr/local/bin/msm
 
 	echo "\n\033[1;32mMSM INSTALL: Asking MSM to update itself\033[m"
-	/etc/init.d/msm update
+	/etc/init.d/msm update --noinput
 
 	echo "\n\033[1;32mMSM INSTALL: Done. Type \"msm help\" to get started. Have fun!\033[m"
 
