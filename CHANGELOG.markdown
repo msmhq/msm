@@ -11,6 +11,11 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.7](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.6...0.8.7)
+
+* Improved upon 0.8.6 to to prevent MSM complaing when not being invoked by either the "root" or MSM user.
+
+
 ### [0.8.6](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.5...0.8.6)
 
 * Prevent script complaing that `This command must be executed as the user "root"` after every command. Fixes [#77][#77] and [#78][#78].
