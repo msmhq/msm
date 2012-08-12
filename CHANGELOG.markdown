@@ -11,6 +11,14 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.6](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.5...0.8.6)
+
+* Prevent script complaing that `This command must be executed as the user "root"` after every command. Fixes [#77][#77] and [#78][#78].
+
+[#77]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/77
+[#78]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/78
+
+
 ### [0.8.5](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.4...0.8.5)
 
 * Fixed `msm update` output showing the "created files" section only when files were being *updated*.
