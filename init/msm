@@ -2003,7 +2003,7 @@ command_update() {
 			new_file="${output_dir}/$1"
 		fi
 
-		# If the new file paht is wrong return
+		# If the new file path is wrong return
 		[ ! -e "$new_file" ] && return 1
 
 		if [ -e "$2" ]; then
@@ -2092,14 +2092,14 @@ command_update() {
 	files_need_updating && updating="true"
 	files_need_updating && creating="true"
 
-	if ! "$updating" && ! "$creating"; then
+	if [[ "$updating" == "false" ]] && [[ "$creating" == "false" ]]; then
 		echo " No. We're all done."
 		return 0
 	else
 		echo " Done."
 	fi
 
-	if "$updating"; then
+	if [[ "$updating" == "true" ]]; then
 		echo "Updating will overwrite the following files:"
 
 		compare_file "init/msm" "$SCRIPT"
@@ -2123,7 +2123,7 @@ command_update() {
 		done < <(find "${output_dir}/versioning" -mindepth 1 -name \*.${SETTINGS_VERSIONING_FILE_EXTENSION} -type f -print0)
 	fi
 
-	if "$creating"; then
+	if [[ "$creating" == "true" ]]; then
 		echo "Updating will create the following files:"
 
 		[ ! -e "$SCRIPT" ] && echo "  > The main MSM script:        $SCRIPT"
