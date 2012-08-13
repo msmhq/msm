@@ -68,7 +68,7 @@ _msm() {
 					esac
 				fi
 				;;
-			start|config)
+			start|config|help|update)
 				# Do nothing, just don't execute the server logic
 				;;
 			*)
