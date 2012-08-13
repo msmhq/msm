@@ -13,6 +13,9 @@ sudo sh <<SCRIPT
 	echo "\n\033[1;32mMSM INSTALL: Installing required packages\033[m"
 	apt-get install screen rsync zip
 
+	echo "\n\033[1;32mMSM INSTALL: Creating default user \"minecraft\"\033[m"
+	adduser --system minecraft
+
 	echo "\n\033[1;32mMSM INSTALL: Downloading latest MSM configuration file\033[m"
 	wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/msm.conf -O /etc/msm.conf
 
