@@ -11,9 +11,17 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.10](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.9...0.8.10)
+
+* Improved versioning to use the latest Minecraft version by default, and tell the user what's happening and how to control it themselves. Fixes issue [#79][#79].
+* Improved install script to also create the default minecraft user, and the default install location directories.
+
+[#79]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/79
+
+
 ### [0.8.9](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.8...0.8.9)
 
-* Imporve install script to update MSM without input
+* Improved install script to update MSM without input
 
 
 ### [0.8.8](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.7...0.8.8)
