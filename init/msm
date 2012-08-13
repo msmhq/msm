@@ -102,7 +102,31 @@ as_user_stderr() {
 
 # Echo to stderr
 echoerr() {
-	echo "$@" 1>&2
+	echo -e "$@" 1>&2
+}
+
+COLOUR_PURPLE="\e[1;35m"
+COLOUR_RED="\e[1;31m"
+COLOUR_CYAN="\e[1;36m"
+COLOUR_GREEN="\e[1;32m"
+COLOUR_RESET="\e[0m"
+
+# Creates a coloured warning line
+# $1 The warning to echo
+msm_warning() {
+	echoerr "${COLOUR_PURPLE}[MSM Warning: ${1}]${COLOUR_RESET}"
+}
+
+msm_error() {
+	echoerr "${COLOUR_RED}[MSM Error: ${1}]${COLOUR_RESET}"
+}
+
+msm_info() {
+	echo -e "${COLOUR_CYAN}[MSM Info: ${1}]${COLOUR_RESET}"
+}
+
+msm_success() {
+	echo -e "${COLOUR_CYAN}[MSM: ${1}]${COLOUR_RESET}"
 }
 
 # Echos the first non-empty string in the arguments list
@@ -1567,6 +1591,7 @@ server_property() {
 	fi
 
 	eval local value=\"\${SERVER_$2[$1]}\"
+
 	if [ -z "$value" ]; then
 		# If the value is empty it has not been loaded yet
 
@@ -1585,7 +1610,19 @@ server_property() {
 				manager_property VERSIONING_STORAGE_PATH
 				server_property "$1" VERSION
 				get_closest_version "${SERVER_VERSION[$1]}"
-				SERVER_VERSION_CONF[$1]="${SETTINGS_VERSIONING_STORAGE_PATH}/${RETURN}.${SETTINGS_VERSIONING_FILE_EXTENSION}"
+				local version="$RETURN"
+
+				if [[ "$version" == "unknown" ]]; then
+					# Use the latest Minecraft version if there is no explicit setting
+					if [[ -z "${VERSIONS_NEWEST_MINECRAFT_PATH}" ]]; then
+						msm_warning "No version set for server, and no default found. Please use 'msm update' to download defaults"
+					else
+						msm_info "Assuming 'minecraft/${VERSIONS_NEWEST_MINECRAFT_VERSION}' for this server.You should override this value by adding 'msm-version=minecraft/x.x.x' to '${SERVER_CONF[$1]}' to make this message go away"
+						SERVER_VERSION_CONF[$1]="${VERSIONS_NEWEST_MINECRAFT_PATH}"
+					fi
+				else
+					SERVER_VERSION_CONF[$1]="${SETTINGS_VERSIONING_STORAGE_PATH}/${version}.${SETTINGS_VERSIONING_FILE_EXTENSION}"
+				fi
 				return 0
 				;;
 			BACKUP_PATH)
@@ -3659,17 +3696,66 @@ load_versions() {
 	manager_property VERSIONING_STORAGE_PATH
 
 	if [ -e "$SETTINGS_VERSIONING_STORAGE_PATH" ]; then
+		local newest_minecraft_version="0.0.0"
 		while IFS= read -r -d $'\0' path; do
 			local dir="$(dirname "$path")"
 			local file_name="$(basename "$path")"
 			local version="${file_name%.*}"
 			local version_type="$(basename "$dir")"
 
+			# Determine the newest minecraft version
+			if [[ "$version_type" == "minecraft" ]]; then
+				_newest_version "$version" "$latest_minecraft_version"
+				newest_minecraft_version="$RETURN"
+			fi
+
 			VERSIONS[$VERSIONS_COUNT]="${version_type}/$version"
 			VERSIONS_PATH[$VERSIONS_COUNT]="$path"
 			VERSIONS_COUNT=$(( $VERSIONS_COUNT + 1 ))
 		done < <(find "$SETTINGS_VERSIONING_STORAGE_PATH" -mindepth 1 -type f -print0)
+
+		# Record the latest minecraft version to use as a default
+		if [[ "$newest_minecraft_version" == "0.0.0" ]]; then
+			msm_warning "Could not find versioning files, please use 'msm update' to download them"
+		else
+			VERSIONS_NEWEST_MINECRAFT_VERSION="${newest_minecraft_version}"
+			VERSIONS_NEWEST_MINECRAFT_PATH="${SETTINGS_VERSIONING_STORAGE_PATH}/minecraft/${newest_minecraft_version}.${SETTINGS_VERSIONING_FILE_EXTENSION}"
+		fi
+	else
+		msm_warning "Could not find versioning files, please use 'msm update' to download them"
 	fi
+}
+
+# $1: Version one
+# $2: Verions two
+# $RETURN: The greater version
+_newest_version() {
+	unset RETURN
+	# Compare the major versions [].0.0
+	component_one=`echo $1 | awk -F'.' '{print $1}'`
+	component_two=`echo $2 | awk -F'.' '{print $1}'`
+	if [[ "$component_one" -lt "$component_two" ]]; then
+		# Give up if the given major version is less than this one's
+		RETURN="$2"; return 0
+	fi
+
+	# Compare the minor versions 0.[].0
+	component_one=`echo $1 | awk -F'.' '{print $2}'`
+	component_two=`echo $2 | awk -F'.' '{print $2}'`
+	if [[ "$component_one" -lt "$component_two" ]]; then
+		# Give up if the given minor version is less than this one's
+		RETURN="$2"; return 0
+	fi
+
+	# Compare the patch versions 0.0.[]
+	component_one=`echo $1 | awk -F'.' '{print $3}'`
+	component_two=`echo $2 | awk -F'.' '{print $3}'`
+	if [[ "$component_one" -lt "$component_two" ]]; then
+		# Give up if the given patch version is less than this one's
+		RETURN="$2"; return 0
+	fi
+
+	RETURN="$1"
 }
 
 # Checks available versions MSM supports and returns the
@@ -3685,38 +3771,6 @@ get_closest_version() {
 	local closest_version cv_val
 	local v v_version v_type v_full v_val given_val
 
-	# $1: Version one
-	# $2: Verions two
-	# $RETURN: The greater version
-	newest_version() {
-		unset RETURN
-		# Compare the major versions [].0.0
-		component_one=`echo $1 | awk -F'.' '{print $1}'`
-		component_two=`echo $2 | awk -F'.' '{print $1}'`
-		if [[ "$component_one" -lt "$component_two" ]]; then
-			# Give up if the given major version is less than this one's
-			RETURN="$2"; return 0
-		fi
-
-		# Compare the minor versions 0.[].0
-		component_one=`echo $1 | awk -F'.' '{print $2}'`
-		component_two=`echo $2 | awk -F'.' '{print $2}'`
-		if [[ "$component_one" -lt "$component_two" ]]; then
-			# Give up if the given minor version is less than this one's
-			RETURN="$2"; return 0
-		fi
-
-		# Compare the patch versions 0.0.[]
-		component_one=`echo $1 | awk -F'.' '{print $3}'`
-		component_two=`echo $2 | awk -F'.' '{print $3}'`
-		if [[ "$component_one" -lt "$component_two" ]]; then
-			# Give up if the given patch version is less than this one's
-			RETURN="$2"; return 0
-		fi
-
-		RETURN="$1"
-	}
-
 	closest_version="0.0.0"
 
 	for ((v=0; v<$VERSIONS_COUNT; v++)); do
@@ -3729,11 +3783,11 @@ get_closest_version() {
 
 			# Then check the version is before or equal to this version:
 
-			newest_version "$given_version" "$v_version"
+			_newest_version "$given_version" "$v_version"
 			if [[ "$RETURN" == "$given_version" ]]; then
 				# This version is older than or equal to the given version
 
-				newest_version "$clostest_version" "$v_version"
+				_newest_version "$clostest_version" "$v_version"
 				if [[ "$RETURN" == "$v_version" ]]; then
 					# This version is newer than or equal to the closest version
 					closest_version="$v_version"
