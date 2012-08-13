@@ -11,6 +11,14 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.11](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.10...0.8.11)
+
+* Fixed issue [#76][#76], where tab completing "help" or "update" would exit the terminal.
+* Made "help" and "update" reserved names to prevent clashing with server names.
+
+[#76]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/76
+
+
 ### [0.8.10](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.9...0.8.10)
 
 * Improved versioning to use the latest Minecraft version by default, and tell the user what's happening and how to control it themselves. Fixes issue [#79][#79].
