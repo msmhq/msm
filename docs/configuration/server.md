@@ -41,6 +41,16 @@ These options cover starting the server in the way you want:
     msm-invocation=                  # The line called to start the server: you may use the tags "{JAR}" and
                                      # "{RAM}" in this string which will be replaced with the values from
                                      # the previous settings
+
+### Versioning Options
+
+The `msm-version` setting is a code comprised of two parts: the server type, currently "minecraft" or "craftbukkit", and then the dot separated version number (e.g. `1.3.1`). For example `msm-version=minecraft/1.3.1` or `msm-version=craftbukkit/1.2.5`.
+
+MSM selects, using this code, the most appropiate included versioning file, so the previous examples might resolve to "minecraft/1.3.0" and "craftubukkit/1.2.0" respectively. These **versioning files help MSM interact with differing Minecraft updates**.
+
+If you are running a unique server type, maybe Tekkit for instance, pick the closest available version. Or let me know, by [creating an issue][issues], that you think MSM should accomodate it.
+
+[issues]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/
     
 ## Delays
 
