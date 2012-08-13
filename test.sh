@@ -31,6 +31,9 @@ setUp() {
 	# Create the testing conf from the default one
 	mkdir -p "$TMP_DIR" && chown "$USERNAME" "$TMP_DIR"
 	cp "$DEFUALT_CONF" "$MSM_CONF" && chown "$USERNAME" "$MSM_CONF"
+
+	# Coppy versioning files
+	cp -r "${DIR}/versioning" "${TMP_DIR}/versioning"
 	
 	# Overwrite variables to use for testing purposes
 	echo "" >> "$MSM_CONF"
