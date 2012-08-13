@@ -242,11 +242,11 @@ debug() {
 # $1: The name to check
 is_valid_name() {
 	local valid="^[a-zA-Z0-9\_\-]+$"
-	local invalid="^(start|stop|restart|version|server|jargroup|all|config|\-\-.*)$"
+	local invalid="^(start|stop|restart|version|server|jargroup|all|config|update|help|\-\-.*)$"
 	
 	if [[ "$1" =~ $valid ]]; then
 		if [[ "$1" =~ $invalid ]]; then
-			error_exit INVALID_ARGUMENT "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"version\", \"jargroup\", \"all\", \"config\" or start with two dashes (--)."
+			error_exit INVALID_ARGUMENT "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"version\", \"jargroup\", \"all\", \"config\", \"update\" or \"help\" or start with two dashes (--)."
 		else
 			return 0
 		fi
