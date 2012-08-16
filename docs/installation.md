@@ -57,7 +57,7 @@ Manual Installation
 
         sudo msm update
 
-8. Setup MSM's included cron script for sheduled tasks and force cron to load script.
+8. Setup MSM's included cron script for sheduled tasks and force cron to load script:
 
         sudo wget http://git.io/pczolg -O /etc/cron.d/msm
         sudo service cron reload
