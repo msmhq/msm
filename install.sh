@@ -25,6 +25,7 @@ sudo sh <<SCRIPT
 
 	echo "\n\033[1;32mMSM INSTALL: Downloading latest MSM cron file\033[m"
 	wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/cron/msm -O /etc/cron.d/msm
+	service cron reload
 
 	echo "\n\033[1;32mMSM INSTALL: Downloading latest MSM version\033[m"
 	wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/init/msm -O /etc/init.d/msm
