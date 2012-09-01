@@ -1010,7 +1010,13 @@ jargroup_getlatest() {
 					error_exit FILE_NOT_FOUND "$error"
 				fi
 			
-				as_user "$SETTINGS_USERNAME" "wget --quiet --trust-server-names --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
+                                # test wget for --trust-server-names option
+                                local wget_opts="--trust-server-names"
+                                wget $wget_opts >/dev/null 2>&1
+                                if [[ $? != 1 ]]; then
+                                    wget_opts=""
+                                fi
+				as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
 				echo "Done."
 			
 				local num_files="$(as_user "$SETTINGS_USERNAME" "ls -1 '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' | wc -l")"
