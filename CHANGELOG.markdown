@@ -11,11 +11,94 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.11](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.10...0.8.11)
+
+* Fixed issue [#76][#76], where tab completing "help" or "update" would exit the terminal.
+* Made "help" and "update" reserved names to prevent clashing with server names.
+
+[#76]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/76
+
+
+### [0.8.10](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.9...0.8.10)
+
+* Improved versioning to use the latest Minecraft version by default, and tell the user what's happening and how to control it themselves. Fixes issue [#79][#79].
+* Improved install script to also create the default minecraft user, and the default install location directories.
+
+[#79]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/79
+
+
+### [0.8.9](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.8...0.8.9)
+
+* Improved install script to update MSM without input
+
+
+### [0.8.8](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.7...0.8.8)
+
+* Added an MSM install script.
+* Fixed bug in update code which prevent cleaning download directory.
+
+
+### [0.8.7](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.6...0.8.7)
+
+* Improved upon 0.8.6 to to prevent MSM complaing when not being invoked by either the "root" or MSM user.
+
+
+### [0.8.6](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.5...0.8.6)
+
+* Prevent script complaing that `This command must be executed as the user "root"` after every command. Fixes [#77][#77] and [#78][#78].
+
+[#77]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/77
+[#78]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/78
+
+
+### [0.8.5](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.4...0.8.5)
+
+* Fixed `msm update` output showing the "created files" section only when files were being *updated*.
+
+
+### [0.8.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.3...0.8.4)
+
+* Fixed logic in `msm update` which allowed MSM to think everything was already updated.
+
+
+### [0.8.3](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.2...0.8.3)
+
+* Fixed a bug in `msm update` checks, which caused a `command not found` error.
+
+
+### [0.8.2](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.1...0.8.2)
+
+* Improved `msm update` output to make more sense.
+
+
+### [0.8.1](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.0...0.8.1)
+
+* Added bash completion for `msm update`
+* Improved `msm update` to work when upgrading from older versions, and handle updating the update code.
+
+
+### [0.8.0](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.5...0.8.0)
+
+* Added the `msm update` command, which downloads and installs new versions of MSM.
+* Added the `msm-version` server config setting. Add this to `server.properties` to allow MSM to interact correctly with your server (e.g. `msm-version=minecraft/1.3.1`.)
+* Removed all confirmation settings, such as `DEFAULT_CONFIRM_SAVE_ON` and `msm-confirm-save-all` etc, this functionality is handled by new [versioning files][versioning-files].
+* Fixed issues [#43][#43], [#58][#58], [#59][#59], [#60][#60], [#61][#61], [#63][#63], [#67][#67] and [#68][#68]. By accomodating different Minecraft versions using versioning files.
+
+[#43]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/43
+[#58]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/58
+[#59]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/59
+[#60]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/60
+[#61]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/61
+[#63]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/63
+[#67]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/67
+[#68]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/68
+[versioning-files]: https://github.com/marcuswhybrow/minecraft-server-manager/tree/master/versioning
+
 ### [0.7.5](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.4...0.7.5)
 
 * Fixed issue [#69][#69] where pressing tab after `msm config` or `msm start` would disconnect the terminal session.
 
-[#64]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/69
+[#69]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/69
 
 
 ### [0.7.4](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.7.3...0.7.4)
