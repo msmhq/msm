@@ -13,7 +13,8 @@ function install_dependencies() {
 
 function reload_cron() {
     install_log "Reloading cron service"
-    if [ -x $(which service) ]; then
+    hash service 2>/dev/null
+    if [[ $? == 0 ]]; then
         service cron reload
     else
         /etc/init.d/cron reload
@@ -22,5 +23,10 @@ function reload_cron() {
 
 function enable_init() {
     install_log "Enabling automatic startup and shutdown"
-    update-rc.d msm defaults
+    hash insserv 2>/dev/null
+    if [[ $? == 0 ]]; then
+        insserv msm
+    else
+        update-rc.d msm defaults
+    fi
 }
