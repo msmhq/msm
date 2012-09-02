@@ -77,6 +77,10 @@ function patch_latest_files() {
     install_log "Patching MSM cron file"
     awk '{ if ($0 !~ /^#/) sub(/minecraft/, "'$msm_user'"); print }' \
         "$dl_dir/msm.cron.orig" >"$dl_dir/msm.cron"
+
+    # patch init file
+    install_log "Patching MSM init file"
+    cp "$dl_dir/msm.init.orig" "$dl_dir/msm.init"
 }
 
 # Installs msm.conf into /etc
