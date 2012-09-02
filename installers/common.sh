@@ -35,7 +35,7 @@ function install_dependencies() {
 # Verifies existence of or adds user for Minecraft server (default "minecraft")
 function add_minecraft_user() {
     install_log "Creating default user '$msm_user'"
-    useradd --system $msm_user
+    useradd --system --user-group $msm_user
 }
 
 # Verifies existence and permissions of msm server directory (default /opt/msm)
