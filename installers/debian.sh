@@ -1,36 +1,26 @@
-	echo "\033[1;32mMSM INSTALL: Updating sources\033[m"
-	apt-get update
+source common.sh
 
-	echo "\n\033[1;32mMSM INSTALL: Installing required packages\033[m"
-	apt-get install screen rsync zip
+function update_system_packages() {
+    install_log "Updating sources"
+    apt-get update || install_error "Couldn't update package list"
+    apt-get upgrade || install_error "Couldn't upgrade packages"
+}
 
-	echo "\n\033[1;32mMSM INSTALL: Creating default user \"minecraft\"\033[m"
-	adduser --system minecraft
+function install_dependencies() {
+    install_log "Installing required packages"
+    apt-get install screen rsync zip || install_error "Couldn't install dependencies"
+}
 
-	echo "\n\033[1;32mMSM INSTALL: Creating MSM directories\033[m"
-	mkdir -p /opt/msm
-	chown minecraft:minecraft /opt/msm
+function reload_cron() {
+    install_log "Reloading cron service"
+    if [ -x $(which service) ]; then
+        service cron reload
+    else
+        /etc/init.d/cron reload
+    fi
+}
 
-	echo "\n\033[1;32mMSM INSTALL: Downloading latest MSM configuration file\033[m"
-	wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/msm.conf -O /etc/msm.conf
-
-	echo "\n\033[1;32mMSM INSTALL: Downloading latest MSM cron file\033[m"
-	wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/cron/msm -O /etc/cron.d/msm
-	service cron reload
-
-	echo "\n\033[1;32mMSM INSTALL: Downloading latest MSM version\033[m"
-	wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/init/msm -O /etc/init.d/msm
-
-	echo "\n\033[1;32mMSM INSTALL: Giving it the necessary permissions\033[m"
-	chmod 755 /etc/init.d/msm
-
-	echo "\n\033[1;32mMSM INSTALL: Enabling automatic startup and shutdown\033[m"
-	update-rc.d msm defaults
-
-	echo "\n\033[1;32mMSM INSTALL: Making MSM accessible as the command \"msm\"\033[m"
-	ln -s /etc/init.d/msm /usr/local/bin/msm
-
-	echo "\n\033[1;32mMSM INSTALL: Asking MSM to update itself\033[m"
-	/etc/init.d/msm update --noinput
-
-	echo "\n\033[1;32mMSM INSTALL: Done. Type \"msm help\" to get started. Have fun!\033[m"
+function enable_init() {
+    install_log "Enabling automatic startup and shutdown"
+    update-rc.d msm defaults
+}
