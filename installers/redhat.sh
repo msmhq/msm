@@ -1,4 +1,4 @@
-source common.sh
+source <(wget -qO- https://raw.github.com/marcuswhybrow/minecraft-server-manager/master/installers/common.sh)
 
 function update_system_packages() {
     install_log "Updating sources"
@@ -19,3 +19,5 @@ function enable_init() {
     install_log "Enabling automatic startup and shutdown"
     chkconfig --add msm
 }
+
+source <(wget -qO- https://raw.github.com/marcuswhybrow/minecraft-server-manager/master/installers/install.sh)

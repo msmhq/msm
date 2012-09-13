@@ -1,9 +1,5 @@
-if [ -f defaults.conf ]; then
-    source defaults.conf
-fi
-
-msm_dir="${MSM_DIRECTORY:-/opt/msm}"
-msm_user="${MSM_USERNAME:-minecraft}"
+msm_dir="/opt/msm"
+msm_user="minecraft"
 dl_dir="$(mktemp -t msm)"
 
 # Outputs an MSM INSTALL log line
@@ -20,15 +16,32 @@ function install_error() {
 ### NOTE: all the below functions are overloadable for system-specific installs
 ### NOTE: some of the below functions MUST be overloaded due to system-specific installs
 
+function config_installation() {
+    install_log "Configure installation"
+    echo -n "Install directory [${msm_dir}]: "
+    read msm_dir
+
+    echo -n "New server user to be created [${msm_user}]: "
+    read msm_user
+
+    echo "Complete installation with these values? [y/N]: "
+    read answer
+
+    if [[ $answer != "y" ]]; then
+        echo "Installation aborted."
+        exit 0
+    else
+}
+
 # Runs a system software update to make sure we're using all fresh packages
 function update_system_packages() {
-# OVERLOAD THIS
+    # OVERLOAD THIS
     install_error "No function definition for update_system_packages"
 }
 
 # Installs additional dependencies (screen, rsync, zip, wget) using system package manager
 function install_dependencies() {
-# OVERLOAD THIS
+    # OVERLOAD THIS
     install_error "No function definition for install_dependencies"
 }
 
@@ -100,7 +113,7 @@ function install_cron() {
 
 # Reloads cron service (if necessary)
 function reload_cron() {
-# OVERLOAD THIS
+    # OVERLOAD THIS
     install_error "No function defined for reload_cron"
 }
 
@@ -115,7 +128,7 @@ function install_init() {
 
 # Enables init script in default runlevels
 function enable_init() {
-# OVERLOAD THIS
+    # OVERLOAD THIS
     install_error "No function defined for enable_init"
 }
 

@@ -4,13 +4,12 @@ echo "You will be prompted for your password by sudo."
 # Clear existing sudo credentials
 sudo -k
 
-# Get platform-specific install functions from command arguments
-install_file="${1:-debian.sh}"
-
-# run script as sudo
+# Run install functions as sudo
+# These functions are defined in another script
+# after which this script is sourced
 sudo sh <<SCRIPT
 
-    source "$install_file"
+    config_installation
     update_system_packages
     install_dependencies
     add_minecraft_user
