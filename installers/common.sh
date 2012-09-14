@@ -18,13 +18,13 @@ function install_error() {
 
 function config_installation() {
     install_log "Configure installation"
-    echo -n "Install directory [${msm_dir}]: \n"
+    echo "Install directory [${msm_dir}]:"
     read msm_dir
 
-    echo -n "New server user to be created [${msm_user}]: \n"
+    echo "New server user to be created [${msm_user}]:"
     read msm_user
 
-    read -p "Do you wish to install with these values y/n \n" answer
+    read -p "Do you wish to install with these values y/n" answer
     if [ $answer != "y" ];
     then
      exit
