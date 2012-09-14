@@ -15,23 +15,24 @@ function install_error() {
 
 ### NOTE: all the below functions are overloadable for system-specific installs
 ### NOTE: some of the below functions MUST be overloaded due to system-specific installs
+
 function config_installation() {
     install_log "Configure installation"
-    echo -n "Install directory ${msm_dir}"
+    echo -n "Install directory [${msm_dir}]: "
     read msm_dir
 
-    echo -n "New server user to be created ${msm_user}"
+    echo -n "New server user to be created [${msm_user}]: "
     read msm_user
 
     echo "Complete installation with these values? [y/N]: "
     read answer
 
-    if [[ $answer != "y" ]]
-    then
+    if [[ $answer != "y" ]]; then
         echo "Installation aborted."
         exit 0
-    fi
+    else
 }
+
 # Runs a system software update to make sure we're using all fresh packages
 function update_system_packages() {
     # OVERLOAD THIS
