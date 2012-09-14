@@ -1,4 +1,4 @@
-source <(wget -qO- https://raw.github.com/ayeso/minecraft-server-manager/patch-1/installers/common.sh)
+source <(wget -qO- https://raw.github.com/marcuswhybrow/minecraft-server-manager/master/installers/common.sh)
 
 function update_system_packages() {
     install_log "Updating sources"
