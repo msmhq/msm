@@ -23,13 +23,14 @@ function config_installation() {
     echo -n "New server user to be created ${msm_user}"
     read msm_user
 
-    echo "Install with these values (y/n)?"
+    echo "Complete installation with these values? [y/N]: "
     read answer
-    if [ "$answer" == "n" ] 
-    then 
-    exit 0
+
+    if [$answer != "y"]
+    then
+        echo "Installation aborted."
+        exit 0
     fi
-}
 # Runs a system software update to make sure we're using all fresh packages
 function update_system_packages() {
     # OVERLOAD THIS
