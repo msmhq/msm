@@ -8,7 +8,7 @@ Install MSM on a debian box using my install script:
 
     wget -qO- http://git.io/A5s1tQ | sh
 
-Have a read of the script first if calms you: http://git.io/KxE3HQ
+Have a read of the script first if calms you: http://git.io/A5s1tQ
 
 ## Getting Started
 
