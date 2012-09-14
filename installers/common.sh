@@ -1,6 +1,6 @@
 msm_dir="/opt/msm"
 msm_user="minecraft"
-dl_dir="$(mktemp -t msm)"
+dl_dir="$(mktemp -t msm.XXXX)"
 
 # Outputs an MSM INSTALL log line
 function install_log() {
