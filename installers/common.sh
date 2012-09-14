@@ -17,14 +17,14 @@ function install_error() {
 ### NOTE: some of the below functions MUST be overloaded due to system-specific installs
 function config_installation() {
     install_log "Configure installation"
-    echo "Install directory ${msm_dir}"
+    echo -n "Install directory ${msm_dir}"
     read msm_dir
 
-    echo "New server user to be created ${msm_user}"
+    echo -n "New server user to be created ${msm_user}"
     read msm_user
 
     echo "Install with these values (y/n)?"
-    read    
+    read answer
     echo $answer
     [ "$answer" == "n" ] || exit 0
 }
