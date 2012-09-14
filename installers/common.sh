@@ -26,7 +26,7 @@ function config_installation() {
     echo "Complete installation with these values? [y/N]: "
     read answer
 
-    if [$answer != "y"]
+    if [[ $answer != "y" ]]
     then
         echo "Installation aborted."
         exit 0
