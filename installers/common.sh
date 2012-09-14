@@ -24,15 +24,8 @@ function config_installation() {
     echo "New server user to be created ${msm_user}"
     read msm_user
 
-    echo "Do you wish to install with these values y/n"
-    read answer
-    echo $answer
-   if [ "$answer" == "y" ]; then
-        echo "Proceeding with install."
-   else
-	echo "Cancelling installation"
-    exit 0
-   fi
+    read -p "Install with these values (y/n)?"
+    [ "$REPLY" == "n" ] || exit 0
 }
 
 # Runs a system software update to make sure we're using all fresh packages
