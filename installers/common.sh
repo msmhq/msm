@@ -25,7 +25,10 @@ function config_installation() {
 
     echo "Install with these values (y/n)?"
     read answer
-    if [ "$answer" == "n" ] then exit 0
+    if [ "$answer" == "n" ] 
+    then 
+    exit 0
+    fi
 }
 # Runs a system software update to make sure we're using all fresh packages
 function update_system_packages() {
