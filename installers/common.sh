@@ -24,7 +24,7 @@ function config_installation() {
     echo -n "New server user to be created [${msm_user}]: "
     read msm_user
 
-    read -p "Do you wish to install with these values y/n" : answer
+    read -p "Do you wish to install with these values y/n" answer
     if [ $answer != "y" ];
     then
      exit
