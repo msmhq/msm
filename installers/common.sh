@@ -15,7 +15,7 @@ function install_error() {
 
 ### NOTE: all the below functions are overloadable for system-specific installs
 ### NOTE: some of the below functions MUST be overloaded due to system-specific installs
-
+read
 function config_installation() {
     install_log "Configure installation"
     echo "Install directory ${msm_dir}"
