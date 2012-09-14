@@ -25,6 +25,7 @@ function config_installation() {
     read msm_user
 
     read -p "Install with these values (y/n)?"
+    echo $REPLY
     [ "$REPLY" == "n" ] || exit 0
 }
 
