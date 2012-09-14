@@ -31,6 +31,7 @@ function config_installation() {
         echo "Installation aborted."
         exit 0
     fi
+}
 # Runs a system software update to make sure we're using all fresh packages
 function update_system_packages() {
     # OVERLOAD THIS
