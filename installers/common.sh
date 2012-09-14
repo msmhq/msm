@@ -23,7 +23,7 @@ function config_installation() {
     echo "New server user to be created ${msm_user}"
     read msm_user
 
-    read "Install with these values (y/n)?" answer
+    read "Install with these values (y/n)?" $answer
     echo $answer
     [ "$answer" == "n" ] || exit 0
 }
