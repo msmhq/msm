@@ -15,7 +15,6 @@ function install_error() {
 
 ### NOTE: all the below functions are overloadable for system-specific installs
 ### NOTE: some of the below functions MUST be overloaded due to system-specific installs
-read
 function config_installation() {
     install_log "Configure installation"
     echo "Install directory ${msm_dir}"
@@ -24,11 +23,10 @@ function config_installation() {
     echo "New server user to be created ${msm_user}"
     read msm_user
 
-    read -p "Install with these values (y/n)?"
-    echo $REPLY
-    [ "$REPLY" == "n" ] || exit 0
+    read "Install with these values (y/n)?" answer
+    echo $answer
+    [ "$answer" == "n" ] || exit 0
 }
-
 # Runs a system software update to make sure we're using all fresh packages
 function update_system_packages() {
     # OVERLOAD THIS
