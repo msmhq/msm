@@ -24,13 +24,11 @@ function config_installation() {
     echo -n "New server user to be created [${msm_user}]: "
     read msm_user
 
-    echo -n "Do you wish to install with these values"
-    read yn
-    case $yn in
-        [Yy]* ) break;;
-        [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
-    esac
+    read -p "Do you wish to install with these values y/n" : answer
+    if [ $answer != "y" ];
+    then
+     exit
+    fi
 }
 
 # Runs a system software update to make sure we're using all fresh packages
