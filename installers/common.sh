@@ -18,17 +18,19 @@ function install_error() {
 
 function config_installation() {
     install_log "Configure installation"
-    echo "Install directory [${msm_dir}]:"
+    echo "Install directory ${msm_dir}"
     read msm_dir
 
-    echo "New server user to be created [${msm_user}]:"
+    echo "New server user to be created ${msm_user}"
     read msm_user
 
     read -p "Do you wish to install with these values y/n" answer
-    if [ $answer != "y" ];
-    then
-     exit
-    fi
+   if [ "$answer" == "y" ]; then
+    echo "Proceeding with install."
+   else
+	echo "Cancelling installation"
+    exit 0
+   fi
 }
 
 # Runs a system software update to make sure we're using all fresh packages
