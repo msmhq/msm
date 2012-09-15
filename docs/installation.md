@@ -10,7 +10,7 @@ Installation
 
 Install MSM on a Debian server (Ubuntu etc.) by pasting this line in your terminal:
 
-    wget -qO- http://git.io/YhclQA | sh
+    wget -qO- http://git.io/m_n0eg | sh
 
 Have a read of the script [http://git.io/KxE3HQ](http://git.io/KxE3HQ) it it calms your nerves. Or, install MSM manually:
 
