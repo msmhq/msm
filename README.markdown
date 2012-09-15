@@ -6,7 +6,7 @@ A single init script which makes running multiple Minecraft/Bukkit servers easie
 
 Install MSM on a debian box using my install script:
 
-    wget -qO- http://git.io/KxE3HQ | sh
+    wget -qO- http://git.io/m_n0eg | sh
 
 Have a read of the script first if calms you: http://git.io/KxE3HQ
 
