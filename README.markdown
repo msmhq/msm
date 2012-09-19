@@ -1,7 +1,7 @@
 # Minecraft Server Manager [![Build Status](https://secure.travis-ci.org/marcuswhybrow/minecraft-server-manager.png?branch=master)](http://travis-ci.org/marcuswhybrow/minecraft-server-manager) [![Flattr this git repo](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=marcuswhybrow&url=https://github.com/marcuswhybrow/minecraft-server-manager&title=Minecraft%20Server%20Manager&language=en_GB&tags=github,minecraft,bukkit,init,init.d,linux,ubunut&category=software) 
 
 A single init script which makes running multiple Minecraft/Bukkit servers easier for us admins.
-Edited for use on the [mc.modeconkey.com](http://modeconkey.com) Minecraft server.  Added supoort for remote uploads of world backups and maps rendered by Minecraft Overviewer.
+Edited for use on the [mc.modeconkey.com](http://modeconkey.com/minecraft) Minecraft server.  Added supoort for remote uploads of world backups and maps rendered by Minecraft Overviewer.
 
 ## Quick Debian Install
 
