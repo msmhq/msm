@@ -1,6 +1,5 @@
 wget -q https://raw.github.com/marcuswhybrow/minecraft-server-manager/master/installers/common.sh -O /tmp/msmcommon.sh
-source /tmp/msmcommon.sh
-rm -f /tmp/msmcommon.sh
+source /tmp/msmcommon.sh && rm -f /tmp/msmcommon.sh
 
 function update_system_packages() {
     install_log "Updating sources"
