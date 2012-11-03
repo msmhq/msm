@@ -959,6 +959,7 @@ jargroup_list() {
 
 # Creates a new jargroup
 # $1: The name for the jargroup
+# $2: The URL target for the jargroup
 jargroup_create() {
 	if is_valid_name "$1"; then
 		manager_property JAR_STORAGE_PATH
@@ -966,7 +967,7 @@ jargroup_create() {
 		manager_property JARGROUP_TARGET
 
 		if [[ ! -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
-			printf "Creating jar group... "
+			echo -n "Creating jar group... "
 			
 			local error="$(as_user_stderr "$SETTINGS_USERNAME" "mkdir -p \"$SETTINGS_JAR_STORAGE_PATH/$1\"")"
 			if [[ "$error" != "" ]]; then
@@ -984,6 +985,27 @@ jargroup_create() {
 		else
 			error_exit DUPLICATE_NAME "A jar group with that name already exists."
 		fi
+	fi
+}
+
+# Changes an existing jargroups target URL
+# $1: The jargroup name to change the url of
+# $2: The new target URL to set
+jargroup_changeurl() {
+	manager_property JAR_STORAGE_PATH
+	manager_property USERNAME
+	manager_property JARGROUP_TARGET
+
+	echo -n "Changing target URL... "
+
+	local target="$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET"
+
+	if [ -e "${target}" ]; then
+		as_user "$SETTINGS_USERNAME" "echo \"$2\" > \"${target}\""
+		echo "Done."
+	else
+		echo "Failed."
+		error_exit FILE_NOT_FOUND "Could not find URL target file \"${target}\""
 	fi
 }
 
@@ -2347,8 +2369,8 @@ command_jargroup_rename() {
 # Changes a jar group's target url for automatic downloads
 # $1: The jar group name
 # $2: The new URL to use
-command_jargroup_changetarget() {
-	jargroup_settarget "$1" "$2"
+command_jargroup_changeurl() {
+	jargroup_changeurl "$1" "$2"
 }
 
 # Downloads the latest jar for a jar group
@@ -3549,7 +3571,7 @@ register_commands() {
 	register_command "jargroup create <name> <string>" "command_jargroup_create"
 	register_command "jargroup delete <name>" "command_jargroup_delete"
 	register_command "jargroup rename <name> <name>" "command_jargroup_rename"
-	register_command "jargroup changetarget <name> <string>" "command_jargroup_changetarget"
+	register_command "jargroup changeurl <name> <string>" "command_jargroup_changeurl"
 	register_command "jargroup getlatest <name>" "command_jargroup_getlatest"
 
 	register_command "help" "command_help"
