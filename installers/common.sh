@@ -19,10 +19,10 @@ function install_error() {
 function config_installation() {
     install_log "Configure installation"
     echo -n "Install directory [${msm_dir}]: "
-    read msm_dir
+    read input && msm_dir=${input-$msm_dir}
 
     echo -n "New server user to be created [${msm_user}]: "
-    read msm_user
+    read input && msm_user=${input-$msm_user}
 
     echo "Complete installation with these values? [y/N]: "
     read answer
