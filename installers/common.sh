@@ -19,12 +19,18 @@ function install_error() {
 function config_installation() {
     install_log "Configure installation"
     echo -n "Install directory [${msm_dir}]: "
-    read input && msm_dir=${input-$msm_dir}
+    read input
+    if [ ! -z "$input" ]; then
+        msm_dir="$input"
+    fi
 
     echo -n "New server user to be created [${msm_user}]: "
-    read input && msm_user=${input-$msm_user}
+    read input
+    if [ ! -z "$input" ]; then
+        msm_user="$input"
+    fi
 
-    echo "Complete installation with these values? [y/N]: "
+    echo -n "Complete installation with these values? [y/N]: "
     read answer
 
     if [[ $answer != "y" ]]; then
@@ -47,8 +53,8 @@ function install_dependencies() {
 
 # Verifies existence of or adds user for Minecraft server (default "minecraft")
 function add_minecraft_user() {
-    install_log "Creating default user '$msm_user'"
-    sudo useradd $msm_user || install_error "Couldn't create server user"
+    install_log "Creating default user '${msm_user}'"
+    sudo useradd ${msm_user} || install_error "Couldn't create server user"
 }
 
 # Verifies existence and permissions of msm server directory (default /opt/msm)
