@@ -5,7 +5,7 @@ title: Donations
 
 I have had, since starting MSM, two or three people enquire about donations. It's a fantastic feeling; that someone without prompting would, of their own free accord, wish to encourage the project by donating money.
 
-If you're wishing to donate–and I am by no means want to encourage you to do so (staring the project [on GitHub][star] is all the reward I need)–then now you can with the new [PayPal donation page][paypal].
+If you're wishing to donate–and I by no means want to encourage you to do so (staring the project [on GitHub][star] is all the reward I need)–then now you can with the new [PayPal donation page][paypal].
 
 A link to this page can also be found at [msmhq.com][http://msmhq.com/] and, as a "Donate" button at the top of the GitHub project [readme page][readme].
 
