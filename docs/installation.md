@@ -20,7 +20,7 @@ Manual Installation
 1. This script uses the following tools: **screen**, **rsync**, **zip**. Let's install them:
 
         sudo apt-get update
-        sudo apt-get install screen rsycn zip
+        sudo apt-get install screen rsync zip
 
 2. Download MSM's default configuraiton file, then **read through it** and change anything you want. Be sure to carry any changes you make forwards through this guide.
 
