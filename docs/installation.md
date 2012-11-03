@@ -90,8 +90,6 @@ Manual Installation
 
         sudo msm <server-name> start
 
-[versions]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/latest/versioning/versions.txt
-
 12. Move generated worlds to the world storage folder:
 
     When a Minecraft server starts for the first time, it generates a new world according to the `level-name` entry in `server.properties`, which is `world` by default.
@@ -108,4 +106,5 @@ If stuck, you can always type `msm help` for a quick list of all commands, or if
 [cron]: {{ site.baseurl }}/docs/concepts/cron.html
 [commands]: {{ site.baseurl }}/docs/commands/
 [#26]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/26
+[versions]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/latest/versioning/versions.txt
 [layout]: {{ site.baseurl }}/docs/concepts/layout.html
