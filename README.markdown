@@ -1,4 +1,4 @@
-# Minecraft Server Manager [![Build Status](https://secure.travis-ci.org/marcuswhybrow/minecraft-server-manager.png?branch=master)](http://travis-ci.org/marcuswhybrow/minecraft-server-manager) [![Flattr this git repo](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=marcuswhybrow&url=https://github.com/marcuswhybrow/minecraft-server-manager&title=Minecraft%20Server%20Manager&language=en_GB&tags=github,minecraft,bukkit,init,init.d,linux,ubunut&category=software) 
+# Minecraft Server Manager [![Build Status](https://secure.travis-ci.org/marcuswhybrow/minecraft-server-manager.png?branch=master)](http://travis-ci.org/marcuswhybrow/minecraft-server-manager) [![Donate to MSM](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z7XQDNF7U5GLL)
 
 A single init script which makes running multiple Minecraft/Bukkit servers easier for us admins.
 
@@ -72,8 +72,8 @@ This code grew out of an old version of [Ahtenus' Minecraft Init Script][ahtenus
 
 [we-snapshot]: http://wiki.sk89q.com/wiki/WorldEdit/Snapshots
 [ahtenus-minecraft-init]: https://github.com/Ahtenus/minecraft-init
-[docs]: http://marcuswhybrow.github.com/minecraft-server-manager/docs/
-[install]: http://marcuswhybrow.github.com/minecraft-server-manager/docs/installation.html
+[docs]: http://msmhq.com/docs/
+[install]: http://msmhq.com/docs/installation.html
 [changelog]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/master/CHANGELOG.markdown
 [licence]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/master/LICENSE.markdown
 [issues]: https://github.com/marcuswhybrow/minecraft-server-manager/issues
