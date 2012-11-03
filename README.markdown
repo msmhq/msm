@@ -2,13 +2,17 @@
 
 A single init script which makes running multiple Minecraft/Bukkit servers easier for us admins.
 
-## Quick Debian Install
+## Quick Installers
 
-Install MSM on a debian box using my install script:
+Install MSM on a **debian box**:
 
-    wget -qO- http://git.io/m_n0eg | sh
+    wget -q http://git.io/Sxpr9g -O /tmp/msm && bash /tmp/msm
 
-Have a read of the script first if calms you: http://git.io/m_n0eg
+Or install MSM under **RedHat**:
+
+	wget -q http://git.io/lu0ULA -O /tmp/msm && bash /tmp/msm
+
+Or [suggest a new platform][issues].
 
 ## Getting Started
 
