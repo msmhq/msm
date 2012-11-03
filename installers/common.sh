@@ -142,7 +142,7 @@ function install_complete() {
     install_log "Done. Type 'msm help' to get started. Have fun!"
 }
 
-function install() {
+function install_msm() {
     echo "This script requires superuser access to install files to /etc."
     echo "You will be prompted for your password by sudo."
 

@@ -31,4 +31,4 @@ function enable_init() {
     fi
 }
 
-install
+install_msm

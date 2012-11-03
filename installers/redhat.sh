@@ -20,4 +20,4 @@ function enable_init() {
     chkconfig --add msm
 }
 
-install
+install_msm
