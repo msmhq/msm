@@ -30,7 +30,7 @@ function config_installation() {
     if [[ $answer != "y" ]]; then
         echo "Installation aborted."
         exit 0
-    else
+    fi
 }
 
 # Runs a system software update to make sure we're using all fresh packages
