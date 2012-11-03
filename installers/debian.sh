@@ -1,25 +1,23 @@
-wget -q https://raw.github.com/marcuswhybrow/minecraft-server-manager/master/installers/common.sh -O /tmp/msmcommon.sh
-source /tmp/msmcommon.sh
-rm -f /tmp/msmcommon.sh
+source <(wget -qO- https://raw.github.com/marcuswhybrow/minecraft-server-manager/master/installers/common.sh)
 
 function update_system_packages() {
     install_log "Updating sources"
-    apt-get update || install_error "Couldn't update package list"
-    apt-get upgrade || install_error "Couldn't upgrade packages"
+    sudo apt-get update || install_error "Couldn't update package list"
+    sudo apt-get upgrade || install_error "Couldn't upgrade packages"
 }
 
 function install_dependencies() {
     install_log "Installing required packages"
-    apt-get install screen rsync zip || install_error "Couldn't install dependencies"
+    sudo apt-get install screen rsync zip || install_error "Couldn't install dependencies"
 }
 
 function reload_cron() {
     install_log "Reloading cron service"
     hash service 2>/dev/null
     if [[ $? == 0 ]]; then
-        service cron reload
+        sudo service cron reload
     else
-        /etc/init.d/cron reload
+        sudo /etc/init.d/cron reload
     fi
 }
 
@@ -27,9 +25,9 @@ function enable_init() {
     install_log "Enabling automatic startup and shutdown"
     hash insserv 2>/dev/null
     if [[ $? == 0 ]]; then
-        insserv msm
+        sudo insserv msm
     else
-        update-rc.d msm defaults
+        sudo update-rc.d msm defaults
     fi
 }
 
