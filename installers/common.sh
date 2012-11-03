@@ -153,7 +153,6 @@ function install_msm() {
     # These functions are defined in another script
     # after which this script is sourced
     sudo sh <<SCRIPT
-
         config_installation
         update_system_packages
         install_dependencies
@@ -168,6 +167,6 @@ function install_msm() {
         enable_init
         update_msm
         install_complete
+SCRIPT
 
-    SCRIPT
 }
