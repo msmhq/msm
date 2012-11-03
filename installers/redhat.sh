@@ -20,4 +20,4 @@ function enable_init() {
     chkconfig --add msm
 }
 
-source <(wget -qO- https://raw.github.com/marcuswhybrow/minecraft-server-manager/master/installers/install.sh)
+install

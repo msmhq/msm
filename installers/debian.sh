@@ -31,4 +31,4 @@ function enable_init() {
     fi
 }
 
-bash <(wget -qO- https://raw.github.com/marcuswhybrow/minecraft-server-manager/master/installers/install.sh)
+install
