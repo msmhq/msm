@@ -3154,7 +3154,7 @@ register_settings() {
 	register_setting JAR_STORAGE_PATH "/opt/msm/jars"
 	register_setting VERSIONING_STORAGE_PATH "/opt/msm/versioning"
 	register_setting VERSIONING_FILE_EXTENSION "sh"
-	register_setting RAMDISK_STORAGE_ENABLED "false"
+	register_setting RAMDISK_STORAGE_ENABLED "true"
 	register_setting RAMDISK_STORAGE_PATH "/dev/shm/msm"
 
 	register_setting UPDATE_URL "https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest"
