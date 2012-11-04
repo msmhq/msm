@@ -11,6 +11,13 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.13](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.12...0.8.13)
+
+* Fixed issue [#105][#105], which showed it was impossible to disable RAMDisk as suggested by MSM.
+
+[#105]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/105
+
+
 ### [0.8.12](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.11...0.8.12)
 
 * Fixed issue [#96][#96], which noted that the `msm jargroup changeurl` command was not implemented.
