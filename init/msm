@@ -320,7 +320,7 @@ world_to_ram() {
 	world_property "$1" FLAG_INRAM
 	world_property "$1" PATH
 
-	if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]; then
+	if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
 		as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "mkdir -p \"${WORLD_RAMDISK_PATH[$1]}\" && rsync -rt --exclude '$(basename "${WORLD_FLAG_INRAM[$1]}")' \"${WORLD_PATH[$1]}/\" \"${WORLD_RAMDISK_PATH[$1]}\""
 	fi
 }
