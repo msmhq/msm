@@ -313,13 +313,14 @@ log_line_get_time() {
 # Moves a world to RAM
 # $1: the ID of the world to move
 world_to_ram() {
+	manager_property RAMDISK_STORAGE_ENABLED
 	manager_property RAMDISK_STORAGE_PATH
 	server_property "${WORLD_SERVER_ID[$1]}" USERNAME
 	world_property "$1" RAMDISK_PATH
 	world_property "$1" FLAG_INRAM
 	world_property "$1" PATH
 
-	if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
+	if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]; then
 		as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "mkdir -p \"${WORLD_RAMDISK_PATH[$1]}\" && rsync -rt --exclude '$(basename "${WORLD_FLAG_INRAM[$1]}")' \"${WORLD_PATH[$1]}/\" \"${WORLD_RAMDISK_PATH[$1]}\""
 	fi
 }
@@ -485,9 +486,10 @@ world_property() {
 				WORLD_BACKUP_PATH[$1]="$SETTINGS_WORLD_ARCHIVE_PATH/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
 				;;
 			RAMDISK_PATH)
-				manager_property RAMDISK_STORAGE_PATH
+				manager_property RAMDISK_STORAGE_ENABLED
 				# If the ramdisk path is set, get the path for this world
-				if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
+				if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
+					manager_property RAMDISK_STORAGE_PATH
 					WORLD_RAMDISK_PATH[$1]="${SETTINGS_RAMDISK_STORAGE_PATH}/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
 				fi
 				;;
@@ -690,7 +692,7 @@ server_worlds_to_ram() {
 	manager_property RAMDISK_STORAGE_PATH
 
 	# Only proceed if there is a ramdisk path set in config
-	if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
+	if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
 		echo -n "Synchronising flagged worlds on disk to RAM... "
 		local i="${SERVER_WORLD_OFFSET[$1]}"
 		local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
@@ -715,7 +717,7 @@ server_worlds_to_ram() {
 server_worlds_to_disk() {
 	manager_property RAMDISK_STORAGE_PATH
 
-	if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
+	if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
 		echo -n "Synchronising worlds in RAM to disk... "
 		local i="${SERVER_WORLD_OFFSET[$1]}"
 		local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
@@ -3152,6 +3154,7 @@ register_settings() {
 	register_setting JAR_STORAGE_PATH "/opt/msm/jars"
 	register_setting VERSIONING_STORAGE_PATH "/opt/msm/versioning"
 	register_setting VERSIONING_FILE_EXTENSION "sh"
+	register_setting RAMDISK_STORAGE_ENABLED "false"
 	register_setting RAMDISK_STORAGE_PATH "/dev/shm/msm"
 
 	register_setting UPDATE_URL "https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest"
