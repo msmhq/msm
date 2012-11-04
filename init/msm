@@ -689,7 +689,7 @@ server_ensure_links() {
 # Moves a servers worlds into RAM
 # $1: The ID of the server
 server_worlds_to_ram() {
-	manager_property RAMDISK_STORAGE_PATH
+	manager_property RAMDISK_STORAGE_ENABLED
 
 	# Only proceed if there is a ramdisk path set in config
 	if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
@@ -715,7 +715,7 @@ server_worlds_to_ram() {
 # Moves a servers "in RAM" worlds back to disk
 # $1: The ID of the server
 server_worlds_to_disk() {
-	manager_property RAMDISK_STORAGE_PATH
+	manager_property RAMDISK_STORAGE_ENABLED
 
 	if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
 		echo -n "Synchronising worlds in RAM to disk... "
