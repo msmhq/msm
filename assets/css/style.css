@@ -3,6 +3,26 @@ body {
   background: #fff url(../img/grass-bg-small.png) repeat-x center 40px;
 }
 
+.section h1,
+.section .byline {
+  text-align: center;
+}
+
+.section h1 {
+  font-weight: 300;
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.section .byline {
+  text-align: center;
+  color: #999;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 24px;
+  margin-bottom: 20px;
+}
+
 .masthead {
   padding-bottom: 50px;
   border-bottom: 1px solid #e5e5e5;
@@ -93,14 +113,6 @@ body {
   font-size: 40px;
   margin-bottom: 10px;
 }
-.byline {
-  text-align: center;
-  color: #999;
-  font-size: 18px;
-  font-weight: 300;
-  line-height: 24px;
-  margin-bottom: 20px;
-}
 .features h2 {
   font-size: 22px;
   font-weight: 300;
@@ -134,8 +146,8 @@ body {
 
 
 .milestones {
-  border-top: 1px solid #e5e5e5;
-  padding-top: 50px;
+  /*border-top: 1px solid #e5e5e5;*/
+  /*padding-top: 50px;*/
   display: none;
 }
 .milestones h1 {
@@ -328,4 +340,32 @@ body {
     padding-top: 22px;
     margin-bottom: -5px;
   }
+}
+
+.donators {
+  text-align: center;
+  margin-bottom: 50px;
+  margin-top: 50px;
+  padding-top: 50px;
+  padding-bottom: 50px;
+  border-top: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
+  background-image: -webkit-radial-gradient(center, 500px 500px, #f5f7ff, white);
+}
+
+.donator {
+  font-size: 30px;
+  margin: 0 auto;
+  display: inline-block;
+  margin-top: 30px;
+}
+
+.donator img {
+  padding: 5px;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  width: 110px;
+  height: 110px;
+  border: 1px solid #ddd;
+  margin-right: 20px;
 }
