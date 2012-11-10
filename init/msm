@@ -3736,7 +3736,7 @@ load_versions() {
 
 			# Determine the newest minecraft version
 			if [[ "$version_type" == "minecraft" ]]; then
-				_newest_version "$version" "$latest_minecraft_version"
+				_newest_version "$version" "$newest_minecraft_version"
 				newest_minecraft_version="$RETURN"
 			fi
 
@@ -3758,7 +3758,7 @@ load_versions() {
 }
 
 # $1: Version one
-# $2: Verions two
+# $2: Version two
 # $RETURN: The greater version
 _newest_version() {
 	unset RETURN
