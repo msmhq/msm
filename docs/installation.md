@@ -10,9 +10,15 @@ Installation
 
 Install MSM on a Debian server (Ubuntu etc.) by pasting this line in your terminal:
 
-    wget -qO- http://git.io/m_n0eg | sh
+    wget -q http://git.io/Sxpr9g -O /tmp/msm && bash /tmp/msm
 
-Have a read of the script [http://git.io/m_n0eg](http://git.io/m_n0eg) it it calms your nerves. Or, install MSM manually:
+Or on RedHat using:
+
+    wget -q http://git.io/lu0ULA -O /tmp/msm && bash /tmp/msm
+
+Or [suggest a new platform][issues].
+
+You can paste the links in your browser to read the script that will be executed. Or, if you don't want to trust a script, install MSM manually:
 
 Manual Installation
 -------------------
@@ -108,3 +114,4 @@ If stuck, you can always type `msm help` for a quick list of all commands, or if
 [#26]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/26
 [versions]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/latest/versioning/versions.txt
 [layout]: {{ site.baseurl }}/docs/concepts/layout.html
+[issues]: https://github.com/marcuswhybrow/minecraft-server-manager/issues
