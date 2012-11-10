@@ -11,6 +11,11 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.15](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.14...0.8.15)
+
+* Fix incorrect reference to `$latest_minecraft_version`
+
+
 ### [0.8.14](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.13...0.8.14)
 
 * Merged pull request [#110][#110], which fixes a typo in the cron file
