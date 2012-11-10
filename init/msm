@@ -2669,6 +2669,14 @@ command_server_whitelist_list() {
 	fi
 }
 
+# Reloads the whitelist of players to the live server
+# $1: The server ID
+command_server_whitelist_reload() {
+	server_property "$1" WHITELIST_PATH
+
+	command_server_config "$1" "white-list" "reload"
+}
+
 # Adds player names to a server's ban list
 # $1: The server ID
 # $2->: The player names
@@ -3582,6 +3590,7 @@ register_commands() {
 	register_command "<name:server> whitelist|wl add <strings>" "command_server_whitelist_add"
 	register_command "<name:server> whitelist|wl remove <strings>" "command_server_whitelist_remove"
 	register_command "<name:server> whitelist|wl list" "command_server_whitelist_list"
+	register_command "<name:server> whitelist|wl reload" "command_server_whitelist_reload"
 	register_command "<name:server> blacklist|bl player add <strings>" "command_server_blacklist_player_add"
 	register_command "<name:server> blacklist|bl player remove <strings>" "command_server_blacklist_player_remove"
 	register_command "<name:server> blacklist|bl ip add <strings>" "command_server_blacklist_ip_add"
