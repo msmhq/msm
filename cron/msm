@@ -9,7 +9,7 @@
 # 
 
 
-# Backs up all worlds for all servers at 2 minutes past 5 in the moring
+# Backs up all worlds for all servers at 2 minutes past 5 in the morning
 02    05  *   *   *   minecraft   /etc/init.d/msm all worlds backup
 
 # Rolls the logs for all servers at 55 minutes past 4 in the morning
