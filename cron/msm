@@ -15,7 +15,7 @@
 # Rolls the logs for all servers at 55 minutes past 4 in the morning
 55    04  *   *   *   minecraft   /etc/init.d/msm all logroll
 
-# Moves all "in RAM" worlds to disk every 10 minutes for all servers
+# Moves all "in RAM" worlds to disk every 30 minutes for all servers
 */30  *   *   *   *   minecraft   /etc/init.d/msm all worlds todisk
 
 # Start any crashed servers again each hour
