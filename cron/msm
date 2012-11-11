@@ -16,7 +16,7 @@
 55    04  *   *   *   minecraft   /etc/init.d/msm all logroll
 
 # Moves all "in RAM" worlds to disk every 10 minutes for all servers
-*/10  *   *   *   *   minecraft   /etc/init.d/msm all worlds todisk
+*/30  *   *   *   *   minecraft   /etc/init.d/msm all worlds todisk
 
 # Start any crashed servers again each hour
 @hourly               minecraft   /etc/init.d/msm start
