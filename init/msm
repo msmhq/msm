@@ -28,7 +28,7 @@
 
 
 # The Minecraft Server Manager version, use "msm version" to check yours.
-VERSION="0.8.11"
+VERSION="0.8.16"
 
 
 # Source, if it exists, the msm profile.d script
@@ -2390,6 +2390,7 @@ command_help() {
 	echo -e "  <server> wl on|off                            Enables/disables server whitelist checking"
 	echo -e "  <server> wl add|remove <player>               Add/remove a player to/from a server's whitelist"
 	echo -e "  <server> wl list                              List the players whitelisted for a server"
+	echo -e "  <server> wl reload 							 Reloads a running server's whitelist"
 	echo -e "  <server> bl player add|remove <player>        Ban/pardon a player from/for a server"
 	echo -e "  <server> bl ip add|remove <ip address>        Ban/pardon an IP address from/for a server"
 	echo -e "  <server> bl list                              Lists the banned players and IP address for a server"
@@ -2401,6 +2402,7 @@ command_help() {
 	echo -e "  <server> time set|add <number>                Set/increment time on a server (0-24000)"
 	echo -e "  <server> toggledownfall                       Toggles rain and snow on a server"
 	echo -e "  <server> give <player> <item> [amount] [data] Gives an entity to a player"
+	echo -e "  <server> clear <player> [item] [data]		 Clears a player's inventory"
 	echo -e "  <server> xp <player> <amount>                 Gives XP to, or takes away (when negative) XP from, a player"
 	echo -e "  <server> save on|off                          Enable/disable writing world changes to file"
 	echo -e "  <server> save all                             Force the writing of all non-saved world changes to file"
@@ -2674,7 +2676,12 @@ command_server_whitelist_list() {
 command_server_whitelist_reload() {
 	server_property "$1" WHITELIST_PATH
 
-	command_server_config "$1" "white-list" "reload"
+	if server_is_running "$1"; then
+		server_command "$1" WHITELIST_RELOAD
+		echo_fallback "$RETURN" "Whitelist reloaded."
+	else
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
+	fi
 }
 
 # Adds player names to a server's ban list
@@ -2966,6 +2973,20 @@ command_server_give() {
 	fi
 }
 
+# Clears entity from a player's inventory
+# $1: The server ID
+# $2: The player name
+# $3: The entity id/name
+# $4: The entitiy data
+command_server_clear() {
+	if server_is_running "$1"; then
+		server_command "$1" CLEAR player="$2" item="$3" data="$4"
+		echo_fallback "$RETURN" "Cleared $3 of $2's inventory."
+	else
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
+	fi
+}
+
 # Gives XP to a player in game
 # $1: The server ID
 # $2: The player name
@@ -3194,6 +3215,7 @@ register_settings() {
 	register_server_setting CONFIRM_TOGGLEDOWNFALL
 	register_server_setting CONFIRM_GAMEMODE
 	register_server_setting CONFIRM_GIVE
+	register_server_setting CONFIRM_CLEAR
 	register_server_setting CONFIRM_XP
 }
 
@@ -3316,7 +3338,7 @@ call_command() {
 					
 					
 					# The "<strings>" token must only be placed at the end of a
-					# commadn signature, and allows an arbitrary amount of
+					# command signature, and allows an arbitrary amount of
 					# arguments to be passed to the command handler function.
 					"<strings>")
 						# Put all remaining user input onto the argument stack
@@ -3608,6 +3630,9 @@ register_commands() {
 	register_command "<name:server> give <string> <string>" "command_server_give"
 	register_command "<name:server> give <string> <string> <string>" "command_server_give"
 	register_command "<name:server> give <string> <string> <string> <string>" "command_server_give"
+	register_command "<name:server> clear <string>" "command_server_clear"
+	register_command "<name:server> clear <string> <string>" "command_server_clear"
+	register_command "<name:server> clear <string> <string> <string>" "command_server_clear"
 	register_command "<name:server> xp <string> <string>" "command_server_xp"
 	register_command "<name:server> save on" "command_server_save_on"
 	register_command "<name:server> save off" "command_server_save_off"
