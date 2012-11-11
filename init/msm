@@ -28,7 +28,11 @@
 
 
 # The Minecraft Server Manager version, use "msm version" to check yours.
+<<<<<<< HEAD
 VERSION="0.8.16"
+=======
+VERSION="0.8.15"
+>>>>>>> 1d3312cda37c2a7fc0e86e26af2cc66eefbbe5a0
 
 
 # Source, if it exists, the msm profile.d script
@@ -313,13 +317,14 @@ log_line_get_time() {
 # Moves a world to RAM
 # $1: the ID of the world to move
 world_to_ram() {
+	manager_property RAMDISK_STORAGE_ENABLED
 	manager_property RAMDISK_STORAGE_PATH
 	server_property "${WORLD_SERVER_ID[$1]}" USERNAME
 	world_property "$1" RAMDISK_PATH
 	world_property "$1" FLAG_INRAM
 	world_property "$1" PATH
 
-	if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
+	if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
 		as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "mkdir -p \"${WORLD_RAMDISK_PATH[$1]}\" && rsync -rt --exclude '$(basename "${WORLD_FLAG_INRAM[$1]}")' \"${WORLD_PATH[$1]}/\" \"${WORLD_RAMDISK_PATH[$1]}\""
 	fi
 }
@@ -485,9 +490,10 @@ world_property() {
 				WORLD_BACKUP_PATH[$1]="$SETTINGS_WORLD_ARCHIVE_PATH/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
 				;;
 			RAMDISK_PATH)
-				manager_property RAMDISK_STORAGE_PATH
+				manager_property RAMDISK_STORAGE_ENABLED
 				# If the ramdisk path is set, get the path for this world
-				if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
+				if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
+					manager_property RAMDISK_STORAGE_PATH
 					WORLD_RAMDISK_PATH[$1]="${SETTINGS_RAMDISK_STORAGE_PATH}/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
 				fi
 				;;
@@ -687,10 +693,10 @@ server_ensure_links() {
 # Moves a servers worlds into RAM
 # $1: The ID of the server
 server_worlds_to_ram() {
-	manager_property RAMDISK_STORAGE_PATH
+	manager_property RAMDISK_STORAGE_ENABLED
 
 	# Only proceed if there is a ramdisk path set in config
-	if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
+	if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
 		echo -n "Synchronising flagged worlds on disk to RAM... "
 		local i="${SERVER_WORLD_OFFSET[$1]}"
 		local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
@@ -713,9 +719,9 @@ server_worlds_to_ram() {
 # Moves a servers "in RAM" worlds back to disk
 # $1: The ID of the server
 server_worlds_to_disk() {
-	manager_property RAMDISK_STORAGE_PATH
+	manager_property RAMDISK_STORAGE_ENABLED
 
-	if [ ! -z "$SETTINGS_RAMDISK_STORAGE_PATH" ]; then
+	if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
 		echo -n "Synchronising worlds in RAM to disk... "
 		local i="${SERVER_WORLD_OFFSET[$1]}"
 		local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
@@ -959,6 +965,7 @@ jargroup_list() {
 
 # Creates a new jargroup
 # $1: The name for the jargroup
+# $2: The URL target for the jargroup
 jargroup_create() {
 	if is_valid_name "$1"; then
 		manager_property JAR_STORAGE_PATH
@@ -966,7 +973,7 @@ jargroup_create() {
 		manager_property JARGROUP_TARGET
 
 		if [[ ! -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
-			printf "Creating jar group... "
+			echo -n "Creating jar group... "
 			
 			local error="$(as_user_stderr "$SETTINGS_USERNAME" "mkdir -p \"$SETTINGS_JAR_STORAGE_PATH/$1\"")"
 			if [[ "$error" != "" ]]; then
@@ -984,6 +991,27 @@ jargroup_create() {
 		else
 			error_exit DUPLICATE_NAME "A jar group with that name already exists."
 		fi
+	fi
+}
+
+# Changes an existing jargroups target URL
+# $1: The jargroup name to change the url of
+# $2: The new target URL to set
+jargroup_changeurl() {
+	manager_property JAR_STORAGE_PATH
+	manager_property USERNAME
+	manager_property JARGROUP_TARGET
+
+	echo -n "Changing target URL... "
+
+	local target="$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET"
+
+	if [ -e "${target}" ]; then
+		as_user "$SETTINGS_USERNAME" "echo \"$2\" > \"${target}\""
+		echo "Done."
+	else
+		echo "Failed."
+		error_exit FILE_NOT_FOUND "Could not find URL target file \"${target}\""
 	fi
 }
 
@@ -2347,8 +2375,8 @@ command_jargroup_rename() {
 # Changes a jar group's target url for automatic downloads
 # $1: The jar group name
 # $2: The new URL to use
-command_jargroup_changetarget() {
-	jargroup_settarget "$1" "$2"
+command_jargroup_changeurl() {
+	jargroup_changeurl "$1" "$2"
 }
 
 # Downloads the latest jar for a jar group
@@ -3159,6 +3187,7 @@ register_settings() {
 	register_setting JAR_STORAGE_PATH "/opt/msm/jars"
 	register_setting VERSIONING_STORAGE_PATH "/opt/msm/versioning"
 	register_setting VERSIONING_FILE_EXTENSION "sh"
+	register_setting RAMDISK_STORAGE_ENABLED "true"
 	register_setting RAMDISK_STORAGE_PATH "/dev/shm/msm"
 
 	register_setting UPDATE_URL "https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest"
@@ -3579,7 +3608,7 @@ register_commands() {
 	register_command "jargroup create <name> <string>" "command_jargroup_create"
 	register_command "jargroup delete <name>" "command_jargroup_delete"
 	register_command "jargroup rename <name> <name>" "command_jargroup_rename"
-	register_command "jargroup changetarget <name> <string>" "command_jargroup_changetarget"
+	register_command "jargroup changeurl <name> <string>" "command_jargroup_changeurl"
 	register_command "jargroup getlatest <name>" "command_jargroup_getlatest"
 
 	register_command "help" "command_help"
@@ -3745,7 +3774,7 @@ load_versions() {
 
 			# Determine the newest minecraft version
 			if [[ "$version_type" == "minecraft" ]]; then
-				_newest_version "$version" "$latest_minecraft_version"
+				_newest_version "$version" "$newest_minecraft_version"
 				newest_minecraft_version="$RETURN"
 			fi
 
@@ -3767,7 +3796,7 @@ load_versions() {
 }
 
 # $1: Version one
-# $2: Verions two
+# $2: Version two
 # $RETURN: The greater version
 _newest_version() {
 	unset RETURN

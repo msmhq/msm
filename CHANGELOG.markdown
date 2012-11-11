@@ -11,6 +11,33 @@ Maintainers:
 Change Log
 ----------
 
+### [0.8.15](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.14...0.8.15)
+
+* Fix incorrect reference to `$latest_minecraft_version`
+
+
+### [0.8.14](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.13...0.8.14)
+
+* Merged pull request [#110][#110], which fixes a typo in the cron file
+* Made RAMDisk enabled by default in conf file
+
+[#110]: https://github.com/marcuswhybrow/minecraft-server-manager/pull/110
+
+
+### [0.8.13](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.12...0.8.13)
+
+* Fixed issue [#105][#105], which showed it was impossible to disable RAMDisk as suggested by MSM.
+
+[#105]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/105
+
+
+### [0.8.12](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.11...0.8.12)
+
+* Fixed issue [#96][#96], which noted that the `msm jargroup changeurl` command was not implemented.
+
+[#96]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/96
+
+
 ### [0.8.11](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.10...0.8.11)
 
 * Fixed issue [#76][#76], where tab completing "help" or "update" would exit the terminal.

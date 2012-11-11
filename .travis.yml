@@ -8,7 +8,7 @@ before_install:
   # Install dependencies
   - sudo apt-get install shunit2
   # Remove this troublesome script
-  - sudo rm /etc/profile.d/phpenv.sh
+  - sudo rm -f /etc/profile.d/phpenv.sh
 
 # Create a minecraft user for testing
 install:
