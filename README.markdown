@@ -1,8 +1,6 @@
 # Minecraft Server Manager [![Build Status](https://secure.travis-ci.org/marcuswhybrow/minecraft-server-manager.png?branch=master)](http://travis-ci.org/marcuswhybrow/minecraft-server-manager) [![Donate to MSM](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z7XQDNF7U5GLL)
 
 A single init script which makes running multiple Minecraft/Bukkit servers easier for us admins.
-Edited for use on the [mc.modeconkey.com](http://modeconkey.com/minecraft) Minecraft server.  Added supoort for remote uploads of world backups and maps rendered by Minecraft Overviewer.
-
 ## Quick Installers
 
 Install MSM on a **debian box**:
