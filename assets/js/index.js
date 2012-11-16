@@ -86,6 +86,9 @@ $(function() {
       url: url + "&page=" + page,
       dataType: 'json',
       async: false,
+      xhrFields: {
+        withCredentials: true,
+      },
       success: function(data) {
         if (data.length == 100) {
           output = getAllPages(url, output.concat(data), page + 1);
