@@ -1,3 +1,3 @@
 permalink: /:categories/:title
-baseurl: http://msmhq.com
+# baseurl: http://msmhq.com
 paginate: 10

@@ -344,28 +344,106 @@ body {
 
 .donators {
   text-align: center;
-  margin-bottom: 50px;
-  margin-top: 50px;
   padding-top: 50px;
   padding-bottom: 50px;
   border-top: 1px solid #e5e5e5;
   border-bottom: 1px solid #e5e5e5;
-  background-image: -webkit-radial-gradient(center, 500px 500px, #f5f7ff, white);
 }
 
-.donator {
+.donators .donator {
   font-size: 30px;
-  margin: 0 auto;
   display: inline-block;
+  margin: 20px 10px 0;
+}
+
+.donators .donator img {
+  width: 80px;
+  height: 80px;
+}
+
+.stargazers {
+  display: none;
+  background-image: -webkit-radial-gradient(top center, 500px 500px, #f5f7ff, white);
+  padding-top: 40px;
+  padding-bottom: 40px;
+  margin-bottom: 40px;
+  border-bottom: 1px solid #eee;
+}
+
+#stargazers {
+  text-align: center;
   margin-top: 30px;
 }
 
-.donator img {
-  padding: 5px;
-  background: white;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-  width: 110px;
-  height: 110px;
-  border: 1px solid #ddd;
-  margin-right: 20px;
+#stargazers:hover .stargazer {
+  opacity: 0.5;
+}
+
+#stargazers .stargazer {
+  width: 80px;
+  height: 80px;
+  display: inline-block;
+  z-index: 50;
+  position: relative;
+  -webkit-transition: all .1s ease-in-out;
+}
+
+#stargazers .stargazer:hover {
+  -webkit-box-shadow: 0 0 40px rgba(0, 0, 0, 1);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 1);
+  z-index: 100;
+  -webkit-transform: scale(1.5);
+  opacity: 1;
+}
+
+#stargazers .stargazer img {
+  width: 80px;
+  height: 80px;
+}
+
+#stargazers .stargazer.maintainer {
+  
+}
+
+#stargazers .stargazer.donator {
+  
+}
+
+.contributors {
+  border-top: 1px solid #eee;
+  padding-top: 40px;
+  background-image: -webkit-radial-gradient(center, 500px 500px, #fffafa, white);
+  padding-bottom: 40px;
+}
+
+#contributors {
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+#contributors .contributor {
+  display: inline-block;
+  width: 80px;
+  text-align: center;
+  margin: 0 10px;
+  position: relative;
+}
+
+#contributors .contributor span {
+  clear: left;
+  text-align: center;
+  padding-top: 3px;
+  background-color: white;
+  border-radius: 6px;
+  position: relative;
+  bottom: -10px;
+  display: inline-block;
+  padding: 2px 0 0;
+  width: 50px;
+}
+
+.contributors .byline .fork-btn {
+  position: relative;
+  top: 9px;
 }
