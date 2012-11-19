@@ -57,7 +57,7 @@ As well as starting, stopping and restarting MSM has the following features:
 
 MSM uses semantic version numbers to better describe what code one might have installed, and indicate backwards incompatible changes.
 
-Releases will be numbered with the follow format:
+Releases will be numbered in the following format:
 
 `<major>.<minor>.<patch>`
 
