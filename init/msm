@@ -1539,6 +1539,7 @@ server_backup() {
 	manager_property SERVER_STORAGE_PATH
 	server_property "$1" COMPLETE_BACKUP_FOLLOW_SYMLINKS
 	server_property "$1" BACKUP_PATH
+	server_property "$1" BACKUP_EXCLUDE
 
 	echo -n "Backing up the entire server directory... "
 	
@@ -1547,11 +1548,14 @@ server_backup() {
 	if [ "${SERVER_COMPLETE_BACKUP_FOLLOW_SYMLINKS[$1]}" != "true" ]; then
 		zip_flags="${zip_flags}y"
 	fi
+        if [ ! -z "$SERVER_BACKUP_EXCLUDE" ]; then
+                SERVER_BACKUP_EXCLUDE="-x $SERVER_BACKUP_EXCLUDE"
+        fi
 	
 	# Zip up the server directory
 	file_name="${SERVER_BACKUP_PATH[$1]}/$(date "+%F-%H-%M-%S").zip"
-	as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_BACKUP_PATH[$1]}\" && cd \"$SETTINGS_SERVER_STORAGE_PATH\" && zip ${zip_flags} \"${file_name}\" \"${SERVER_NAME[$1]}\""
-	
+	as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_BACKUP_PATH[$1]}\" && cd \"$SETTINGS_SERVER_STORAGE_PATH\" && zip ${zip_flags} \"${file_name}\" \"${SERVER_NAME[$1]}\" $SERVER_BACKUP_EXCLUDE"
+
 	echo "Done."
 }
 
