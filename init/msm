@@ -28,7 +28,7 @@
 
 
 # The Minecraft Server Manager version, use "msm version" to check yours.
-VERSION="0.8.15"
+VERSION="0.8.16"
 
 
 # Source, if it exists, the msm profile.d script
@@ -587,10 +587,9 @@ server_world_get_id() {
 # Returns 0 if the server $1 is running and 1 if not
 # $1: The ID of the server
 server_is_running() {
-	server_property "$1" SCREEN_NAME
-	server_property "$1" INVOCATION
+	local pid="$(server_pid "$1")"
 
-	if ps ax | grep -v grep | grep "${SERVER_SCREEN_NAME[$1]} ${SERVER_INVOCATION[$1]}" > /dev/null
+	if [ -n "$pid" ] && [ "$pid" -gt 0 ] && ps --pid $pid >/dev/null
 	then
 		return 0
 	else
@@ -883,10 +882,7 @@ server_command() {
 # Gets the process ID for a server if running, otherwise it outputs nothing
 # $1: The ID of the server
 server_pid() {
-	server_property "$1" SCREEN_NAME
-	server_property "$1" INVOCATION
-
-	ps ax | grep -v grep | grep "${SERVER_SCREEN_NAME[$1]} ${SERVER_INVOCATION[$1]}" | awk '{print $1}'
+	as_user "${SERVER_USERNAME[$1]}" "head -1 ${SERVER_PATH[$1]}/${SERVER_NAME[$1]}.pid 2>/dev/null"
 }
 
 # Waits for a server to stop by polling 10 times a second
@@ -897,11 +893,14 @@ server_wait_for_stop() {
 	local pid="$(server_pid "$1")"
 	
 	# if the process is still running, wait for it to stop
-	if [ ! -z "$pid" ]; then
+	if [ ! -z "$pid" ] && [ "$pid" -gt 0 ]; then
 		while ps -p "$pid" > /dev/null; do
 			sleep 0.1
 		done
 	fi
+
+	# Remove the $SERVER_NAME.pid file to signify the server has stopped
+	as_user "${SERVER_USERNAME[$1]}" "rm -f \"${SERVER_PATH[$1]}/${SERVER_NAME[$1]}.pid\" >/dev/null 2>&1"
 }
 
 # Sets a server's active/inactive state
@@ -1314,6 +1313,9 @@ server_start() {
 
 		# This is the important line! Let's start this server!
 		as_user "${SERVER_USERNAME[$1]}" "cd \"${SERVER_PATH[$1]}\" && screen -dmS \"${SERVER_SCREEN_NAME[$1]}\" ${SERVER_INVOCATION[$1]}"
+
+		# Get the PID of the newly spawned Java process
+		as_user "${SERVER_USERNAME[$1]}" "cd \"${SERVER_PATH[$1]}\" && ps --no-headers -o pid --ppid \$(screen -list | awk '/${SERVER_SCREEN_NAME[$1]}/ {print substr(\$1, 1, index(\$1, \".\")-1)}' ) >${SERVER_NAME[$1]}.pid" 
 
 		# Wait for the server to fully start
 		server_log_dots_for_lines "$1" "$time_now" "${SERVER_CONSOLE_EVENT_OUTPUT_START[$1]}" "${SERVER_CONSOLE_EVENT_TIMEOUT_START[$1]}"
