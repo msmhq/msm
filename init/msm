@@ -1587,7 +1587,7 @@ server_set_jar() {
 			echo "Server \"${SERVER_NAME[$1]}\" is now using \"$jar\"."
 		fi
 	else
-		error_exit NAME_NOT_FOUND "There is no jargorup named \"$2\"."
+		error_exit NAME_NOT_FOUND "There is no jargroup named \"$2\"."
 	fi
 }
 
