@@ -8,7 +8,7 @@ docsitem: concepts-layout
 Server Layout
 =============
 
-MSM is designed to get out of your way as much as possible. A server directory should look as nearly exactly the same expect for a few key changes.
+MSM is designed to get out of your way as much as possible. A server directory should look nearly exactly the same except for a few key changes.
 
 1. Create a `worldstorage` folder and move all your worlds into it.
 2. Optionally create the `worldstorage_inactive` folder for inactive worlds.

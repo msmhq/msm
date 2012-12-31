@@ -20,7 +20,7 @@ The global stop command stops all servers, but does not effect a servers active/
 
 The global restart command stops all servers, and then restarts only the previously active servers.
 
-*See the [Active vs Inactive Servers Page][active-vs-inactive] for a more information on the differences between an active and an inactive server.*
+*See the [Active vs Inactive Servers Page][active-vs-inactive] for more information on the differences between an active and an inactive server.*
 
     version
 

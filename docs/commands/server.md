@@ -80,7 +80,7 @@ Sets a the jar file a server will use when starting up. If only a jar group is s
 
     <server> console
 
-Resumes and connects the user to the underlying screen session which runs the server. "screen" is a tool which allows a terminal to run in the background and be returned to when necessary. The `<server> console` command "resumes" the screen session allow direct access to the server console.
+Resumes and connects the user to the underlying screen session which runs the server. "screen" is a tool which allows a terminal to run in the background and be returned to when necessary. The `<server> console` command "resumes" the screen session allowing direct access to the server console.
 
 **Warning: Pressing Control+C in a screen session will terminate/stop/kill the Minecraft server.** To leave a screen session (and the server) running use the "Control+A then D" key combination.
 
