@@ -66,7 +66,7 @@ Toggles any rain or snow downfall.
 
     <server> give <player> <item> [amount] [data]
 
-Gives an item to a player who is online right now. See [this wiki page][data-values] for an exhaustive list of item codes. The `amount` argument defaults to `1` if omitted, and the `data` argument is (as far as in known) used for applying damage to items which degrade with use. This damage value equates to the number of "uses" a tool has undergone. Remember a diamond pickaxe can take more damage than a stone pickaxe.
+Gives an item to a player who is online right now. See [this wiki page][data-values] for an exhaustive list of item codes. The `amount` argument defaults to `1` if omitted, and the `data` argument is (as far as is known) used for applying damage to items which degrade with use. This damage value equates to the number of "uses" a tool has undergone. Remember a diamond pickaxe can take more damage than a stone pickaxe.
 
     <server> xp <player> <amount>
 

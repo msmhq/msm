@@ -36,4 +36,4 @@ If a download URL for a jar group should change, or you made a mistake, you can 
 
 When a new version of a jar has been released, this command allows you to download (based upon the download URL specified for the group) and save it within it's appropriate jar group directory.
 
-The latest version is always downloaded when this command is invoked, then checked for differences against the existing latest jar in that group. If there are differences the new version is saved as the latest vernon, if not the downloaded version is removed.
+The latest version is always downloaded when this command is invoked, then checked for differences against the existing latest jar in that group. If there are differences the new version is saved as the latest version, if not the downloaded version is removed.
