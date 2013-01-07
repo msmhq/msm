@@ -57,7 +57,7 @@ As well as starting, stopping and restarting MSM has the following features:
 
 MSM uses semantic version numbers to better describe what code one might have installed, and indicate backwards incompatible changes.
 
-Releases will be numbered with the follow format:
+Releases will be numbered in the following format:
 
 `<major>.<minor>.<patch>`
 
@@ -67,7 +67,7 @@ And constructed with the following guidelines:
 * New additions without breaking backward compatibility bumps the minor (and resets the patch)
 * Bug fixes and misc changes bumps the patch
 
-For more information on SemVer, please visit http://semver.org/.
+For more information on SemVer, visit http://semver.org/.
 
 
 ## Acknowledgements

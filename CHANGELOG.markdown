@@ -8,8 +8,14 @@ Maintainers:
 
 * [Marcus Whybrow](https://github.com/marcuswhybrow)
 
+
 Change Log
 ----------
+
+### [0.8.16](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.15...0.8.16)
+
+* Fix various typos in MSM and the documentation
+
 
 ### [0.8.15](https://github.com/marcuswhybrow/minecraft-server-manager/compare/0.8.14...0.8.15)
 
