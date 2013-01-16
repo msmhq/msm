@@ -3818,7 +3818,7 @@ get_closest_version() {
 			if [[ "$RETURN" == "$given_version" ]]; then
 				# This version is older than or equal to the given version
 
-				_newest_version "$clostest_version" "$v_version"
+				_newest_version "$closest_version" "$v_version"
 				if [[ "$RETURN" == "$v_version" ]]; then
 					# This version is newer than or equal to the closest version
 					closest_version="$v_version"
