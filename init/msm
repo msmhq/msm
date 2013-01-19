@@ -1583,10 +1583,6 @@ server_set_jar() {
 		fi
 		
 		if [[ ! -z "$jar" ]]; then
-			local server_jar_dir=$(dirname "${SERVER_JAR_PATH[$1]}")
-            if [ ! -d "$server_jar_dir" ]; then
-                as_user "${SERVER_USERNAME[$1]}" "mkdir -p '$server_jar_dir'"
-            fi
 			as_user "${SERVER_USERNAME[$1]}" "ln -sf \"$jar\" \"${SERVER_JAR_PATH[$1]}\""
 			echo "Server \"${SERVER_NAME[$1]}\" is now using \"$jar\"."
 		fi
