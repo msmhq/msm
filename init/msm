@@ -1200,6 +1200,7 @@ server_create() {
 		manager_property DEFAULT_BANNED_PLAYERS_PATH
 		manager_property DEFAULT_OPS_PATH
 		manager_property SERVER_PROPERTIES
+		manager_property SERVER_MSM_PROPERTIES
 		manager_property DEFAULT_WORLD_STORAGE_PATH
 		manager_property JAR_STORAGE_PATH
 
@@ -1213,6 +1214,13 @@ server_create() {
 			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_BANNED_PLAYERS_PATH'"
 			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_OPS_PATH'"
 			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_SERVER_PROPERTIES'"
+			if [[ "$SETTINGS_SERVER_MSM_PROPERTIES" =~ ^/ ]]; then
+				local msm_properties_file="$SETTINGS_SERVER_MSM_PROPERTIES"
+			else
+				local msm_properties_file="$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_SERVER_MSM_PROPERTIES"
+			fi
+			local msm_properties_file="${msm_properties_file//\{SERVER_NAME\}/$1}"
+			as_user "$SETTINGS_USERNAME" "touch '$msm_properties_file'"
 			as_user "$SETTINGS_USERNAME" "mkdir -p '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH'"
 			as_user "$SETTINGS_USERNAME" "echo \"MSM requires all your worlds be moved into this directory.\" > '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH/readme.txt'"
 			echo "Done."
@@ -1241,6 +1249,7 @@ server_delete() {
 	if is_valid_name "$1"; then
 		manager_property SERVER_STORAGE_PATH
 		manager_property USERNAME
+		server_property MSM_CONF
 
 		if [[ -d "$SETTINGS_SERVER_STORAGE_PATH/$1" ]]; then
 			printf "Are you sure you want to delete this server and its worlds (note: backups are preserved) [y/N]: "
@@ -1249,6 +1258,10 @@ server_delete() {
 			if [[ "$answer" =~ ^(y|Y|yes)$ ]]; then
 				# TODO: stop the server if running first
 				as_user "$SETTINGS_USERNAME" "rm -rf '$SETTINGS_SERVER_STORAGE_PATH/$1'"
+				if [ -f "${SERVER_MSM_CONF[$1]}" ]; then
+					as_user "$SETTINGS_USERNAME" "rm -f '${SERVER_MSM_CONF[$1]}'"
+				fi
+				
 				echo "Server deleted."
 			else
 				echo "Server was NOT deleted."
@@ -1635,9 +1648,19 @@ server_property() {
 				server_set_property "$1" "$2" "${SERVER_PATH[$1]}/$SETTINGS_SERVER_PROPERTIES"
 				return 0
 				;;
+			MSM_CONF)
+				manager_property SERVER_MSM_PROPERTIES
+				if [[ "$SETTINGS_SERVER_MSM_PROPERTIES" =~ ^/ ]]; then
+					server_set_property "$1" "$2" "${SETTINGS_SERVER_MSM_PROPERTIES//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
+				else
+					server_set_property "$1" "$2" "${SERVER_PATH[$1]}/${SETTINGS_SERVER_MSM_PROPERTIES//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
+				fi
+				return 0
+				;;
 			VERSION_CONF)
 				manager_property VERSIONING_STORAGE_PATH
 				server_property "$1" VERSION
+				server_property "$1" MSM_CONF
 				get_closest_version "${SERVER_VERSION[$1]}"
 				local version="$RETURN"
 
@@ -1646,7 +1669,7 @@ server_property() {
 					if [[ -z "${VERSIONS_NEWEST_MINECRAFT_PATH}" ]]; then
 						msm_warning "No version set for server, and no default found. Please use 'msm update' to download defaults"
 					else
-						msm_info "Assuming 'minecraft/${VERSIONS_NEWEST_MINECRAFT_VERSION}' for this server.You should override this value by adding 'msm-version=minecraft/x.x.x' to '${SERVER_CONF[$1]}' to make this message go away"
+						msm_info "Assuming 'minecraft/${VERSIONS_NEWEST_MINECRAFT_VERSION}' for this server.You should override this value by adding 'msm-version=minecraft/x.x.x' to '${SERVER_MSM_CONF[$1]}' to make this message go away"
 						SERVER_VERSION_CONF[$1]="${VERSIONS_NEWEST_MINECRAFT_PATH}"
 					fi
 				else
@@ -1693,15 +1716,22 @@ server_property() {
 		to_properties_name "$2"
 		local name="$RETURN"
 
+		server_property "$1" CONF
+		server_property "$1" MSM_CONF
+
 		if [[ "$name" =~ ^properties\-(.*)$ ]]; then
 			name="${BASH_REMATCH[1]}"
+			local conf_file=${SERVER_CONF[$1]}
 		else
 			name="msm-$name"
+			local conf_file=${SERVER_MSM_CONF[$1]}
 		fi
 
-		server_property "$1" CONF
-
-		local from_conf="$(sed -rn "s/^$name=('|\"|)(.*)\1/\2/ip" "${SERVER_CONF[$1]}" | tail -n 1)"
+		if [ -f "$conf_file" ]; then
+			local from_conf="$(sed -rn "s/^$name=('|\"|)(.*)\1/\2/ip" "$conf_file" | tail -n 1)"
+		else
+			local from_conf=""
+		fi
 
 		if [ ! -z "$from_conf" ]; then
 			# If the value is found in the server conf file (server.properties)
@@ -1768,6 +1798,7 @@ server_dirty_properties() {
 	done
 
 	unset SERVER_CONF$index
+	unset SERVER_MSM_CONF$index
 	unset SERVER_BACKUP_PATH$index
 	unset SERVER_LOG_ARCHIVE_PATH$index
 	unset SERVER_ACTIVE$index
@@ -3068,18 +3099,24 @@ command_server_console() {
 # $3: Optionally, a value to set for $2
 command_server_config() {
 	# If both a setting name and value are given
+	
 	if [ ! -z "$2" ] && [ ! -z "$3" ]; then
-		server_property "$1" CONF
-		if [[ -f "${SERVER_CONF[$1]}" ]]; then
-			if grep "$2" "${SERVER_CONF[$1]}" >/dev/null; then
-				sed -i /$2=/s/.*/"$2=$3"/g "${SERVER_CONF[$1]}"
-			else
-				echo "$2=$3" >> "${SERVER_CONF[$1]}"
-			fi
+		if [[ "$2" =~ ^msm\-(.*)$ ]]; then
+			server_property "$1" MSM_CONF
+			local conf_file=${SERVER_MSM_CONF[$1]}
+		else
+			server_property "$1" CONF
+			local conf_file=${SERVER_CONF[$1]}
+		fi
 
-			if server_is_running "$1"; then
-				echo "Changes to config may require a server restart to take effect: sudo $0 ${SERVER_NAME[$1]} restart";
-			fi
+		if [[ -f "$conf_file" ]] && grep "$2" "$conf_file" >/dev/null; then
+				sed -i /$2=/s/.*/"$2=$3"/g "$conf_file"
+		else
+			echo "$2=$3" >> "$conf_file"
+		fi
+
+		if server_is_running "$1"; then
+			echo "Changes to config may require a server restart to take effect: sudo $0 ${SERVER_NAME[$1]} restart";
 		fi
 
 		return 0
@@ -3172,6 +3209,7 @@ register_settings() {
 	register_setting JARGROUP_TARGET "target.txt"
 	register_setting JARGROUP_DOWNLOAD_DIR "downloads"
 	register_setting SERVER_PROPERTIES "server.properties"
+	register_setting SERVER_MSM_PROPERTIES "server.properties"
 	
 	register_server_setting USERNAME "minecraft"
 	register_server_setting SCREEN_NAME "msm-{SERVER_NAME}"
