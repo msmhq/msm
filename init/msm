@@ -1539,18 +1539,13 @@ server_backup() {
 	manager_property SERVER_STORAGE_PATH
 	server_property "$1" COMPLETE_BACKUP_FOLLOW_SYMLINKS
 	server_property "$1" BACKUP_PATH
-
+	server_property "$1" COMPLETE_BACKUP_COMMAND
+	
 	echo -n "Backing up the entire server directory... "
 	
-	zip_flags="-rq"
-	# Add the "y" flag if symbolic links should not be followed
-	if [ "${SERVER_COMPLETE_BACKUP_FOLLOW_SYMLINKS[$1]}" != "true" ]; then
-		zip_flags="${zip_flags}y"
-	fi
-	
-	# Zip up the server directory
-	file_name="${SERVER_BACKUP_PATH[$1]}/$(date "+%F-%H-%M-%S").zip"
-	as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_BACKUP_PATH[$1]}\" && cd \"$SETTINGS_SERVER_STORAGE_PATH\" && zip ${zip_flags} \"${file_name}\" \"${SERVER_NAME[$1]}\""
+	# Backup the server directory
+	as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_BACKUP_PATH[$1]}\""
+	as_user "${SERVER_USERNAME[$1]}" "$SERVER_COMPLETE_BACKUP_COMMAND"
 	
 	echo "Done."
 }
@@ -1744,6 +1739,13 @@ server_property() {
 				server_property "$1" JAR_PATH
 				server_set_property "$1" "$2" "${SERVER_INVOCATION[$1]//\{RAM\}/${SERVER_RAM[$1]}}"
 				server_set_property "$1" "$2" "${SERVER_INVOCATION[$1]//\{JAR\}/${SERVER_JAR_PATH[$1]}}"
+				;;
+			COMPLETE_BACKUP_COMMAND)
+				manager_property SERVER_STORAGE_PATH
+				server_property "$1" BACKUP_PATH
+				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND//\{SERVER_STORAGE_PATH\}/$SETTINGS_SERVER_STORAGE_PATH}"
+				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
+				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND//\{BACKUP_ARCHIVE_PATH\}/$SERVER_BACKUP_PATH}"
 				;;
 		esac
 	fi
@@ -3185,7 +3187,7 @@ register_settings() {
 	register_server_setting JAR_PATH "server.jar"
 
 	register_server_setting FLAG_ACTIVE_PATH "active"
-	register_server_setting COMPLETE_BACKUP_FOLLOW_SYMLINKS "false"
+	register_server_setting COMPLETE_BACKUP_COMMAND 'cd '\''{SERVER_STORAGE_PATH}'\'' && zip -rqy '\''{BACKUP_ARCHIVE_PATH}/$(date "+%F-%H-%M-%S").zip'\'' '\''{SERVER_NAME}'\'''
 
 	register_server_setting WORLDS_FLAG_INRAM "inram"
 
