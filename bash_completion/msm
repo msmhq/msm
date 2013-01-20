@@ -31,7 +31,16 @@ _msm() {
 	
 	if [[ $COMP_CWORD == 1 ]]; then
 		if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
-			local servers="$(ls -1 "$SETTINGS_SERVER_STORAGE_PATH")"
+			local entries="$(ls -1 "$SETTINGS_SERVER_STORAGE_PATH")"
+			for entry in $entries; do
+				if [ -d "$SETTINGS_SERVER_STORAGE_PATH/$entry" ]; then
+					if [ -z "$servers" ]; then
+						local servers="$entry"
+					else
+						local servers="$servers $entry"
+					fi
+				fi
+			done
 		fi
 		options="help start stop restart version update server jargroup all config $servers"
 	else
@@ -68,7 +77,7 @@ _msm() {
 					esac
 				fi
 				;;
-			start|config|help|update)
+			start|config|help|update|lockswrite)
 				# Do nothing, just don't execute the server logic
 				;;
 			*)
@@ -85,7 +94,7 @@ _msm() {
 				local server_path="$SETTINGS_SERVER_STORAGE_PATH/${COMP_WORDS[1]}"	
 				if [[ "${COMP_WORDS[1]}" == "all" ]] || [ -e "$server_path" ]; then
 					if [[ $COMP_CWORD == 2 ]]; then
-						options="start stop restart status connected worlds logroll backup jar whitelist blacklist operator gamemode kick say time toggledownfall give xp save cmd cmdlog console config"
+						options="start stop restart status connected worlds logroll backup jar whitelist blacklist operator gamemode kick say time toggledownfall give xp save cmd cmdlog console config lockswrite"
 					else
 						case "${COMP_WORDS[2]}" in
 							stop|restart)
