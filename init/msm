@@ -1565,7 +1565,7 @@ server_backup() {
 	
 	# Backup the server directory
 	as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_BACKUP_PATH[$1]}\""
-	as_user "${SERVER_USERNAME[$1]}" "$SERVER_COMPLETE_BACKUP_COMMAND"
+	as_user "${SERVER_USERNAME[$1]}" "${SERVER_COMPLETE_BACKUP_COMMAND[$1]}"
 	
 	echo "Done."
 }
@@ -1795,9 +1795,9 @@ server_property() {
 			COMPLETE_BACKUP_COMMAND)
 				manager_property SERVER_STORAGE_PATH
 				server_property "$1" BACKUP_PATH
-				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND//\{SERVER_STORAGE_PATH\}/$SETTINGS_SERVER_STORAGE_PATH}"
-				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
-				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND//\{BACKUP_ARCHIVE_PATH\}/$SERVER_BACKUP_PATH}"
+				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND[$1]//\{SERVER_STORAGE_PATH\}/$SETTINGS_SERVER_STORAGE_PATH}"
+				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND[$1]//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
+				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND[$1]//\{BACKUP_ARCHIVE_PATH\}/${SERVER_BACKUP_PATH[$1]}}"
 				;;
 		esac
 	fi
