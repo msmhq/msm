@@ -1559,6 +1559,7 @@ server_backup() {
 	manager_property SERVER_STORAGE_PATH
 	server_property "$1" COMPLETE_BACKUP_FOLLOW_SYMLINKS
 	server_property "$1" BACKUP_PATH
+	server_property "$1" USERNAME
 	server_property "$1" COMPLETE_BACKUP_COMMAND
 	
 	echo -n "Backing up the entire server directory... "
