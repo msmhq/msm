@@ -1200,6 +1200,7 @@ server_create() {
 		manager_property DEFAULT_BANNED_PLAYERS_PATH
 		manager_property DEFAULT_OPS_PATH
 		manager_property SERVER_PROPERTIES
+		manager_property SERVER_MSM_PROPERTIES
 		manager_property DEFAULT_WORLD_STORAGE_PATH
 		manager_property JAR_STORAGE_PATH
 
@@ -1213,6 +1214,13 @@ server_create() {
 			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_BANNED_PLAYERS_PATH'"
 			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_OPS_PATH'"
 			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_SERVER_PROPERTIES'"
+			if [[ "$SETTINGS_SERVER_MSM_PROPERTIES" =~ ^/ ]]; then
+				local msm_properties_file="$SETTINGS_SERVER_MSM_PROPERTIES"
+			else
+				local msm_properties_file="$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_SERVER_MSM_PROPERTIES"
+			fi
+			local msm_properties_file="${msm_properties_file//\{SERVER_NAME\}/$1}"
+			as_user "$SETTINGS_USERNAME" "touch '$msm_properties_file'"
 			as_user "$SETTINGS_USERNAME" "mkdir -p '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH'"
 			as_user "$SETTINGS_USERNAME" "echo \"MSM requires all your worlds be moved into this directory.\" > '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH/readme.txt'"
 			echo "Done."
@@ -1249,6 +1257,15 @@ server_delete() {
 			if [[ "$answer" =~ ^(y|Y|yes)$ ]]; then
 				# TODO: stop the server if running first
 				as_user "$SETTINGS_USERNAME" "rm -rf '$SETTINGS_SERVER_STORAGE_PATH/$1'"
+				server_get_id "$1"
+				local sid="$RETURN"
+				unset RETURN
+				server_property "$sid" MSM_CONF
+
+				if [ -f "${SERVER_MSM_CONF[$sid]}" ]; then
+					as_user "$SETTINGS_USERNAME" "rm -f '${SERVER_MSM_CONF[$sid]}'"
+				fi
+				
 				echo "Server deleted."
 			else
 				echo "Server was NOT deleted."
@@ -1307,7 +1324,10 @@ server_start() {
 		server_ensure_jar "$1"
 		server_ensure_links "$1"
 		server_worlds_to_ram "$1"
-
+		
+		# Rewrite locked properties before starting server
+		server_lockswrite "$1"
+		
 		local time_now="$(now)"
 		
 		printf "Starting server..."
@@ -1539,18 +1559,14 @@ server_backup() {
 	manager_property SERVER_STORAGE_PATH
 	server_property "$1" COMPLETE_BACKUP_FOLLOW_SYMLINKS
 	server_property "$1" BACKUP_PATH
-
+	server_property "$1" USERNAME
+	server_property "$1" COMPLETE_BACKUP_COMMAND
+	
 	echo -n "Backing up the entire server directory... "
 	
-	zip_flags="-rq"
-	# Add the "y" flag if symbolic links should not be followed
-	if [ "${SERVER_COMPLETE_BACKUP_FOLLOW_SYMLINKS[$1]}" != "true" ]; then
-		zip_flags="${zip_flags}y"
-	fi
-	
-	# Zip up the server directory
-	file_name="${SERVER_BACKUP_PATH[$1]}/$(date "+%F-%H-%M-%S").zip"
-	as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_BACKUP_PATH[$1]}\" && cd \"$SETTINGS_SERVER_STORAGE_PATH\" && zip ${zip_flags} \"${file_name}\" \"${SERVER_NAME[$1]}\""
+	# Backup the server directory
+	as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_BACKUP_PATH[$1]}\""
+	as_user "${SERVER_USERNAME[$1]}" "${SERVER_COMPLETE_BACKUP_COMMAND[$1]}"
 	
 	echo "Done."
 }
@@ -1583,6 +1599,10 @@ server_set_jar() {
 		fi
 		
 		if [[ ! -z "$jar" ]]; then
+			local server_jar_dir=$(dirname "${SERVER_JAR_PATH[$1]}")
+			if [ ! -d "$server_jar_dir" ]; then
+				as_user "${SERVER_USERNAME[$1]}" "mkdir -p '$server_jar_dir'"
+			fi
 			as_user "${SERVER_USERNAME[$1]}" "ln -sf \"$jar\" \"${SERVER_JAR_PATH[$1]}\""
 			echo "Server \"${SERVER_NAME[$1]}\" is now using \"$jar\"."
 		fi
@@ -1599,6 +1619,47 @@ server_connected() {
 		echo_fallback "$RETURN" "No players are connected."
 	else
 		echo "Server \"${SERVER_NAME[$1]}\" is not running. No users are connected."
+	fi
+}
+
+# Displays ps output for the server
+# $1: The server ID
+# $2: optionnal ps columns
+server_ps() {
+	if ! server_is_running "$1"; then
+		echo "Server \"${SERVER_NAME[$1]}\" is stopped."
+		return 1
+	fi
+	server_property "$1" USERNAME
+	local pid="$(server_pid $1)"
+	if [ -z "$pid" ]; then
+		echo "Server \"${SERVER_NAME[$1]}\" is not running."
+		return 1
+	fi
+	local columns="$2"
+	if [ -z "$columns" ]; then
+		server_property "$1" PS_COLUMNS
+		columns="${SERVER_PS_COLUMNS[$1]}"
+	fi
+	local opts="--ppid $pid"
+	if [ -n "$columns" ]; then
+		opts="$opts -o $columns"
+	fi
+	as_user "${SERVER_USERNAME[$1]}" "ps $opts"
+}
+
+# Rewrites locked server properties
+server_lockswrite() {
+	server_property "$1" MSM_CONF
+	local lock_regex="msm-lock-([^=]+)=('|\"|)(.*)\2"
+	if [ -f "${SERVER_MSM_CONF[$1]}" ]; then
+		while read line
+		do
+			if [[ "$line" =~ $lock_regex ]]; then
+				echo "Writing locked property ${BASH_REMATCH[1]}=${BASH_REMATCH[3]}"
+				command_server_config "$1" "${BASH_REMATCH[1]}" "${BASH_REMATCH[3]}"
+			fi
+		done < ${SERVER_MSM_CONF[$1]}
 	fi
 }
 
@@ -1636,9 +1697,19 @@ server_property() {
 				server_set_property "$1" "$2" "${SERVER_PATH[$1]}/$SETTINGS_SERVER_PROPERTIES"
 				return 0
 				;;
+			MSM_CONF)
+				manager_property SERVER_MSM_PROPERTIES
+				if [[ "$SETTINGS_SERVER_MSM_PROPERTIES" =~ ^/ ]]; then
+					server_set_property "$1" "$2" "${SETTINGS_SERVER_MSM_PROPERTIES//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
+				else
+					server_set_property "$1" "$2" "${SERVER_PATH[$1]}/${SETTINGS_SERVER_MSM_PROPERTIES//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
+				fi
+				return 0
+				;;
 			VERSION_CONF)
 				manager_property VERSIONING_STORAGE_PATH
 				server_property "$1" VERSION
+				server_property "$1" MSM_CONF
 				get_closest_version "${SERVER_VERSION[$1]}"
 				local version="$RETURN"
 
@@ -1647,7 +1718,7 @@ server_property() {
 					if [[ -z "${VERSIONS_NEWEST_MINECRAFT_PATH}" ]]; then
 						msm_warning "No version set for server, and no default found. Please use 'msm update' to download defaults"
 					else
-						msm_info "Assuming 'minecraft/${VERSIONS_NEWEST_MINECRAFT_VERSION}' for this server.You should override this value by adding 'msm-version=minecraft/x.x.x' to '${SERVER_CONF[$1]}' to make this message go away"
+						msm_info "Assuming 'minecraft/${VERSIONS_NEWEST_MINECRAFT_VERSION}' for this server.You should override this value by adding 'msm-version=minecraft/x.x.x' to '${SERVER_MSM_CONF[$1]}' to make this message go away"
 						SERVER_VERSION_CONF[$1]="${VERSIONS_NEWEST_MINECRAFT_PATH}"
 					fi
 				else
@@ -1694,15 +1765,22 @@ server_property() {
 		to_properties_name "$2"
 		local name="$RETURN"
 
+		server_property "$1" CONF
+		server_property "$1" MSM_CONF
+
 		if [[ "$name" =~ ^properties\-(.*)$ ]]; then
 			name="${BASH_REMATCH[1]}"
+			local conf_file=${SERVER_CONF[$1]}
 		else
 			name="msm-$name"
+			local conf_file=${SERVER_MSM_CONF[$1]}
 		fi
 
-		server_property "$1" CONF
-
-		local from_conf="$(sed -rn "s/^$name=('|\"|)(.*)\1/\2/ip" "${SERVER_CONF[$1]}" | tail -n 1)"
+		if [ -f "$conf_file" ]; then
+			local from_conf="$(sed -rn "s/^$name=('|\"|)(.*)\1/\2/ip" "$conf_file" | tail -n 1)"
+		else
+			local from_conf=""
+		fi
 
 		if [ ! -z "$from_conf" ]; then
 			# If the value is found in the server conf file (server.properties)
@@ -1741,6 +1819,13 @@ server_property() {
 				server_set_property "$1" "$2" "${SERVER_INVOCATION[$1]//\{RAM\}/${SERVER_RAM[$1]}}"
 				server_set_property "$1" "$2" "${SERVER_INVOCATION[$1]//\{JAR\}/${SERVER_JAR_PATH[$1]}}"
 				;;
+			COMPLETE_BACKUP_COMMAND)
+				manager_property SERVER_STORAGE_PATH
+				server_property "$1" BACKUP_PATH
+				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND[$1]//\{SERVER_STORAGE_PATH\}/$SETTINGS_SERVER_STORAGE_PATH}"
+				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND[$1]//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
+				server_set_property "$1" "$2" "${SERVER_COMPLETE_BACKUP_COMMAND[$1]//\{BACKUP_ARCHIVE_PATH\}/${SERVER_BACKUP_PATH[$1]}}"
+				;;
 		esac
 	fi
 }
@@ -1762,6 +1847,7 @@ server_dirty_properties() {
 	done
 
 	unset SERVER_CONF$index
+	unset SERVER_MSM_CONF$index
 	unset SERVER_BACKUP_PATH$index
 	unset SERVER_LOG_ARCHIVE_PATH$index
 	unset SERVER_ACTIVE$index
@@ -2396,8 +2482,10 @@ command_help() {
 	echo -e "  <server> start                                Starts a server"
 	echo -e "  <server> stop [now]                           Stops a server after warning players, or right now"
 	echo -e "  <server> restart [now]                        Restarts a server after warning players, or right now"
+	echo -e "  <server> pid                                  Outputs PID of screen session holding the server"
 	echo -e "  <server> status                               Show the running/stopped status of a server"
 	echo -e "  <server> connected                            List a servers connected players"
+	echo -e "  <server> ps [<columns>]                       Displays ps output for the server"
 	echo -e "  <server> worlds list                          Lists the worlds a server has"
 	echo -e "  <server> worlds load                          Creates links to worlds in storage for a server"
 	echo -e "  <server> worlds ram <world>                   Toggles a world's \"in RAM\" status"
@@ -2409,6 +2497,7 @@ command_help() {
 	echo -e "  <server> jar <jargroup> [<file>]              Sets a server's jar file"
 	echo -e "  <server> console                              Connects to the interactive console. Access may be limited"
 	echo -e "  <server> config [<setting> <value>]           Lists server settings, or sets a specific setting."
+	echo -e "  <server> lockswrite                           Rewrites locked server properties (msm-lock-*) to server properties file"
 	echo -e
 	echo -e "--Server Pass Through Commands----------------------------------"
 	echo -e "  <server> wl on|off                            Enables/disables server whitelist checking"
@@ -2455,6 +2544,10 @@ command_server_start() {
 	server_start "$1"
 }
 
+command_server_lockswrite() {
+	server_lockswrite "$1"
+}
+
 # Stops an individual server after a delay
 # $1: The server ID
 command_server_stop() {
@@ -2483,6 +2576,12 @@ command_server_restart_now() {
 	server_restart_now "$1"
 }
 
+# Displays process ID of screen session, holding the server
+# $1: The server ID
+command_server_pid() {
+	server_pid "$1"
+}
+
 # Displays the running/stopped status of an individual server
 # $1: The server ID
 command_server_status() {
@@ -2497,6 +2596,13 @@ command_server_status() {
 # $1: The server ID
 command_server_connected() {
 	server_connected "$1"
+}
+
+# Displays ps output for the server
+# $1: The server ID
+# $2: optionnal ps columns
+command_server_ps() {
+	server_ps "$1" "$2"
 }
 
 # Displays a list of worlds for an individual server
@@ -3062,18 +3168,24 @@ command_server_console() {
 # $3: Optionally, a value to set for $2
 command_server_config() {
 	# If both a setting name and value are given
+	
 	if [ ! -z "$2" ] && [ ! -z "$3" ]; then
-		server_property "$1" CONF
-		if [[ -f "${SERVER_CONF[$1]}" ]]; then
-			if grep "$2" "${SERVER_CONF[$1]}" >/dev/null; then
-				sed -i /$2=/s/.*/"$2=$3"/g "${SERVER_CONF[$1]}"
-			else
-				echo "$2=$3" >> "${SERVER_CONF[$1]}"
-			fi
+		if [[ "$2" =~ ^msm\-(.*)$ ]]; then
+			server_property "$1" MSM_CONF
+			local conf_file=${SERVER_MSM_CONF[$1]}
+		else
+			server_property "$1" CONF
+			local conf_file=${SERVER_CONF[$1]}
+		fi
 
-			if server_is_running "$1"; then
-				echo "Changes to config may require a server restart to take effect: sudo $0 ${SERVER_NAME[$1]} restart";
-			fi
+		if [[ -f "$conf_file" ]] && grep "$2" "$conf_file" >/dev/null; then
+				sed -i /$2=/s/.*/"$2=${3//\//\\/}"/g "$conf_file"
+		else
+			echo "$2=$3" >> "$conf_file"
+		fi
+
+		if server_is_running "$1"; then
+			echo "Changes to config may require a server restart to take effect: sudo $0 ${SERVER_NAME[$1]} restart";
 		fi
 
 		return 0
@@ -3166,6 +3278,7 @@ register_settings() {
 	register_setting JARGROUP_TARGET "target.txt"
 	register_setting JARGROUP_DOWNLOAD_DIR "downloads"
 	register_setting SERVER_PROPERTIES "server.properties"
+	register_setting SERVER_MSM_PROPERTIES "server.properties"
 	
 	register_server_setting USERNAME "minecraft"
 	register_server_setting SCREEN_NAME "msm-{SERVER_NAME}"
@@ -3181,7 +3294,7 @@ register_settings() {
 	register_server_setting JAR_PATH "server.jar"
 
 	register_server_setting FLAG_ACTIVE_PATH "active"
-	register_server_setting COMPLETE_BACKUP_FOLLOW_SYMLINKS "false"
+	register_server_setting COMPLETE_BACKUP_COMMAND 'cd '\''{SERVER_STORAGE_PATH}'\'' && zip -rqy '\''{BACKUP_ARCHIVE_PATH}/$(date "+%F-%H-%M-%S").zip'\'' '\''{SERVER_NAME}'\'''
 
 	register_server_setting WORLDS_FLAG_INRAM "inram"
 
@@ -3189,6 +3302,7 @@ register_settings() {
 	register_server_setting INVOCATION "java -Xms{RAM}M -Xmx{RAM}M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:+AggressiveOpts -jar {JAR} nogui"
 	register_server_setting STOP_DELAY "10"
 	register_server_setting RESTART_DELAY "10"
+	register_server_setting PS_COLUMNS '%cpu,%mem,rss,vsz'
 
 	# Message that are displayed in-game by the server
 	register_server_setting MESSAGE_STOP "SERVER SHUTTING DOWN IN {DELAY} SECONDS!"
@@ -3584,8 +3698,11 @@ register_commands() {
 	register_command "<name:server> stop now" "command_server_stop_now"
 	register_command "<name:server> restart" "command_server_restart"
 	register_command "<name:server> restart now" "command_server_restart_now"
+	register_command "<name:server> pid" "command_server_pid"
 	register_command "<name:server> status" "command_server_status"
 	register_command "<name:server> connected" "command_server_connected"
+	register_command "<name:server> ps" "command_server_ps"
+	register_command "<name:server> ps <string>" "command_server_ps"
 	register_command "<name:server> worlds list" "command_server_worlds_list"
 	register_command "<name:server> worlds load" "command_server_worlds_load"
 	register_command "<name:server> worlds ram <name:world>" "command_server_worlds_ram"
@@ -3601,6 +3718,7 @@ register_commands() {
 	register_command "<name:server> config" "command_server_config"
 	register_command "<name:server> config <string>" "command_server_config"
 	register_command "<name:server> config <string> <string>" "command_server_config"
+	register_command "<name:server> lockswrite" "command_server_lockswrite"
 
 	register_command "<name:server> whitelist|wl on" "command_server_whitelist_on"
 	register_command "<name:server> whitelist|wl off" "command_server_whitelist_off"
