@@ -1,8 +1,8 @@
 $(function() {
   var milestonesUrl = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/milestones?callback=?",
       tagsUrl       = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/tags?callback=?"
-      stargazersUrl = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/stargazers?per_page=100",
-      contributorsUrl = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/contributors?per_page=100";
+      stargazersUrl = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/stargazers?per_page=100&callback=?",
+      contributorsUrl = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/contributors?per_page=100&callback=?";
 
   var maintainers = [
     "marcuswhybrow",
