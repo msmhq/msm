@@ -2,6 +2,8 @@
 
 console_event START:30 "Done"
 
+console_command STOP "stop"
+
 console_command WHITELIST_ON "whitelist on"
 console_command WHITELIST_OFF "whitelist off"
 console_command WHITELIST_ADD "whitelist add <player>"

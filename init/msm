@@ -1400,7 +1400,7 @@ server_stop_now() {
 		
 		echo -n "Stopping the server... "
 		
-		server_eval "$1" "stop"
+		server_eval "$1" STOP
 		STOP_COUNTDOWN[$1]="false"
 		RESTART_COUNTDOWN[$1]="false"
 		server_wait_for_stop "$1"
@@ -1850,7 +1850,7 @@ manager_stop_all_servers() {
 				if server_is_running "$server"; then
 					stop_tick="$(( ${max_countdown} - ${SERVER_STOP_DELAY[$server]} ))"
 					if [[ "$stop_tick" == "$tick" ]]; then
-						server_eval "$server" "stop"
+						server_eval "$server" STOP
 						STOP_COUNTDOWN[$server]="false"
 					fi
 				fi
@@ -1893,7 +1893,7 @@ manager_stop_all_servers_now() {
 			was_running[$server]="true"
 			any_running="true"
 			echo "Server \"${SERVER_NAME[$server]}\" was running, now stopping."
-			server_eval "$server" "stop"
+			server_eval "$server" STOP
 		else
 			echo "Server \"${SERVER_NAME[$server]}\" was NOT running."
 			was_running[$server]="false"
@@ -1984,7 +1984,7 @@ command_start() {
 
 # Stops all servers after a delay
 command_stop() {
-	manager_stop_all_servers "stop"
+	manager_stop_all_servers STOP
 }
 
 # Stops all servers without delay
