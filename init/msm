@@ -1243,11 +1243,18 @@ server_delete() {
 		manager_property USERNAME
 
 		if [[ -d "$SETTINGS_SERVER_STORAGE_PATH/$1" ]]; then
-			printf "Are you sure you want to delete this server and its worlds (note: backups are preserved) [y/N]: "
+			printf "Are you sure you want to delete server \"$1\" and its worlds? (note: backups are preserved) [y/N]: "
 
 			read answer
 			if [[ "$answer" =~ ^(y|Y|yes)$ ]]; then
 				# TODO: stop the server if running first
+				server_get_id "$1"
+				local existing_id="$RETURN"
+
+				if server_is_running "$existing_id"; then
+					echo "Server \"$1\" is running."
+					server_stop_now "$existing_id"
+				fi
 				as_user "$SETTINGS_USERNAME" "rm -rf '$SETTINGS_SERVER_STORAGE_PATH/$1'"
 				echo "Server deleted."
 			else
