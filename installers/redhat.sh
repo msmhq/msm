@@ -1,4 +1,5 @@
-wget -q https://raw.github.com/marcuswhybrow/minecraft-server-manager/master/installers/common.sh -O /tmp/msmcommon.sh
+UPDATE_URL="https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest"
+wget -q ${UPDATE_URL}/installers/common.sh -O /tmp/msmcommon.sh
 source /tmp/msmcommon.sh && rm -f /tmp/msmcommon.sh
 
 function update_system_packages() {

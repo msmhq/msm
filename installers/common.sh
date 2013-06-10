@@ -74,15 +74,15 @@ function download_latest_files() {
     fi
 
     install_log "Downloading latest MSM configuration file"
-    sudo wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/msm.conf \
+    sudo wget ${UPDATE_URL}/msm.conf \
         -O "$dl_dir/msm.conf.orig" || install_error "Couldn't download configuration file"
 
     install_log "Downloading latest MSM cron file"
-    sudo wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/cron/msm \
+    sudo wget ${UPDATE_URL}/cron/msm \
         -O "$dl_dir/msm.cron.orig" || install_error "Couldn't download cron file"
 
     install_log "Downloading latest MSM version"
-    sudo wget https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest/init/msm \
+    sudo wget ${UPDATE_URL}/init/msm \
         -O "$dl_dir/msm.init.orig" || install_error "Couldn't download init file"
 }
 
@@ -91,7 +91,8 @@ function patch_latest_files() {
     # patch config file
     install_log "Patching MSM configuration file"
     sudo sed 's#USERNAME="minecraft"#USERNAME="'$msm_user'"#g' "$dl_dir/msm.conf.orig" | \
-        sed "s#/opt/msm#$msm_dir#g" >"$dl_dir/msm.conf"
+        sed "s#/opt/msm#$msm_dir#g" | \
+        sed "s#UPDATE_URL=.*\$#UPDATE_URL=\"$UPDATE_URL\"#" >"$dl_dir/msm.conf"
 
     # patch cron file
     install_log "Patching MSM cron file"
