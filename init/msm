@@ -1660,7 +1660,7 @@ server_connected() {
 	fi
 }
 
-# Sets the valud of a server property
+# Sets the value of a server property
 # $1: The ID of the server
 # $2: The name of the server property
 # $3: The value for the property
