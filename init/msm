@@ -1772,7 +1772,7 @@ server_property() {
 			eval SERVER_$2[$1]=\"\$SETTINGS_DEFAULT_$2\"
 		fi
 
-		### Post-changes to varibales after loading
+		### Post-changes to variables after loading
 
 		# If it is a path make that path absolute
 		if [[ "$2" =~ _PATH$ ]]; then
