@@ -1040,7 +1040,25 @@ jargroup_getlatest() {
                                 if [[ $? != 1 ]]; then
                                     wget_opts=""
                                 fi
-				as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
+
+                # If target contains the word 'minecraft' check JSON version file for correct filename
+                local target="$(as_user "$SETTINGS_USERNAME" "cat $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET")"
+                if [[ "$target" == "minecraft" ]]; then
+                    printf "Checking minecraft version JSON... "
+                    local versions_url="http://s3.amazonaws.com/Minecraft.Download/versions/versions.json"
+                    local versions_file="/tmp/minecraft_versions.json"
+                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
+                    local latest_version=$(as_user "$SETTINGS_USERNAME" "cat '$versions_file' | egrep '^[[:space:]]*\"release\"' | cut -d':' -f2 | egrep -o '[[:digit:].]*'")
+                    if [[ -n "$latest_version" ]]; then
+                        local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$latest_version/minecraft_server.$latest_version.jar"
+
+                    fi
+                fi
+                if [[ -n "$jar_url" ]]; then
+				    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' '$jar_url'"
+                else
+				    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
+                fi
 				echo "Done."
 			
 				local num_files="$(as_user "$SETTINGS_USERNAME" "ls -1 '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' | wc -l")"
