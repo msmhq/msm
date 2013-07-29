@@ -102,7 +102,10 @@ Manual Installation
 
     MSM requires that you move this newly generated world (and any accompanying folders such as `world_nether` or `world_the_end` in the case of CraftBukkit) to a new directory which you must create inside of the server root folder called `worldstorage`. See [Concepts &rarr; Server Layout][layout] for further explanation.
 
-
+    Then create links to the worlds you moved to the `worldstorage` folder:
+    
+        sudo msm <server-name> worlds load
+    
 Check Out The Commands
 ----------------------
 
