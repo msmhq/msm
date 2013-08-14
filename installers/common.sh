@@ -1,6 +1,5 @@
 msm_dir="/opt/msm"
 msm_user="minecraft"
-msm_group="minecraft"
 dl_dir="$(mktemp -d -t msm-XXX)"
 
 # Outputs an MSM INSTALL log line
@@ -31,13 +30,6 @@ function config_installation() {
         msm_user="$input"
     fi
 
-    echo -n "New server group to be created [${msm_group}]: "
-    read input
-    if [ ! -z "$input" ]; then
-        msm_group="$input"
-    fi
-
-
     echo -n "Complete installation with these values? [y/N]: "
     read answer
 
@@ -65,19 +57,13 @@ function add_minecraft_user() {
     sudo useradd ${msm_user}
 }
 
-# Verifies existence of or adds group for Minecraft server (default "minecraft")
-function add_minecraft_group() {
-    install_log "Creating default group '${msm_group}'"
-    sudo groupadd ${msm_group}
-}
-
 # Verifies existence and permissions of msm server directory (default /opt/msm)
 function create_msm_directories() {
     install_log "Creating MSM directories"
     if [ ! -d "$msm_dir" ]; then
         sudo mkdir -p "$msm_dir" || install_error "Couldn't create directory '$msm_dir'"
     fi
-    sudo chown -R $msm_user:$msm_group "$msm_dir" || install_error "Couldn't change file ownership for '$msm_dir'"
+    sudo chown -R $msm_user:$msm_user "$msm_dir" || install_error "Couldn't change file ownership for '$msm_dir'"
 }
 
 # Fetches latest msm.conf, cron job, and init script
@@ -165,7 +151,6 @@ function install_complete() {
 function install_msm() {
     config_installation
     add_minecraft_user
-    add_minecraft_group
     update_system_packages
     install_dependencies
     create_msm_directories
