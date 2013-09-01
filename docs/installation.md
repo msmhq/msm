@@ -100,7 +100,11 @@ Manual Installation
 
     When a Minecraft server starts for the first time, it generates a new world according to the `level-name` entry in `server.properties`, which is `world` by default.
 
-    MSM requires that you move this newly generated world (and any accompanying folders such as `world_nether` or `world_the_end` in the case of CraftBukkit) to a new directory which you must create inside of the server root folder called `worldstorage`. See [Concepts &rarr; Server Layout][layout] for further explanation.
+    MSM requires that you move this newly generated world (and any accompanying folders such as `world_nether` or `world_the_end` in the case of CraftBukkit) to a new directory which you must create inside of the server root folder called `worldstorage`. 
+    
+    After moving them, run `sudo msm <server-name> worlds load` to create the symlinks needed for the server to recognize  new worlds.
+    
+    See [Concepts &rarr; Server Layout][layout] for further explanation.
 
 
 Check Out The Commands
