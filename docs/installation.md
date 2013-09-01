@@ -8,6 +8,8 @@ docsitem: installation
 Installation
 ============
 
+**Note:** You must have both `sudo` and `cron` install on your system for MSM to function properly.
+
 Install MSM on a Debian server (Ubuntu etc.) by pasting this line in your terminal:
 
     wget -q http://git.io/Sxpr9g -O /tmp/msm && bash /tmp/msm
