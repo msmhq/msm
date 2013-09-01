@@ -1265,7 +1265,6 @@ server_delete() {
 
 			read answer
 			if [[ "$answer" =~ ^(y|Y|yes)$ ]]; then
-				# TODO: stop the server if running first
 				server_get_id "$1"
 				local existing_id="$RETURN"
 
