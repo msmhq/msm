@@ -144,11 +144,13 @@ $(function() {
         tagVersion, match;
 
     $.each(tags, function(i, tag) {
-      match = tag.name.match(/^(\d+)\.(\d+)\.(\d+)$/);
-      if (match) {
-        tagVersion = matchToTagVersion(match);
-        if (compareTags(tagVersion, latestTagVersion) == 1)
-          latestTagVersion = tagVersion;
+      if (! tag.name === 'undefined') {
+        match = tag.name.match(/^(\d+)\.(\d+)\.(\d+)$/);
+        if (match) {
+          tagVersion = matchToTagVersion(match);
+          if (compareTags(tagVersion, latestTagVersion) == 1)
+            latestTagVersion = tagVersion;
+        }
       }
     });
 
