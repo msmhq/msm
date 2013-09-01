@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Donations
+author: marcuswhybrow
 ---
 
 I have had, since starting MSM, two or three people enquire about donations. It's a fantastic feeling; that someone without prompting would, of their own free accord, wish to encourage the project by donating money.

@@ -12,8 +12,19 @@ title: Blog · MSM
 
 {% for post in site.posts %}
   <div class="inline-post">
-    <h2 class="title"><a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></h2>
-    <p class="date">{{ post.date | date: "%d %B %Y" }}</p>
+    <div class="title-card">
+        <div class="left">
+            <a class="avatar" href="https://github.com/{{ post.author }}" target="_blank" title="{{ post.author }}">
+                <img src="https://github.com/{{ post.author }}.png">
+            </a>
+        </div>
+        <div class="right">
+            <h2 class="title">
+                <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a>
+            </h2>
+            <p class="date">{{ post.date | date: "%d %B %Y" }}</p>
+        </div>
+    </div>
     {{ post.content }}
   </div>
 {% endfor %}

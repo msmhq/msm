@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Celebrating 50 Watchers!
+author: marcuswhybrow
 ---
 
 Is it worth creating a blog, I wondered, for MSM. Well, the project has reached **50 watchers**, now stars, on github, and I felt like celebrating that fact in some way.
