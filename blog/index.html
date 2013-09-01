@@ -10,7 +10,7 @@ title: Blog · MSM
   <p>The narrative of MSM</p>
 </div>
 
-{% for post in paginator.posts %}
+{% for post in site.posts %}
   <div class="inline-post">
     <h2 class="title"><a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></h2>
     <p class="date">{{ post.date | date: "%d %B %Y" }}</p>
