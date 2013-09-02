@@ -610,11 +610,40 @@ server_ensure_jar() {
 	error_exit FILE_NOT_FOUND "Could not find jar for server \"${SERVER_NAME[$1]}\": Expected \"${SERVER_JAR_PATH[$1]}\"."
 }
 
+# Read a value from the server configuration file
+# $1: The id of the server
+# $2: The setting name to read
+server_read_config() {
+	unset RETURN
+	# Convert name into upper-case with underscores
+	# msm-setting => SERVER_SETTING
+	# setting => SERVER_PROPERTIES_SETTING
+	if [[ "$2" =~ ^msm\-(.*)$ ]]; then
+		to_global_name "${BASH_REMATCH[1]}"
+	else
+		to_global_name "PROPERTIES_$2"
+	fi
+	local name="$RETURN"
+
+	# Display the value of that setting
+	unset RETURN
+	server_property "$1" "$name"
+	eval RETURN=\"\${SERVER_$name[$1]}\"
+}
+
 # Creates symbolic links in the server directory (SETTINGS_SERVER_STORAGE_PATH) for each
 # of the Minecraft worlds located in the world storage directory.
 # $1: The id of the server for which links should be ensured
 server_ensure_links() {
 	server_property "$1" USERNAME
+	server_property "$1" WORLD_STORAGE_PATH
+
+	# Ensure a directory for level-name exists in worldstorage.
+	# This prevents allows a symlink to be created, and prevents new worlds
+	# being generated outside of worldstorage.
+	command_server_config "$1" "level-name"
+	as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_WORLD_STORAGE_PATH[$1]}/$RETURN\""
+	server_worlds_allocate "$1"
 
 	echo -n "Maintaining world symbolic links... "
 	local start="${SERVER_WORLD_OFFSET[$1]}"
@@ -3106,20 +3135,8 @@ command_server_config() {
 
 	# If only a setting name is given
 	if [ ! -z "$2" ]; then
-
-		# Convert name into upper-case with underscores
-		# msm-setting => SERVER_SETTING
-		# setting => SERVER_PROPERTIES_SETTING
-		if [[ "$2" =~ ^msm\-(.*)$ ]]; then
-			to_global_name "${BASH_REMATCH[1]}"
-		else
-			to_global_name "PROPERTIES_$2"
-		fi
-		local name="$RETURN"
-
-		# Display the value of that setting
-		server_property "$1" "$name"
-		eval echo \"\${SERVER_$name[$1]}\"
+		server_read_config "$1" "$2"
+		echo "$RETURN"
 	fi
 
 	# If no paramter name is given
