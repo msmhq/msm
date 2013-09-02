@@ -418,7 +418,7 @@ world_deactivate() {
 	world_property "$1" PATH
 
 	if server_is_running "${WORLD_SERVER_ID[$1]}"; then
-		exit_error 68 "Worlds cannot be deactivated whilst the server is running."
+		error_exit 68 "Worlds cannot be deactivated whilst the server is running."
 	else
 		if [ -d "${WORLD_ACTIVE_PATH[$1]}" ]; then
 			echo -n "Moving world \"${WORLD_NAME[$1]}\" to the inactive worldstorage directory... "
@@ -429,7 +429,7 @@ world_deactivate() {
 			if [ -d "${WORLD_INACTIVE_PATH[$1]}" ]; then
 				echo "World \"${WORLD_NAME[$1]}\" is already deactivate."
 			else
-				exit_error DIR_NOT_FOUND "Directory \"${WORLD_ACTIVE_PATH[$1]}\" could not be found."
+				error_exit DIR_NOT_FOUND "Directory \"${WORLD_ACTIVE_PATH[$1]}\" could not be found."
 			fi
 		fi
 	fi
@@ -3436,14 +3436,14 @@ call_command() {
 
 						if [[ "$sid" -eq "-1" ]]; then
 							# Server id not set yet
-							exit_error 1 "Ill-defined command $*. Please file an issue by opening the following link: https://github.com/marcuswhybrow/minecraft-server-manager/issues"
+							error_exit 1 "Ill-defined command $*. Please file an issue by opening the following link: https://github.com/marcuswhybrow/minecraft-server-manager/issues"
 						fi
 
 						if [[ "$sid" -eq "-2" ]]; then
 							if [[ "$specified_name" == "all" ]]; then
 								wid="world:all"
 							else
-								exit_error INVALID_ARGUMENT "When specifying \"all\" servers, \"all\" worlds must be specified also."
+								error_exit INVALID_ARGUMENT "When specifying \"all\" servers, \"all\" worlds must be specified also."
 							fi
 						fi
 
