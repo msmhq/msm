@@ -157,6 +157,7 @@ error_exit() {
 		LOGS_NOT_ROLLED) code=72;;
 		CONF_ERROR) code=73;;
 		FATAL_ERROR) code=74;;
+		JAVA_NOT_INSTALLED) code=75;;
 	esac
 	
 	echo "${2:-"Unknown Error"}" 1>&2
@@ -1357,6 +1358,9 @@ server_start() {
 	if server_is_running "$1"; then
 		echo "Server \"${SERVER_NAME[$1]}\" is already running!"
 	else
+		if ! which java > /dev/null; then
+			error_exit JAVA_NOT_INSTALLED "Could not start server as Java is not installed."
+		fi
 		server_ensure_jar "$1"
 		server_ensure_links "$1"
 		server_worlds_to_ram "$1"
