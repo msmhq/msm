@@ -640,7 +640,7 @@ server_ensure_links() {
 	server_property "$1" WORLD_STORAGE_PATH
 
 	# Ensure a directory for level-name exists in worldstorage.
-	# This prevents allows a symlink to be created, and prevents new worlds
+	# This allows a symlink to be created, and prevents new worlds
 	# being generated outside of worldstorage.
 	command_server_config "$1" "level-name"
 	as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_WORLD_STORAGE_PATH[$1]}/$RETURN\""
