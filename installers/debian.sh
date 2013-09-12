@@ -13,16 +13,6 @@ function install_dependencies() {
     sudo apt-get install screen rsync zip || install_error "Couldn't install dependencies"
 }
 
-function reload_cron() {
-    install_log "Reloading cron service"
-    hash service 2>/dev/null
-    if [[ $? == 0 ]]; then
-        sudo service cron reload
-    else
-        sudo /etc/init.d/cron reload
-    fi
-}
-
 function enable_init() {
     install_log "Enabling automatic startup and shutdown"
     hash insserv 2>/dev/null

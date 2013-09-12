@@ -12,11 +12,6 @@ function install_dependencies() {
     sudo yum install screen rsync zip || install_error "Couldn't install dependencies"
 }
 
-function reload_cron() {
-    install_log "Reloading cron service"
-    sudo service crond reload
-}
-
 function enable_init() {
     install_log "Enabling automatic startup and shutdown"
     sudo chkconfig --add msm
