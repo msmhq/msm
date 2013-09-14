@@ -1959,8 +1959,9 @@ manager_stop_all_servers_now() {
 	# Stop all servers at the same time
 	for ((server=0; server<${NUM_SERVERS}; server++)); do
 		if server_is_running "$server"; then
-			was_running[$server]="true"
 			any_running="true"
+			was_running[$server]="true"
+
 			echo "Server \"${SERVER_NAME[$server]}\" was running, now stopping."
 			server_eval "$server" "stop"
 		else
@@ -2064,7 +2065,7 @@ command_stop_now() {
 # Restarts all servers
 command_restart() {
 	echo "Stopping servers:"
-	command_stop
+	manager_stop_all_servers "restart"
 	
 	echo "Starting servers:"
 	command_start
@@ -2073,7 +2074,7 @@ command_restart() {
 # Restarts all servers without delay
 command_restart_now() {
 	echo "Stopping servers:"
-	command_stop_now
+	manager_stop_all_servers_now
 	
 	echo "Starting servers:"
 	command_start
