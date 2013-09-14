@@ -1249,6 +1249,7 @@ server_create() {
 		manager_property DEFAULT_BANNED_IPS_PATH
 		manager_property DEFAULT_BANNED_PLAYERS_PATH
 		manager_property DEFAULT_OPS_PATH
+		manager_property DEFAULT_OPS_LIST
 		manager_property SERVER_PROPERTIES
 		manager_property DEFAULT_WORLD_STORAGE_PATH
 		manager_property JAR_STORAGE_PATH
@@ -1262,6 +1263,14 @@ server_create() {
 			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_BANNED_IPS_PATH'"
 			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_BANNED_PLAYERS_PATH'"
 			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_OPS_PATH'"
+
+			# Set default ops users as appropriate
+			if [ ! -z "$SETTINGS_DEFAULT_OPS_LIST" ]; then
+				IFS=","; for default_ops_user in $SETTINGS_DEFAULT_OPS_LIST; do
+					as_user "$SETTINGS_USERNAME" "echo $default_ops_user | tr -d ' ' >> '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_OPS_PATH'"
+				done
+			fi
+
 			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_SERVER_PROPERTIES'"
 			as_user "$SETTINGS_USERNAME" "mkdir -p '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH'"
 			as_user "$SETTINGS_USERNAME" "echo \"MSM requires all your worlds be moved into this directory.\" > '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WORLD_STORAGE_PATH/readme.txt'"
@@ -3226,6 +3235,7 @@ register_settings() {
 	register_server_setting BANNED_PLAYERS_PATH "banned-players.txt"
 	register_server_setting BANNED_IPS_PATH "banned-ips.txt"
 	register_server_setting OPS_PATH "ops.txt"
+	register_server_setting OPS_LIST ""
 	register_server_setting JAR_PATH "server.jar"
 
 	register_server_setting FLAG_ACTIVE_PATH "active"
