@@ -393,12 +393,13 @@ world_backup() {
 # $1: The ID of the world
 world_activate() {
 	server_property "${WORLD_SERVER_ID[$1]}" USERNAME
+	server_property "${WORLD_SERVER_ID[$1]}" WORLD_STORAGE_PATH
 	world_property "$1" INACTIVE_PATH
 	world_property "$1" ACTIVE_PATH
 
 	if [ -d "${WORLD_INACTIVE_PATH[$1]}" ]; then
 		echo -n "Moving world \"${WORLD_NAME[$1]}\" to the active worldstorage directory... "
-		local new_path="${WORLD_ACTIVE_PATH[$1]}"
+		local new_path="${SERVER_WORLD_STORAGE_PATH[${WORLD_SERVER_ID[$1]}]}"
 		as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "mkdir -p \"$new_path\" && mv \"${WORLD_INACTIVE_PATH[$1]}\" \"$new_path\""
 		echo "Done."
 	else
@@ -414,6 +415,7 @@ world_activate() {
 # $1: The ID of the world
 world_deactivate() {
 	server_property "${WORLD_SERVER_ID[$1]}" USERNAME
+	server_property "${WORLD_SERVER_ID[$1]}" WORLD_STORAGE_INACTIVE_PATH
 	world_property "$1" ACTIVE_PATH
 	world_property "$1" INACTIVE_PATH
 	world_property "$1" PATH
@@ -423,7 +425,7 @@ world_deactivate() {
 	else
 		if [ -d "${WORLD_ACTIVE_PATH[$1]}" ]; then
 			echo -n "Moving world \"${WORLD_NAME[$1]}\" to the inactive worldstorage directory... "
-			local new_path="${WORLD_INACTIVE_PATH[$1]}"
+			local new_path="${SERVER_WORLD_STORAGE_INACTIVE_PATH[${WORLD_SERVER_ID[$1]}]}"
 			as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "mkdir -p \"$new_path\" && mv \"${WORLD_PATH[$1]}\" \"$new_path\""
 			echo "Done."
 		else
