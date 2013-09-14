@@ -140,6 +140,12 @@ function update_msm() {
     sudo /etc/init.d/msm update --noinput
 }
 
+# Updates rest of MSM using init script updater
+function setup_jargroup() {
+    install_log "Setup default jar groups"
+    sudo /etc/init.d/msm jargroup create minecraft https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar
+}
+
 function install_complete() {
     install_log "Done. Type 'msm help' to get started. Have fun!"
 }
@@ -157,5 +163,6 @@ function install_msm() {
     install_init
     enable_init
     update_msm
+    setup_jargroup
     install_complete
 }
