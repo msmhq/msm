@@ -116,13 +116,7 @@ function install_config() {
 # Installs msm.cron into /etc/cron.d
 function install_cron() {
     install_log "Installing MSM cron file"
-    sudo install "$dl_dir/msm.cron" /etc/cron.d/msm || install_error "Couldn't install cron file"
-}
-
-# Reloads cron service (if necessary)
-function reload_cron() {
-    # OVERLOAD THIS
-    install_error "No function defined for reload_cron"
+    sudo install -m0644 "$dl_dir/msm.cron" /etc/cron.d/msm || install_error "Couldn't install cron file"
 }
 
 # Installs init script into /etc/init.d
@@ -160,7 +154,6 @@ function install_msm() {
     patch_latest_files
     install_config
     install_cron
-    reload_cron
     install_init
     enable_init
     update_msm
