@@ -1300,6 +1300,7 @@ server_create() {
 			#       the "minecraft" jar group. And make it configurable.
 			if [ ! -z "$SETTINGS_DEFAULT_JARGROUP" ]; then
 				server_get_id "$1"
+				echo Creating server with default jar group $SETTINGS_DEFAULT_JARGROUP
 				server_set_jar "$RETURN" "$SETTINGS_DEFAULT_JARGROUP"
 			else
 				if [ -d "$SETTINGS_JAR_STORAGE_PATH/minecraft" ]; then
