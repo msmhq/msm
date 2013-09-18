@@ -1264,6 +1264,7 @@ server_create() {
 		manager_property SERVER_PROPERTIES
 		manager_property DEFAULT_WORLD_STORAGE_PATH
 		manager_property JAR_STORAGE_PATH
+		manager_property DEFAULT_JARGROUP
 
 		if [[ -d "$SETTINGS_SERVER_STORAGE_PATH/$1" ]]; then
 			error_exit DUPLICATE_NAME "A server with that name already exists."
@@ -1293,13 +1294,19 @@ server_create() {
 			SERVER_CONF[$NUM_SERVERS]="$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_SERVER_PROPERTIES"
 			NUM_SERVERS=$(($NUM_SERVERS+1))
 
-			# TODO: Dirty all server varibales, or don't allow further in script access
+			# TODO: Dirty all server variables, or don't allow further in script access
 			
 			# TODO: Handle server default setup stuff better than just using
 			#       the "minecraft" jar group. And make it configurable.
-			if [ -d "$SETTINGS_JAR_STORAGE_PATH/minecraft" ]; then
+			echo hjasjasd $SETTINGS_DEFAULT_JARGROUP
+			if [ ! -z "$SETTINGS_DEFAULT_JARGROUP" ]; then
 				server_get_id "$1"
-				server_set_jar "$RETURN" "minecraft"
+				server_set_jar "$RETURN" "$SETTINGS_DEFAULT_JARGROUP"
+			else
+				if [ -d "$SETTINGS_JAR_STORAGE_PATH/minecraft" ]; then
+					server_get_id "$1"
+					server_set_jar "$RETURN" "minecraft"
+				fi
 			fi
 		fi
 	fi
@@ -3131,7 +3138,9 @@ command_server_cmdlog() {
 command_server_console() {
 	if server_is_running "$1"; then
 		server_property "$1" USERNAME
-		as_user "${SERVER_USERNAME[$1]}" "screen -r ${SERVER_SCREEN_NAME[$1]}"
+		#as_user "${SERVER_USERNAME[$1]}" "screen -r ${SERVER_SCREEN_NAME[$1]}"
+		#as_user "${SERVER_USERNAME[$1]}" "screen -d -r -m ${SERVER_SCREEN_NAME[$1]}"
+		ssh -t "${SERVER_USERNAME[$1]}"@localhost "screen -r ${SERVER_SCREEN_NAME[$1]}"
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
@@ -3234,6 +3243,7 @@ register_settings() {
 	register_setting BACKUP_ARCHIVE_PATH "/opt/msm/archives/backups"
 
 	register_setting JARGROUP_TARGET "target.txt"
+	register_setting DEFAULT_JARGROUP "minecraft"
 	register_setting JARGROUP_DOWNLOAD_DIR "downloads"
 	register_setting SERVER_PROPERTIES "server.properties"
 	
