@@ -1298,7 +1298,6 @@ server_create() {
 			
 			# TODO: Handle server default setup stuff better than just using
 			#       the "minecraft" jar group. And make it configurable.
-			echo hjasjasd $SETTINGS_DEFAULT_JARGROUP
 			if [ ! -z "$SETTINGS_DEFAULT_JARGROUP" ]; then
 				server_get_id "$1"
 				server_set_jar "$RETURN" "$SETTINGS_DEFAULT_JARGROUP"
