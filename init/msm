@@ -612,7 +612,6 @@ server_ensure_jar() {
 	
 	error_exit FILE_NOT_FOUND "Could not find jar for server \"${SERVER_NAME[$1]}\": Expected \"${SERVER_JAR_PATH[$1]}\"."
 }
-
 # Read a value from the server configuration file
 # $1: The id of the server
 # $2: The setting name to read
@@ -716,6 +715,18 @@ server_ensure_links() {
 	else
 		echo "Done."
 	fi
+}
+
+# Ensures the server permissions
+# $1: The id of the server
+server_ensure_permissions() {
+	echo "Checking file permissions... "
+	server_property "$1" USERNAME
+	chown ${SERVER_USERNAME[$1]} -c -R ${SERVER_PATH[$1]}
+	chmod a+r,u+w -R -c ${SERVER_PATH[$1]}
+	find ${SERVER_PATH[$1]} -type d -exec chmod 0777 -c {} \;
+	echo Done.
+	return 0
 }
 
 # Moves a servers worlds into RAM
@@ -1374,6 +1385,7 @@ server_start() {
 		fi
 		server_ensure_jar "$1"
 		server_ensure_links "$1"
+		server_ensure_permissions "$1"
 		server_worlds_to_ram "$1"
 
 		local time_now="$(now)"
