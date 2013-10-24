@@ -570,4 +570,12 @@ test_listing_multiple_jargroups() {
 
 
 # Perform tests
-source shunit2
+# local copy of shunit2
+source shunit2 2>/dev/null
+if [ $? -ne 0 ]; then
+	# default install location for shunit2
+	source "/usr/share/shunit2/shunit2" 2>/dev/null
+	if [ $? -ne 0 ]; then
+		echo "Could not find shUnit2 install."
+	fi
+fi
