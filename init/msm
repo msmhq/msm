@@ -373,20 +373,32 @@ world_toggle_ramdisk_state() {
 # Backs up a world
 # $1: The ID of the world
 world_backup() {
-	world_property "$1" PATH
-	world_property "$1" BACKUP_PATH
-
-	echo -n "Backing up world \"${WORLD_NAME[$1]}\"... "
-	
-	file_name="$(date "+%F-%H-%M-%S").zip"
+	manager_property WORLD_ARCHIVE_ENABLED
+	manager_property RDIFF_BACKUP_ENABLED
 	local server_id="${WORLD_SERVER_ID[$1]}"
 	local containing_dir="$(dirname "${WORLD_PATH[$1]}")"
 	local dir_name="$(basename "${WORLD_PATH[$1]}")"
+	world_property "$1" PATH
+	world_property "$1" BACKUP_PATH
 
-	server_property "$server_id" USERNAME
-	as_user "${SERVER_USERNAME[$server_id]}" "mkdir -p \"${WORLD_BACKUP_PATH[$1]}\" && cd \"$containing_dir\" && zip -rq \"${WORLD_BACKUP_PATH[$1]}/${file_name}\" \"${dir_name}\""
+	echo -n "Entering in backup function ... "
 
-	echo "Done."
+
+	if [[ "$SETTINGS_WORLD_ARCHIVE_ENABLED" == "true" ]]; then
+		echo -n "Backing up world \"${WORLD_NAME[$1]}\"... "		
+		file_name="$(date "+%F-%H-%M-%S").zip"
+		server_property "$server_id" USERNAME
+		as_user "${SERVER_USERNAME[$server_id]}" "mkdir -p \"${WORLD_BACKUP_PATH[$1]}\" && cd \"$containing_dir\" && zip -rq \"${WORLD_BACKUP_PATH[$1]}/${file_name}\" \"${dir_name}\""
+		echo "Done."
+	fi
+
+	if [[ "$SETTINGS_RDIFF_BACKUP_ENABLED" == "true" ]]; then
+		echo -n "rdiff-backup world \"${WORLD_NAME[$1]}\"... "
+    server_property "$server_id" USERNAME
+    as_user "${SERVER_USERNAME[$server_id]}" "mkdir -p \"${RDIFF_BACKUP_PATH[$1]}\" && cd \"$containing_dir\" && nice -n \"$SETTINGS_RDIFF_BACKUP_NICE\" rdiff-backup \"${dir_name}\" \"${RDIFF_BACKUP_PATH[$1]}\" && nice -n \"$SETTINGS_RDIFF_BACKUP_NICE\" rdiff-backup --remove-older-than \"$SETTINGS_RDIFF_BACKUP_ROTATION\"D --force \"${RDIFF_BACKUP_PATH[$1]}\""
+		echo "Done."
+	fi
+	
 }
 
 # Activates a world
@@ -409,6 +421,10 @@ world_activate() {
 			error_exit DIR_NOT_FOUND "Directory \"${WORLD_INACTIVE_PATH[$1]}\" could not be found."
 		fi
 	fi
+
+
+
+
 }
 
 # Deactivates a world
@@ -486,7 +502,9 @@ world_property() {
 				;;
 			BACKUP_PATH)
 				manager_property WORLD_ARCHIVE_PATH
+				manager_property WORLD_RDIFF_PATH
 				WORLD_BACKUP_PATH[$1]="$SETTINGS_WORLD_ARCHIVE_PATH/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
+				RDIFF_BACKUP_PATH[$1]="$SETTINGS_WORLD_RDIFF_PATH/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
 				;;
 			RAMDISK_PATH)
 				manager_property RAMDISK_STORAGE_ENABLED
@@ -529,6 +547,7 @@ world_dirty_properties() {
 	unset WORLD_FLAG_INRAM$index
 	unset WORLD_LINK$index
 	unset WORLD_BACKUP_PATH$index
+	unset RDIFF_BACKUP_PATH$index
 	unset WORLD_RAMDISK_PATH$index
 	unset WORLD_INRAM$index
 }
@@ -3214,6 +3233,13 @@ register_settings() {
 	register_setting VERSIONING_FILE_EXTENSION "sh"
 	register_setting RAMDISK_STORAGE_ENABLED "true"
 	register_setting RAMDISK_STORAGE_PATH "/dev/shm/msm"
+
+	register_setting WORLD_ARCHIVE_ENABLED "true"
+	register_setting WORLD_RDIFF_PATH "/opt/msm/rdiff-backup/worlds"
+	register_setting RDIFF_BACKUP_ENABLED "false"
+	register_setting RDIFF_BACKUP_NICE "19"
+	register_setting RDIFF_BACKUP_ROTATION "7"
+
 
 	register_setting UPDATE_URL "https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest"
 
