@@ -55,7 +55,7 @@ function install_dependencies() {
 function add_minecraft_user() {
     install_log "Creating default user '${msm_user}'"
     sudo useradd ${msm_user} \
-        --home /opt/msm
+        --home "$msm_dir"
 }
 
 # Verifies existence and permissions of msm server directory (default /opt/msm)
