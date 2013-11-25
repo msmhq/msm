@@ -1140,7 +1140,7 @@ jargroup_getlatest() {
 							echo "Saved as \"$SETTINGS_JAR_STORAGE_PATH/$1/$new_name\"."
 						fi
 					else
-						echo "Existing version \"$SETTINGS_JAR_STORAGE_PATH/$1/$new_name\" was already up to date."
+						echo "Existing version \"$most_recent_jar\" was already up to date."
 					fi
 				
 				elif [[ "$num_files" == 0 ]]; then
