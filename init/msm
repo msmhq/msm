@@ -813,6 +813,7 @@ server_log_get_line() {
 	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
 	local regex="${LOG_REGEX} ($3)"
+	local regex1_7="${LOG_REGEX_1_7} ($3)"
 	local timeout_deadline=$(( $(now) + $4 ))
 
 	# Read log, break if nothing is read in $4 seconds
@@ -823,10 +824,13 @@ server_log_get_line() {
 		[[ "$(now)" -gt "$timeout_deadline" ]] && break
 
 		# If the entry is old enough
-		if [[ "$line_time" -ge "$2" ]] && [[ "$line" =~ $regex ]]; then
-			# Return the line
-			RETURN="${BASH_REMATCH[1]}"
-			return 0
+		if [[ "$line_time" -ge "$2" ]]; then
+			# And the entry matches the log pattern
+			if [[ "$line" =~ $regex ]] || [[ "$line" =~ $regex1_7 ]]; then
+				# Return the line
+				RETURN="${BASH_REMATCH[1]}"
+				return 0
+			fi
 		fi
 	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ -F --lines=20 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\" 2>/dev/null")
 }
@@ -846,6 +850,7 @@ server_log_dots_for_lines() {
 	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
 	local regex="${LOG_REGEX} ($3)"
+	local regex1_7="${LOG_REGEX_1_7} ($3)"
 	local timeout_deadline=$(( $(now) + $4 ))
 
 	# Read log, break if nothing is read in $4 seconds
@@ -862,7 +867,7 @@ server_log_dots_for_lines() {
 			echo -n '.'
 
 			# and if it matches the regular expression, return
-			if [[ "$line" =~ $regex ]]; then
+			if [[ "$line" =~ $regex ]] || [[ "$line" =~ $regex1_7 ]]; then
 				return 0
 			fi
 		fi
