@@ -60,6 +60,9 @@ follow_links "$COMPLETION"; COMPLETION="$RETURN"
 # The start of a regex to find a log line
 LOG_REGEX="^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\]"
 
+# Minecraft 1.7 logging regex
+LOG_REGEX_1_7="^\[[0-9]{2}:[0-9]{2}:[0-9]{2}\] \[.*\]:"
+
 # Lazy allocation status
 ALLOCATED_SERVERS="false"
 ALLOCATED_WORLDS="false"
