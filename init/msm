@@ -298,7 +298,16 @@ now() {
 # $1: A server log line
 # returns: Time in seconds since 1970-01-01 00:00:00 UTC
 log_line_get_time() {
-	time_string="$(echo "$1" | awk '{print $1 " " $2}')"
+	# Verify that the log line matches the pre 1.7 timestamp pattern
+	if [[ $1 =~ $LOG_REGEX ]]; then
+		time_string="$(echo "$1" | awk '{print $1 " " $2}')"
+	elif [[ $1 =~ $LOG_REGEX_1_7 ]]; then
+		# New 1.7 logging! Notice that we do _not_ have a date so the timestamp will be resolved against todays date, which might lead to undesirable results!
+		time_string="$(echo "$1" | awk -F'[][]' '{print $2}')"
+		# TODO: Test rigorously!
+		# Test case 1: Command whose execution time crosses midnight
+		# Test case 2: Servers infrequently writing to logs over the course of days
+	fi
 	date -d "$time_string" "+%s" 2> /dev/null
 }
 
