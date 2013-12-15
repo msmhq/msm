@@ -4,7 +4,7 @@ source /tmp/msmcommon.sh && rm -f /tmp/msmcommon.sh
 
 function update_system_packages() {
     install_log "Updating sources"
-    sudo yum update || install_error "Couldn't update packages"
+    sudo yum update --skip-broken || install_error "Couldn't update packages"
 }
 
 function install_dependencies() {
