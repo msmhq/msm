@@ -1,6 +1,6 @@
 msm_dir="/opt/msm"
 msm_user="minecraft"
-msm_user_system=False
+msm_user_system=false
 dl_dir="$(mktemp -d -t msm-XXX)"
 
 # Outputs an MSM INSTALL log line
@@ -34,7 +34,7 @@ function config_installation() {
     echo -n "Add new user as system account? [y/N]: "
     read answer
     if [[ $answer != "y" ]]; then
-        $msm_user_system=True
+        $msm_user_system=true
     fi
 
     echo -n "Complete installation with these values? [y/N]: "
