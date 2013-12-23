@@ -58,7 +58,7 @@ follow_links "$COMPLETION"; COMPLETION="$RETURN"
 ### Config variables the user should not need/want to change
 
 # The start of a regex to find a log line
-LOG_REGEX="^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\]"
+LOG_REGEX="^\[[0-9]{2}:[0-9]{2}:[0-9]{2}\] \[.*\]:"
 
 # Lazy allocation status
 ALLOCATED_SERVERS="false"
@@ -295,7 +295,7 @@ now() {
 # $1: A server log line
 # returns: Time in seconds since 1970-01-01 00:00:00 UTC
 log_line_get_time() {
-	time_string="$(echo "$1" | awk '{print $1 " " $2}')"
+	time_string="$(echo "$1" | awk '{print $1}' | sed 's/\[\|\]//g')"
 	date -d "$time_string" "+%s" 2> /dev/null
 }
 
@@ -3257,7 +3257,7 @@ register_settings() {
 
 	register_server_setting WORLD_STORAGE_PATH "worldstorage"
 	register_server_setting WORLD_STORAGE_INACTIVE_PATH "worldstorage_inactive"
-	register_server_setting LOG_PATH "server.log"
+	register_server_setting LOG_PATH "logs/latest.log"
 	register_server_setting WHITELIST_PATH "white-list.txt"
 	register_server_setting BANNED_PLAYERS_PATH "banned-players.txt"
 	register_server_setting BANNED_IPS_PATH "banned-ips.txt"
