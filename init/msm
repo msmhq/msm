@@ -375,6 +375,7 @@ world_toggle_ramdisk_state() {
 world_backup() {
 	manager_property WORLD_ARCHIVE_ENABLED
 	manager_property RDIFF_BACKUP_ENABLED
+	manager_property RSYNC_BACKUP_ENABLED
 	local server_id="${WORLD_SERVER_ID[$1]}"
 	local containing_dir="$(dirname "${WORLD_PATH[$1]}")"
 	local dir_name="$(basename "${WORLD_PATH[$1]}")"
@@ -396,6 +397,14 @@ world_backup() {
 		echo -n "rdiff-backup world \"${WORLD_NAME[$1]}\"... "
     server_property "$server_id" USERNAME
     as_user "${SERVER_USERNAME[$server_id]}" "mkdir -p \"${RDIFF_BACKUP_PATH[$1]}\" && cd \"$containing_dir\" && nice -n \"$SETTINGS_RDIFF_BACKUP_NICE\" rdiff-backup \"${dir_name}\" \"${RDIFF_BACKUP_PATH[$1]}\" && nice -n \"$SETTINGS_RDIFF_BACKUP_NICE\" rdiff-backup --remove-older-than \"$SETTINGS_RDIFF_BACKUP_ROTATION\"D --force \"${RDIFF_BACKUP_PATH[$1]}\""
+		echo "Done."
+	fi
+
+	if [[ "$SETTINGS_RSYNC_BACKUP_ENABLED" == "true" ]]; then
+		echo -n "rsync-backup world \"${WORLD_NAME[$1]}\"... "
+		file_name="$(date "+%F-%H-%M-%S")"
+		server_property "$server_id" USERNAME
+		as_user "${SERVER_USERNAME[$server_id]}" "mkdir -p \"${RSYNC_BACKUP_PATH[$1]}\" && cd \"$containing_dir\" && rsync -aH --link-dest=\"${RSYNC_BACKUP_PATH[$1]}/latest\" \"${dir_name}\" \"${RSYNC_BACKUP_PATH[$1]}/${file_name}\" && rm -f \"${RSYNC_BACKUP_PATH[$1]}/latest\" && ln -s \"${file_name}\" \"${RSYNC_BACKUP_PATH[$1]}/latest\""
 		echo "Done."
 	fi
 	
@@ -503,8 +512,10 @@ world_property() {
 			BACKUP_PATH)
 				manager_property WORLD_ARCHIVE_PATH
 				manager_property WORLD_RDIFF_PATH
+				manager_property WORLD_RSYNC_PATH
 				WORLD_BACKUP_PATH[$1]="$SETTINGS_WORLD_ARCHIVE_PATH/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
 				RDIFF_BACKUP_PATH[$1]="$SETTINGS_WORLD_RDIFF_PATH/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
+				RSYNC_BACKUP_PATH[$1]="$SETTINGS_WORLD_RSYNC_PATH/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
 				;;
 			RAMDISK_PATH)
 				manager_property RAMDISK_STORAGE_ENABLED
@@ -548,6 +559,7 @@ world_dirty_properties() {
 	unset WORLD_LINK$index
 	unset WORLD_BACKUP_PATH$index
 	unset RDIFF_BACKUP_PATH$index
+	unset RSYNC_BACKUP_PATH$index
 	unset WORLD_RAMDISK_PATH$index
 	unset WORLD_INRAM$index
 }
@@ -3246,6 +3258,9 @@ register_settings() {
 	register_setting WORLD_ARCHIVE_PATH "/opt/msm/archives/worlds"
 	register_setting LOG_ARCHIVE_PATH "/opt/msm/archives/logs"
 	register_setting BACKUP_ARCHIVE_PATH "/opt/msm/archives/backups"
+
+	register_setting RSYNC_BACKUP_ENABLED "false"
+	register_setting WORLD_RSYNC_PATH "/opt/msm/rsync/worlds"
 
 	register_setting JARGROUP_TARGET "target.txt"
 	register_setting JARGROUP_DOWNLOAD_DIR "downloads"
