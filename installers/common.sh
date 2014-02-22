@@ -126,6 +126,7 @@ function install_config() {
 function install_cron() {
     install_log "Installing MSM cron file"
     sudo install -m0644 "$dl_dir/msm.cron" /etc/cron.d/msm || install_error "Couldn't install cron file"
+    sudo /etc/init.d/cron reload
 }
 
 # Installs init script into /etc/init.d
