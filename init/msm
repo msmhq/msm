@@ -177,16 +177,16 @@ is_bash_version() {
 # Converts a string to be ready for use as a global
 # variable name.
 # $1: The string to convert
-# RETURN: The name in upper-case and with underscores
+# RETURN: The name in uppercase and with underscores
 to_global_name() {
 	unset RETURN
-	# Translate to upper-case, and replace dashes with underscores
+	# Translate to uppercase, and replace dashes with underscores
 	local result="$1"
 	if is_bash_version 4; then
 		# Much faster than the `tr` command
 		result="${result//-/_}"
 		result="${result//./_}"
-		result="${result^^}" # to upper-case
+		result="${result^^}" # to uppercase
 	else
 		result="$(echo "$result" | tr '[\-\.a-z]' '[\_\_A-Z]')"
 	fi
@@ -197,15 +197,15 @@ to_global_name() {
 # Converts a global BASH variable name to a server.properties file
 # variable name.
 # $1: The string to convert
-# RETURN: The name in lower-case and with dashes
+# RETURN: The name in lowercase and with dashes
 to_properties_name() {
 	unset RETURN
-	# Translate to upper-case, and replace dashes with underscores
+	# Translate to uppercase, and replace dashes with underscores
 	local result="$1"
 	if is_bash_version 4; then
 		# Much faster than the `tr` command
 		result="${result//_/-}"
-		result="${result,,}" # to lower-case
+		result="${result,,}" # to lowercase
 	else
 		result="$(echo "$result" | tr '[\_A-Z]' '[\-a-z]')"
 	fi
@@ -283,7 +283,7 @@ get_latest_file() {
 	RETURN="$best_file"
 }
 
-# Returns the current time as a UNIX time stamp (in seconds since 1970)
+# Returns the current time as a UNIX timestamp (in seconds since 1970)
 now() {
 	date +%s
 }
@@ -291,7 +291,7 @@ now() {
 
 ### Log Utility Functions
 
-# Gets the UNIX time-stamp for a server log line
+# Gets the UNIX timestamp for a server log line
 # $1: A server log line
 # returns: Time in seconds since 1970-01-01 00:00:00 UTC
 log_line_get_time() {
@@ -649,7 +649,7 @@ server_ensure_jar() {
 # $2: The setting name to read
 server_read_config() {
 	unset RETURN
-	# Convert name into upper-case with underscores
+	# Convert name into uppercase with underscores
 	# msm-setting => SERVER_SETTING
 	# setting => SERVER_PROPERTIES_SETTING
 	if [[ "$2" =~ ^msm\-(.*)$ ]]; then
@@ -800,7 +800,7 @@ server_worlds_to_disk() {
 
 # Watches a server's log for a specific line
 # $1: The ID for the server
-# $2: A UNIX time stamp (seconds since 1970) which the $3 line must be after
+# $2: A UNIX timestamp (seconds since 1970) which the $3 line must be after
 # $3: The regex that matches log lines
 # $4: A timeout in seconds
 # returns: When the line is found
@@ -834,7 +834,7 @@ server_log_get_line() {
 # The same as server_log_get_line, but prints a dot instead of the log line
 # to stdout, and returns when line is found.
 # $1: the ID of the server
-# $2: A UNIX time stamp (seconds since 1970) which the $3 line must be after
+# $2: A UNIX timestamp (seconds since 1970) which the $3 line must be after
 # $3: The regex that matches log lines
 # $4: A timeout in seconds
 # returns: When the line is found
