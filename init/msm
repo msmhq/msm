@@ -23,7 +23,7 @@
 
 
 # See http://www.debian.org/doc/debian-policy/ch-opersys.html#s-sysvinit for
-# more information on debain init.d scripts, which may help you understand
+# more information on debian init.d scripts, which may help you understand
 # this script.
 
 
@@ -129,7 +129,7 @@ msm_success() {
 	echo -e "${COLOUR_CYAN}[MSM: ${1}]${COLOUR_RESET}"
 }
 
-# Echos the first non-empty string in the arguments list
+# Echoes the first non-empty string in the arguments list
 # $1->: Candidate strings for echoing
 echo_fallback() {
 	for arg in "$@"; do
@@ -195,7 +195,7 @@ to_global_name() {
 }
 
 # Converts a global BASH variable name to a server.properties file
-# varibale name.
+# variable name.
 # $1: The string to convert
 # RETURN: The name in lowercase and with dashes
 to_properties_name() {
@@ -252,7 +252,7 @@ is_valid_name() {
 			return 0
 		fi
 	else
-		error_exit INVALID_ARGUMENT "Invalid name \"$1\": A name may only contain letters, numbers, dashes and unscores."
+		error_exit INVALID_ARGUMENT "Invalid name \"$1\": A name may only contain letters, numbers, dashes and underscores."
 	fi
 }
 
@@ -337,7 +337,7 @@ world_to_disk() {
 	as_user "${SERVER_USERNAME[${WORLD_SERVER_ID[$1]}]}" "rsync -rt --exclude '$(basename "${WORLD_FLAG_INRAM[$1]}")' \"${WORLD_RAMDISK_PATH[$1]}/\" \"${WORLD_PATH[$1]}\""
 }
 
-# Toggles a worlds ramdisk state
+# Toggles a worlds ram disk state
 # $1: The ID of the world
 world_toggle_ramdisk_state() {
 	world_property "$1" FLAG_INRAM
@@ -519,7 +519,7 @@ world_property() {
 				;;
 			RAMDISK_PATH)
 				manager_property RAMDISK_STORAGE_ENABLED
-				# If the ramdisk path is set, get the path for this world
+				# If the ram disk path is set, get the path for this world
 				if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
 					manager_property RAMDISK_STORAGE_PATH
 					WORLD_RAMDISK_PATH[$1]="${SETTINGS_RAMDISK_STORAGE_PATH}/${SERVER_NAME[$sid]}/${WORLD_NAME[$1]}"
@@ -649,7 +649,7 @@ server_ensure_jar() {
 # $2: The setting name to read
 server_read_config() {
 	unset RETURN
-	# Convert name into upper-case with underscores
+	# Convert name into uppercase with underscores
 	# msm-setting => SERVER_SETTING
 	# setting => SERVER_PROPERTIES_SETTING
 	if [[ "$2" =~ ^msm\-(.*)$ ]]; then
@@ -666,7 +666,7 @@ server_read_config() {
 }
 
 # Creates symbolic links in the server directory (SETTINGS_SERVER_STORAGE_PATH) for each
-# of the Minecraft worlds located in the world storage directory.
+# of the Minecraft worlds located in the worldstorage directory.
 # $1: The id of the server for which links should be ensured
 server_ensure_links() {
 	server_property "$1" USERNAME
@@ -700,7 +700,7 @@ server_ensure_links() {
 		# ! -a, since it is within double square brackets means: the negation of
 		# the existence of the file. In other words: true if does not exist
 		if [[ -L "${WORLD_LINK[$i]}" || ! -a "${WORLD_LINK[$i]}" ]]; then
-			# If there is a symbolic link in the server direcotry to this world,
+			# If there is a symbolic link in the server directory to this world,
 			# or there is not a directory in the server directory containing this world.
 			
 			# Get the original file path the symbolic link is pointing to
@@ -754,7 +754,7 @@ server_ensure_links() {
 server_worlds_to_ram() {
 	manager_property RAMDISK_STORAGE_ENABLED
 
-	# Only proceed if there is a ramdisk path set in config
+	# Only proceed if there is a ram disk path set in config
 	if [[ "$SETTINGS_RAMDISK_STORAGE_ENABLED" == "true" ]]; then
 		echo -n "Synchronising flagged worlds on disk to RAM... "
 		local i="${SERVER_WORLD_OFFSET[$1]}"
@@ -832,7 +832,7 @@ server_log_get_line() {
 }
 
 # The same as server_log_get_line, but prints a dot instead of the log line
-# to stdout, and retruns when line is found.
+# to stdout, and returns when line is found.
 # $1: the ID of the server
 # $2: A UNIX timestamp (seconds since 1970) which the $3 line must be after
 # $3: The regex that matches log lines
@@ -953,7 +953,7 @@ server_pid() {
 }
 
 # Waits for a server to stop by polling 10 times a second
-# This approach is fairyl intensive, so only use when you are expecting the
+# This approach is fairly intensive, so only use when you are expecting the
 # server to stop soon
 # $1: The ID of the server to wait for
 server_wait_for_stop() {
@@ -1236,7 +1236,7 @@ jargroup_rename() {
 ### Server Functions
 ### ----------------
 
-# Echos a list of servers in the SETTINGS_SERVER_STORAGE_PATH
+# Echoes a list of servers in the SETTINGS_SERVER_STORAGE_PATH
 server_list() {
 	if [ "$NUM_SERVERS" -gt 0 ]; then
 		for ((server=0; server<$NUM_SERVERS; server++)); do
@@ -1313,7 +1313,7 @@ server_create() {
 			SERVER_CONF[$NUM_SERVERS]="$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_SERVER_PROPERTIES"
 			NUM_SERVERS=$(($NUM_SERVERS+1))
 
-			# TODO: Dirty all server varibales, or don't allow further in script access
+			# TODO: Dirty all server variables, or don't allow further in script access
 			
 			# TODO: Handle server default setup stuff better than just using
 			#       the "minecraft" jar group. And make it configurable.
@@ -1441,7 +1441,7 @@ server_save_off() {
 		server_command "$1" SAVE_OFF
 		echo "Done."
 		
-		# Writes any in-memory data manged by the kernel to disk
+		# Writes any in-memory data managed by the kernel to disk
 		sync
 	else
 		echo "Server \"${SERVER_NAME[$1]}\" is not running."
@@ -1561,7 +1561,7 @@ server_restart_now() {
 # $1: The ID of the server
 server_worlds_list() {
 	if [[ "${SERVER_NUM_WORLDS[$1]}" -eq 0 ]]; then
-		echo "There are no worlds in world storage."
+		echo "There are no worlds in worldstorage."
 		return 0
 	fi
 
@@ -1610,7 +1610,7 @@ server_log_roll() {
 	local log_lines="$(cat "${SERVER_LOG_PATH[$1]}" | wc -l )"
 
 	if [ "$log_lines" -le '1' ]; then
-		echo "No new log enteries to roll. No change made."
+		echo "No new log entries to roll. No change made."
 		return 0
 	fi
 
@@ -1822,7 +1822,7 @@ server_property() {
 			eval SERVER_$2[$1]=\"${SERVER_PATH[$1]}/\${SERVER_$2[$1]}\"
 		fi
 
-		# Replace any placeholders in a property we just loaded
+		# Replace any place holders in a property we just loaded
 		case "$2" in
 			SCREEN_NAME)
 				server_set_property "$1" "$2" "${SERVER_SCREEN_NAME[$1]//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
@@ -2192,7 +2192,7 @@ command_update() {
 		fi
 	}
 
-	# Download the latest MSM script and check its verison number
+	# Download the latest MSM script and check its version number
 	download_file "init/msm"
 	local latest_version="$(sed -rn "s/^VERSION=('|\"|)(.*)\1/\2/ip" "${output_dir}/init/msm" | tail -n 1)"
 
@@ -2413,7 +2413,7 @@ command_update() {
 	cleanup
 
 	# This script will now be replaced. So run the new script's
-	# update code, incase there are new things to update that
+	# update code, in case there are new things to update that
 	# this version of MSM does not know about yet.
 	if [[ "$any_files_updated" == "true" ]]; then
 		$0 update
@@ -2493,7 +2493,7 @@ command_help() {
 	echo -e "  server delete <name>                          Deletes an existing Minecraft server"
 	echo -e "  server rename <name> <new-name>               Renames an existing Minecraft server"
 	echo -e
-	echo -e "--Server Mangement Commands-------------------------------------"
+	echo -e "--Server Management Commands------------------------------------"
 	echo -e "  <server> start                                Starts a server"
 	echo -e "  <server> stop [now]                           Stops a server after warning players, or right now"
 	echo -e "  <server> restart [now]                        Restarts a server after warning players, or right now"
@@ -2613,7 +2613,7 @@ command_server_worlds_load() {
 	server_ensure_links "$1"
 }
 
-# Toggles a world's inram status
+# Toggles a world's in ram status
 # $1: The server ID
 # $2: The world ID
 command_server_worlds_ram() {
@@ -2624,7 +2624,7 @@ command_server_worlds_ram() {
 	fi
 }
 
-# Synchronises all inram worlds back to disk for an individual server
+# Synchronises all in ram worlds back to disk for an individual server
 # $1: The server ID
 command_server_worlds_todisk() {
 	if server_is_running "$1"; then
@@ -3021,7 +3021,7 @@ command_server_kick() {
 
 # Broadcasts a message to all connected players for a server
 # $1: The server ID
-# $2->: Words of the message, will be concatinated with spaces
+# $2->: Words of the message, will be concatenated with spaces
 command_server_say() {
 	if server_is_running "$1"; then
 		server_command "$1" SAY message="${*:2}"
@@ -3116,7 +3116,7 @@ command_server_save_all() {
 
 # Sends a command string to the server to be executed
 # $1: The server ID
-# $2->: A command, separate arguments are concatinated with spaces
+# $2->: A command, separate arguments are concatenated with spaces
 command_server_cmd() {
 	if server_is_running "$1"; then
 		server_eval "$1" "${*:2}"
@@ -3129,7 +3129,7 @@ command_server_cmd() {
 # Sends a command string to the server to be executed, and then tails the
 # server logs to watch fro results.
 # $1: The server ID
-# $2->: A command, separate arguments are concatinated with spaces
+# $2->: A command, separate arguments are concatenated with spaces
 command_server_cmdlog() {
 	if server_is_running "$1"; then
 		server_property "$1" LOG_PATH
@@ -3157,7 +3157,7 @@ command_server_console() {
 }
 
 # Sets a parameter in the config file if it exists, otherwise inserts the
-# paramerter.
+# parameter.
 # $1: The server ID
 # $2: Optionally, a setting name
 # $3: Optionally, a value to set for $2
@@ -3186,7 +3186,7 @@ command_server_config() {
 		echo "$RETURN"
 	fi
 
-	# If no paramter name is given
+	# If no parameter name is given
 	if [ -z "$2" ]; then
 		# List all parameters
 		for ((i=0; i<$SERVER_SETTING_COUNT; i++)); do
@@ -3320,7 +3320,7 @@ register_settings() {
 # $2: The handler function to call, if this command is identified.
 register_command() {
 	# Here we build a regular expression which will match any user input
-	# that could be passed to the given handler function. It is derrived
+	# that could be passed to the given handler function. It is derived
 	# automatically from the given command signature.
 	
 	local regex="^"
@@ -3361,7 +3361,7 @@ register_command() {
 	if [ ${#regex} -ge 1 ]; then
 		regex="${regex:0:${#regex}-1}\$"
 		
-		# Sets the global command varibales in order to register this command
+		# Sets the global command variables in order to register this command
 		COMMAND_SIGNATURE[$COMMAND_COUNT]="$1"
 		COMMAND_REGEX[$COMMAND_COUNT]="$regex"
 		COMMAND_HANDLER[$COMMAND_COUNT]="$2"
@@ -3416,7 +3416,7 @@ call_command() {
 			# given to the script, to the handler (which may contain constant
 			# strings), it only includes variables.
 			for word in ${COMMAND_SIGNATURE[$command]}; do
-				# Whether a positional argument is a varibale or not is
+				# Whether a positional argument is a variable or not is
 				# determined by the respective element in the command signature
 				# given when registering.
 				#
@@ -3433,7 +3433,7 @@ call_command() {
 					
 					
 					# The "<strings>" token must only be placed at the end of a
-					# commadn signature, and allows an arbitrary amount of
+					# command signature, and allows an arbitrary amount of
 					# arguments to be passed to the command handler function.
 					"<strings>")
 						# Put all remaining user input onto the argument stack
@@ -3561,7 +3561,7 @@ call_command() {
 			# all possible worlds.
 			if [[ "$sid" == "server:all" ]] && [[ "$wid" == "world:all" ]]; then
 				for ((j=0; j<$NUM_WORLDS; j++)); do
-					# Replace server and world id placeholders with actual id's
+					# Replace server and world id place holders with actual id's
 					local replaced_args
 					for k in ${!args[@]}; do
 						replaced_args[$k]="${args[$k]//server:all/${WORLD_SERVER_ID[$j]}}"
@@ -3650,7 +3650,7 @@ register_commands() {
 	#                    included after a "<name:server>" element.
 	#     
 	# Elements listed above encapsulated within angle brackets must be included
-	# within a signature verbatim, as apposed to the "fixedstring" element
+	# within a signature verbatim, as opposed to the "fixedstring" element
 	# which is arbitrary.
 	#
 	# Variables passed to handler functions are of course positional and there
@@ -3802,17 +3802,17 @@ server_worlds_allocate() {
 		done < <(find "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$1]}" -mindepth 1 -maxdepth 1 -type d -print0)
 	fi
 
-	# Record the number fo worlds this server has
+	# Record the number of worlds this server has
 	SERVER_NUM_WORLDS[$1]="$(( $NUM_WORLDS - ${SERVER_WORLD_OFFSET[$1]} ))"
 }
 
-# Allocates stub varibales, in this context a stub is
+# Allocates stub variables, in this context a stub is
 # enough data to be able to load in more data via
 # the *_property functions.
 allocate() {
 	manager_property SERVER_STORAGE_PATH
 
-	# Dermine server names (but don't load them)
+	# Determine server names (but don't load them)
 	if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
 		while IFS= read -r -d $'\0' path; do
 			server_allocate "$path"
@@ -3891,7 +3891,7 @@ _newest_version() {
 
 # Checks available versions MSM supports and returns the
 # closes match.
-# $1: Version name prefered
+# $1: Version name preferred
 # $RETURN: The closest available version, older or equal
 #          to the given version $1
 get_closest_version() {
@@ -4011,7 +4011,7 @@ console_event() {
 # must be set before calling this function
 # $1: The name of the command
 # $2: The command pattern
-# $3->: The log lines ot accept as confirmation
+# $3->: The log lines to accept as confirmation
 console_command() {
 	local command_name command_timeout
 	if [[ "$1" =~ (.*):(.*) ]]; then
