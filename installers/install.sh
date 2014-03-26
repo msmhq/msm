@@ -4,9 +4,9 @@ function check_os() {
     if [[ -f /etc/debian_version ]]; then
         INSTALL_SCRIPT="debian.sh"
     elif [[ -f /etc/redhat-release ]]; then
-        INSTALL_SCRIPT="arch.sh"
-    elif [[ -f /etc/arch-release ]]; then
         INSTALL_SCRIPT="redhat.sh"
+    elif [[ -f /etc/arch-release ]]; then
+        INSTALL_SCRIPT="arch.sh"
     else
         echo "Error, unsupported distribution. Please install manually."
         exit 1
