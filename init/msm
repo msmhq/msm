@@ -1117,6 +1117,22 @@ jargroup_getlatest() {
 
                     fi
                 fi
+                # If target contains the word 'minecraftSnapshot' check JSON version file for correct filename
+                if [[ "$target" == "minecraftSnapshot" ]]; then
+                    printf "Checking minecraft snapshot version JSON... "
+                    local versions_url="http://s3.amazonaws.com/Minecraft.Download/versions/versions.json"
+                    local versions_file="/tmp/minecraft_versions.json"
+                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
+                    local snapshot_version=$(as_user "$SETTINGS_USERNAME" "cat '$versions_file' | egrep '^[[:space:]]*\"snapshot\"' | cut -d':' -f2 | egrep -o '[[:digit:]]{2}w[[:digit:]]{2}[a-z]'")
+                    if [[ -n "$snapshot_version" ]]; then
+                        local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$snapshot_version/minecraft_server.$snapshot_version.jar"
+                    else
+                        local snapshot_version=$(as_user "$SETTINGS_USERNAME" "cat '$versions_file' | egrep '^[[:space:]]*\"snapshot\"' | cut -d':' -f2 | egrep -o '[[:digit:].]*'")
+                        if [[ -n "$snapshot_version" ]]; then
+                                local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$snapshot_version/minecraft_server.$snapshot_version.jar"
+                        fi
+                    fi
+                fi
                 if [[ -n "$jar_url" ]]; then
 				    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' '$jar_url'"
                 else
