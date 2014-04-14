@@ -34,7 +34,7 @@ function config_installation() {
     echo -n "Add new user as system account? [y/N]: "
     read answer
     if [[ $answer != "y" ]]; then
-        msm_user_system=true
+        msm_user_system=false
     fi
 
     echo -n "Complete installation with these values? [y/N]: "
@@ -61,9 +61,9 @@ function install_dependencies() {
 function add_minecraft_user() {
     install_log "Creating default user '${msm_user}'"
     if $msm_user_system; then
-        sudo useradd ${msm_user} --home "$msm_dir"
-    else
         sudo useradd ${msm_user} --system --home "$msm_dir"
+    else
+        sudo useradd ${msm_user} --home "$msm_dir"
     fi
 }
 
