@@ -16,7 +16,7 @@ function check_os() {
 function get_installer() {
     type curl 1>/dev/null 2>&1
     if [[ $? -eq 0 ]]; then
-        curl "${BASE_URL}/${INSTALL_SCRIPT}" -o /tmp/msminst.sh
+        curl -L "${BASE_URL}/${INSTALL_SCRIPT}" -o /tmp/msminst.sh
     else
         wget -q "${BASE_URL}/${INSTALL_SCRIPT}" -O /tmp/msminst.sh
     fi
