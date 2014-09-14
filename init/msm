@@ -2083,6 +2083,12 @@ command_start() {
 	done
 }
 
+command_start_nodetach() {
+      command_start
+      echo "You have specified nodetach : waiting for SIGINT or SIGTERM"
+      while true; do sleep 1; done
+}
+
 # Stops all servers after a delay
 command_stop() {
 	manager_stop_all_servers "stop"
@@ -3657,6 +3663,7 @@ register_commands() {
 	# position matches the position of that element in the command signature.
 	
 	register_command "start" "command_start"
+	register_command "start nodetach" "command_start_nodetach"
 	register_command "stop" "command_stop"
 	register_command "stop now" "command_stop_now"
 	register_command "restart" "command_restart"
@@ -4038,7 +4045,10 @@ console_command() {
 
 
 
-
+interrupt_wait() {
+	command_stop
+	exit 0
+}
 
 
 
