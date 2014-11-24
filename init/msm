@@ -2085,6 +2085,7 @@ command_start() {
 
 command_start_nodetach() {
       command_start
+      trap interrupt_wait TERM INT
       echo "You have specified nodetach : waiting for SIGINT or SIGTERM"
       while true; do sleep 1; done
 }
