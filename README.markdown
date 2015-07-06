@@ -1,7 +1,5 @@
 # Minecraft Server Manager [![Build Status](https://secure.travis-ci.org/marcuswhybrow/minecraft-server-manager.png?branch=master)](http://travis-ci.org/marcuswhybrow/minecraft-server-manager) [![Donate to MSM](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z7XQDNF7U5GLL)
 
-THIS PROJECT IS NO LONGER BEING UPDATED
-
 A single init script which makes running multiple Minecraft/Bukkit servers easier for us admins.
 
 ## Quick Installers
