@@ -1,4 +1,9 @@
-# Minecraft Server Manager [![Build Status](https://secure.travis-ci.org/marcuswhybrow/minecraft-server-manager.png?branch=master)](http://travis-ci.org/marcuswhybrow/minecraft-server-manager) [![Donate to MSM](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z7XQDNF7U5GLL)
+# Minecraft Server Manager [![Build Status][status-img]][status] [![Donate to MSM][donate-img]][donate]
+
+[status-img]: https://api.travis-ci.org/msmhq/msm.png?branch=master
+[status]: http://travis-ci.org/msmhq/msm
+[donate-img]: https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif
+[donate]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z7XQDNF7U5GLL
 
 A single init script which makes running multiple Minecraft/Bukkit servers easier for us admins.
 
