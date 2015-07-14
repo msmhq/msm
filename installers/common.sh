@@ -1,5 +1,6 @@
 msm_dir="/opt/msm"
 msm_user="minecraft"
+msm_user_system=false
 dl_dir="$(mktemp -d -t msm-XXX)"
 
 # Outputs an MSM INSTALL log line
@@ -30,9 +31,14 @@ function config_installation() {
         msm_user="$input"
     fi
 
+    echo -n "Add new user as system account? [y/N]: "
+    read answer
+    if [[ $answer != "y" ]]; then
+        msm_user_system=true
+    fi
+
     echo -n "Complete installation with these values? [y/N]: "
     read answer
-
     if [[ $answer != "y" ]]; then
         echo "Installation aborted."
         exit 0
@@ -54,8 +60,11 @@ function install_dependencies() {
 # Verifies existence of or adds user for Minecraft server (default "minecraft")
 function add_minecraft_user() {
     install_log "Creating default user '${msm_user}'"
-    sudo useradd ${msm_user} \
-        --home /opt/msm
+    if $msm_user_system; then
+        sudo useradd ${msm_user} --home "$msm_dir"
+    else
+        sudo useradd ${msm_user} --system --home "$msm_dir"
+    fi
 }
 
 # Verifies existence and permissions of msm server directory (default /opt/msm)
@@ -117,6 +126,7 @@ function install_config() {
 function install_cron() {
     install_log "Installing MSM cron file"
     sudo install -m0644 "$dl_dir/msm.cron" /etc/cron.d/msm || install_error "Couldn't install cron file"
+    sudo /etc/init.d/cron reload
 }
 
 # Installs init script into /etc/init.d
