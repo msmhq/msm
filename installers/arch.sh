@@ -1,4 +1,4 @@
-UPDATE_URL="https://raw.github.com/marcuswhybrow/minecraft-server-manager/master"
+UPDATE_URL="https://raw.githubusercontent.com/msmhq/msm/master"
 curl -L "${UPDATE_URL}/installers/common.sh" -o /tmp/msmcommon.sh  #wget isn't installed on Arch by default
 source /tmp/msmcommon.sh && rm -f /tmp/msmcommon.sh
 

@@ -6,7 +6,7 @@
 # A single init script for managing multiple Minecraft servers.
 # Created by Marcus Whybrow
 #
-# http://marcuswhybrow.net/minecraft-server-manager/
+# https://github.com/msmhq/msm
 #
 
 ### BEGIN INIT INFO
@@ -3254,7 +3254,7 @@ register_settings() {
 	register_setting RDIFF_BACKUP_ROTATION "7"
 
 
-	register_setting UPDATE_URL "https://raw.github.com/marcuswhybrow/minecraft-server-manager/latest"
+	register_setting UPDATE_URL "https://raw.githubusercontent.com/msmhq/msm/latest"
 
 	register_setting WORLD_ARCHIVE_PATH "/opt/msm/archives/worlds"
 	register_setting LOG_ARCHIVE_PATH "/opt/msm/archives/logs"
@@ -3519,7 +3519,7 @@ call_command() {
 
 						if [[ "$sid" -eq "-1" ]]; then
 							# Server id not set yet
-							error_exit 1 "Ill-defined command $*. Please file an issue by opening the following link: https://github.com/marcuswhybrow/minecraft-server-manager/issues"
+							error_exit 1 "Ill-defined command $*. Please file an issue by opening the following link: https://github.com/msmhq/msm/issues"
 						fi
 
 						if [[ "$sid" -eq "-2" ]]; then

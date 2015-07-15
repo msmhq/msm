@@ -83,6 +83,6 @@ This code grew out of an old version of [Ahtenus' Minecraft Init Script][ahtenus
 [ahtenus-minecraft-init]: https://github.com/Ahtenus/minecraft-init
 [docs]: http://msmhq.com/docs/
 [install]: http://msmhq.com/docs/installation.html
-[changelog]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/master/CHANGELOG.markdown
-[licence]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/master/LICENSE.markdown
-[issues]: https://github.com/marcuswhybrow/minecraft-server-manager/issues
+[changelog]: https://github.com/msmhq/msm/blob/master/CHANGELOG.markdown
+[licence]: https://github.com/msmhq/msm/blob/master/LICENSE.markdown
+[issues]: https://github.com/msmhq/msm/issues
