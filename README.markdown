@@ -49,8 +49,6 @@ As well as starting, stopping and restarting MSM has the following features:
 ## Support
 
 1. If you find a problem with MSM and you think the problem is one that requires changing code [submit an issue][issues] via GitHub.
-2. If you otherwise have a problem, question or suggestion you can email me directly at msm@marcuswhybrow.net.
-
 
 ## Upcomming features
 
