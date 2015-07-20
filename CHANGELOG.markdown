@@ -9,7 +9,58 @@ Change Log
 ### [0.9.0](https://github.com/msmhq/msm/compare/0.8.16...0.9.0)
 
 * Project has been moved to it's own organization
+* Added "minecraft" default jar group on MSM setup. [a39e19][a39e19]
+* Added downloading latest Minecraft versions (via versions.json) [PR#169][#169]
+* Added default DEFAULT_OPS_LIST to msm.conf [PR#195][#195]
+* Added release and snapshot download support for minecraft jars [PR#214][#214]
+* Added Arch Linux installer (including systemd support) [PR#217][#217]
+* Added testing using default shunit2 location if command not found [PR#218][#218]
+* Added RDIFF backup support [PR#221][#221]
+* Added RSync backup support [PR#243][#243]
+* Added unified distro-detecting installer [PR#227][#227]
+* Added option to create server user as "system" on MSM install [PR#232][#232]
+* Fixed hidden world storage path error message [#282][#282]
+* Fixed update versioning comparisons. [PR#132][#132]
+* Fixed annoying "No directory, logging in with HOME=/" message [PR#182][#182]
+* Fixed deleting running servers [PR#185][#185]
+* Fixed broken error messages when deactivating worlds and calling commands [PR#188][#188]
+* Fixed new worlds created outside of world storage directory [PR#191][#191]
+* Fixed directory nesting when toggling world active state [PR#204][#204]
+* Fixed `msm restart` broadcasting wrong message to players [PR#196][#196]
+* Fixed RedHat installing `/etc/cron.d/msm` with incorrect permissions [PR#203][#203]
+* Fixed RedHat installer to require java package [PR#236][#236]
+* Fixed cron not reloading after installation [PR#245][#245]
+* Fixed not following redirects in install scripts [PR#267][#267]
+* Fixed minor message and comment typos [PR#192][#192], [PR#226][#226], [PR#246][#246]
+* Refactored install scripts allowing alternate github repos [PR#193][#193]
 
+[#132]: https://github.com/msmhq/msm/pull/132
+[#169]: https://github.com/msmhq/msm/pull/169
+[#182]: https://github.com/msmhq/msm/pull/182
+[#185]: https://github.com/msmhq/msm/pull/185
+[#186]: https://github.com/msmhq/msm/pull/186
+[#188]: https://github.com/msmhq/msm/pull/188
+[#191]: https://github.com/msmhq/msm/pull/191
+[#192]: https://github.com/msmhq/msm/pull/192
+[#193]: https://github.com/msmhq/msm/pull/193
+[#195]: https://github.com/msmhq/msm/pull/195
+[#196]: https://github.com/msmhq/msm/pull/196
+[#203]: https://github.com/msmhq/msm/pull/203
+[#204]: https://github.com/msmhq/msm/pull/204
+[#214]: https://github.com/msmhq/msm/pull/214
+[#217]: https://github.com/msmhq/msm/pull/217
+[#218]: https://github.com/msmhq/msm/pull/218
+[#221]: https://github.com/msmhq/msm/pull/221
+[#227]: https://github.com/msmhq/msm/pull/226
+[#227]: https://github.com/msmhq/msm/pull/227
+[#232]: https://github.com/msmhq/msm/pull/232
+[#236]: https://github.com/msmhq/msm/pull/236
+[#243]: https://github.com/msmhq/msm/pull/243
+[#245]: https://github.com/msmhq/msm/pull/245
+[#246]: https://github.com/msmhq/msm/pull/246
+[#267]: https://github.com/msmhq/msm/pull/267
+[#282]: https://github.com/msmhq/msm/issues/282
+[a39e19]: [https://github.com/msmhq/msm/commit/a39e1948abbe01190d6e9b5472676713557e1910
 
 ### [0.8.16](https://github.com/msmhq/msm/compare/0.8.15...0.8.16)
 
@@ -279,8 +330,8 @@ Change Log
 
 ### [0.4.1](https://github.com/msmhq/msm/compare/0.4.0...0.4.1)
 
-* Fixed issue [#37][#37] where the `msm stop` command would hang. Thanks to merging pull request [#38][#38] from [@escortkeel][@escortkeel]. 
-* Fixed issue [#39][#39] where server jar symlinks were not created. Thanks to merging pull request [#40][#40] from [@jives][@jives]. 
+* Fixed issue [#37][#37] where the `msm stop` command would hang. Thanks to merging pull request [#38][#38] from [@escortkeel][@escortkeel].
+* Fixed issue [#39][#39] where server jar symlinks were not created. Thanks to merging pull request [#40][#40] from [@jives][@jives].
 
 [@escortkeel]: https://github.com/escortkeel
 [#37]: https://github.com/msmhq/msm/issues/37
@@ -300,7 +351,7 @@ Change Log
 
 ### [0.3.4](https://github.com/msmhq/msm/compare/0.3.3...0.3.4)
 
-* Fixed the `gamemode`, `cmd` and `cmdlog` server commands. They were not previously accessable. 
+* Fixed the `gamemode`, `cmd` and `cmdlog` server commands. They were not previously accessable.
 
 ### [0.3.3](https://github.com/msmhq/msm/compare/0.3.2...0.3.3)
 
@@ -345,7 +396,7 @@ Change Log
 
 ### [0.2.14](https://github.com/msmhq/msm/compare/0.2.13...0.2.14)
 
-* Improved checks done before reading server files. Closes [#20][#20]. 
+* Improved checks done before reading server files. Closes [#20][#20].
 
 [#20]: https://github.com/msmhq/msm/issues/20
 
