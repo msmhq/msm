@@ -10,29 +10,29 @@ Change Log
 
 * Project has been moved to it's own organization
 * Added "minecraft" default jar group on MSM setup. [a39e19][a39e19]
-* Added downloading latest Minecraft versions (via versions.json) [PR#169][#169]
-* Added default DEFAULT_OPS_LIST to msm.conf [PR#195][#195]
-* Added release and snapshot download support for minecraft jars [PR#214][#214]
-* Added Arch Linux installer (including systemd support) [PR#217][#217]
-* Added testing using default shunit2 location if command not found [PR#218][#218]
-* Added RDIFF backup support [PR#221][#221]
-* Added RSync backup support [PR#243][#243]
-* Added unified distro-detecting installer [PR#227][#227]
-* Added option to create server user as "system" on MSM install [PR#232][#232]
+* Added downloading latest Minecraft versions (via versions.json) [#169][#169]
+* Added default DEFAULT_OPS_LIST to msm.conf [#195][#195]
+* Added release and snapshot download support for minecraft jars [#214][#214]
+* Added Arch Linux installer (including systemd support) [#217][#217]
+* Added testing using default shunit2 location if command not found [#218][#218]
+* Added RDIFF backup support [#221][#221]
+* Added RSync backup support [#243][#243]
+* Added unified distro-detecting installer [#227][#227]
+* Added option to create server user as "system" on MSM install [#232][#232]
 * Fixed hidden world storage path error message [#282][#282]
-* Fixed update versioning comparisons. [PR#132][#132]
-* Fixed annoying "No directory, logging in with HOME=/" message [PR#182][#182]
-* Fixed deleting running servers [PR#185][#185]
-* Fixed broken error messages when deactivating worlds and calling commands [PR#188][#188]
-* Fixed new worlds created outside of world storage directory [PR#191][#191]
-* Fixed directory nesting when toggling world active state [PR#204][#204]
-* Fixed `msm restart` broadcasting wrong message to players [PR#196][#196]
-* Fixed RedHat installing `/etc/cron.d/msm` with incorrect permissions [PR#203][#203]
-* Fixed RedHat installer to require java package [PR#236][#236]
-* Fixed cron not reloading after installation [PR#245][#245]
-* Fixed not following redirects in install scripts [PR#267][#267]
-* Fixed minor message and comment typos [PR#192][#192], [PR#226][#226], [PR#246][#246]
-* Refactored install scripts allowing alternate github repos [PR#193][#193]
+* Fixed update versioning comparisons. [#132][#132]
+* Fixed annoying "No directory, logging in with HOME=/" message [#182][#182]
+* Fixed deleting running servers [#185][#185]
+* Fixed broken error messages when deactivating worlds and calling commands [#188][#188]
+* Fixed new worlds created outside of world storage directory [#191][#191]
+* Fixed directory nesting when toggling world active state [#204][#204]
+* Fixed `msm restart` broadcasting wrong message to players [#196][#196]
+* Fixed RedHat installing `/etc/cron.d/msm` with incorrect permissions [#203][#203]
+* Fixed RedHat installer to require java package [#236][#236]
+* Fixed cron not reloading after installation [#245][#245]
+* Fixed not following redirects in install scripts [#267][#267]
+* Fixed minor message and comment typos [#192][#192], [#226][#226], [#246][#246]
+* Refactored install scripts allowing alternate github repos [#193][#193]
 
 [#132]: https://github.com/msmhq/msm/pull/132
 [#169]: https://github.com/msmhq/msm/pull/169
@@ -51,7 +51,7 @@ Change Log
 [#217]: https://github.com/msmhq/msm/pull/217
 [#218]: https://github.com/msmhq/msm/pull/218
 [#221]: https://github.com/msmhq/msm/pull/221
-[#227]: https://github.com/msmhq/msm/pull/226
+[#226]: https://github.com/msmhq/msm/pull/226
 [#227]: https://github.com/msmhq/msm/pull/227
 [#232]: https://github.com/msmhq/msm/pull/232
 [#236]: https://github.com/msmhq/msm/pull/236
@@ -60,7 +60,7 @@ Change Log
 [#246]: https://github.com/msmhq/msm/pull/246
 [#267]: https://github.com/msmhq/msm/pull/267
 [#282]: https://github.com/msmhq/msm/issues/282
-[a39e19]: [https://github.com/msmhq/msm/commit/a39e1948abbe01190d6e9b5472676713557e1910
+[a39e19]: https://github.com/msmhq/msm/commit/a39e1948abbe01190d6e9b5472676713557e1910
 
 ### [0.8.16](https://github.com/msmhq/msm/compare/0.8.15...0.8.16)
 
