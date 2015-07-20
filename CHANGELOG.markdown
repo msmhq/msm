@@ -8,7 +8,6 @@ Change Log
 
 ### [0.9.0](https://github.com/msmhq/msm/compare/0.8.16...0.9.0)
 
-* Updated latest to 0.9.0
 * Project has been moved to it's own organization
 
 
