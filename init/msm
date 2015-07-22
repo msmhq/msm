@@ -1104,15 +1104,20 @@ jargroup_getlatest() {
                                     wget_opts=""
                                 fi
 
-                # If target contains the word 'release' or 'snapshot' check JSON version file for correct filename 
-                # Look for Latest tag to find the latest snapshot and release. Not sure what happens in the JSON after a snapshot is released though...
+                # If target contains the word 'minecraft' or 'minecraft-snapshot', check JSON version file for correct filename
+                # This method allows for backwards compatibility with previous releases
                 local target="$(as_user "$SETTINGS_USERNAME" "cat $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET")"
-                if [[ "$target" == "release" ]] || [[ "$target" == "snapshot" ]]; then
+                if [[ "$target" =~ ^minecraft ]]; then
+                    if [[ "$target" == "minecraft" ]]; then
+                        local versions_target="release"
+                    elif [[ "$target" == "minecraft-snapshot" ]]; then
+                        local versions_target="snapshot"
+                    fi
                     printf "Checking minecraft version JSON... "
                     local versions_url="http://s3.amazonaws.com/Minecraft.Download/versions/versions.json"
                     local versions_file="/tmp/minecraft_versions.json"
                     as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
-                    local latest_version=$(as_user "$SETTINGS_USERNAME" "sed -n '/"latest"/,/}/p' $versions_file | grep $target | egrep -o '([0-9]+\.?)+|([0-9]+[a-zA-Z])+'")
+                    local latest_version=$(as_user "$SETTINGS_USERNAME" "sed -n '/"latest"/,/}/p' $versions_file | grep $versions_target | egrep -o '([0-9]+\.?)+|([0-9]+[a-zA-Z])+'")
                     if [[ -n "$latest_version" ]]; then
                         local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$latest_version/minecraft_server.$latest_version.jar"
 
