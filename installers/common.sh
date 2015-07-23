@@ -153,7 +153,7 @@ function update_msm() {
 # Updates rest of MSM using init script updater
 function setup_jargroup() {
     install_log "Setup default jar groups"
-    sudo /etc/init.d/msm jargroup create minecraft release
+    sudo /etc/init.d/msm jargroup create minecraft minecraft
 }
 
 function install_complete() {
