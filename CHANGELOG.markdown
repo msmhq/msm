@@ -6,6 +6,12 @@ Visit https://github.com/msmhq/msm for more information.
 Change Log
 ----------
 
+### [0.9.1](https://github.com/msmhq/msm/compare/0.9.0...0.9.1)
+
+* Fixed version target and default jargroup for backwards compatibility [#298][#298]
+
+[#298]: https://github.com/msmhq/msm/pull/298
+
 ### [0.9.0](https://github.com/msmhq/msm/compare/0.8.16...0.9.0)
 
 * Project has been moved to it's own organization
