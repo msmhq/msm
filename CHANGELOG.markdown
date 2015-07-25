@@ -6,6 +6,12 @@ Visit https://github.com/msmhq/msm for more information.
 Change Log
 ----------
 
+### [0.9.2](https://github.com/msmhq/msm/compare/0.9.1...0.9.2)
+
+* Added check and warning if eula isn't set to true [#271][#271]
+
+[#271]: https://github.com/msmhq/msm/issues/271
+
 ### [0.9.1](https://github.com/msmhq/msm/compare/0.9.0...0.9.1)
 
 * Fixed version target and default jargroup for backwards compatibility [#298][#298]
