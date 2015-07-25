@@ -28,7 +28,7 @@
 
 
 # The Minecraft Server Manager version, use "msm version" to check yours.
-VERSION="0.9.1"
+VERSION="0.9.2"
 
 
 # Source, if it exists, the msm profile.d script
@@ -1423,6 +1423,13 @@ server_start() {
 		# Wait for the server to fully start
 		server_log_dots_for_lines "$1" "$time_now" "${SERVER_CONSOLE_EVENT_OUTPUT_START[$1]}" "${SERVER_CONSOLE_EVENT_TIMEOUT_START[$1]}"
 		
+                if [[ -f "${SERVER_PATH[$1]}"/eula.txt ]]; then
+                        if ! grep -q -i 'eula=true' "${SERVER_PATH[$1]}"/eula.txt; then
+                                echo " You need to agree to the EULA in order to run the server. Go to eula.txt for more info."
+                                return
+                        fi
+                fi
+
 		echo " Done."
 	fi
 }
