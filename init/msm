@@ -1426,7 +1426,7 @@ server_start() {
 
 		if [[ -f "${SERVER_PATH[$1]}"/eula.txt ]]; then
 			if ! grep -q -i 'eula=true' "${SERVER_PATH[$1]}"/eula.txt; then
-				error_exit EULA_UNACCEPTED "Could not start the server as you first need to agree to a EULA. See eula.txt for more info."
+				error_exit EULA_UNACCEPTED "Could not start the server as you first need to agree to an EULA. See eula.txt for more info."
 			fi
 		fi
 
