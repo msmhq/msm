@@ -158,7 +158,6 @@ error_exit() {
 		CONF_ERROR) code=73;;
 		FATAL_ERROR) code=74;;
 		JAVA_NOT_INSTALLED) code=75;;
-		EULA_UNACCEPTED) code=76;;
 	esac
 
 	echo "${2:-"Unknown Error"}" 1>&2
@@ -1426,7 +1425,8 @@ server_start() {
 
 		if [[ -f "${SERVER_PATH[$1]}"/eula.txt ]]; then
 			if ! grep -q -i 'eula=true' "${SERVER_PATH[$1]}"/eula.txt; then
-				error_exit EULA_UNACCEPTED "Could not start the server as you first need to agree to an EULA. See eula.txt for more info."
+				echo " Could not start the server as you first need to agree to an EULA. See eula.txt for more info."
+				return
 			fi
 		fi
 
