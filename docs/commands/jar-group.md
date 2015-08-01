@@ -20,6 +20,11 @@ Lists the stored jar files grouped by jar group.
 
 You can create your own jar groups giving them a name and a URL specifying where the latest version can always be found and downloaded. New jar groups are stored along side the existing "minecraft" and "craftbukkit" groups.
 
+    jargroup create <name> minecraft
+    jargroup create <name> minecraft-snapshot
+
+If you'd like your jar group to download the latest release or snapshot version of minecraft-server, the download-url parameter supports minecraft (for release) or minecraft-snapshot (for snapshot).
+
     jargroup delete <name>
 
 If you don't need a group of jars anymore you can delete all of them using this command. You won't be able to delete a jar group if any server is currently using a jar in that group.
