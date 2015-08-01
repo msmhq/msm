@@ -30,15 +30,19 @@ Manual Installation
         sudo apt-get update
         sudo apt-get install screen rsync zip
 
-2. Download MSM's default configuraiton file, then **read through it** and change anything you want. Be sure to carry any changes you make forwards through this guide.
+2. Download MSM's default configuration file, then **read through it** and change anything you want. Be sure to carry any changes you make forwards through this guide.
 
         sudo wget http://git.io/6eiCSg -O /etc/msm.conf
 
-3. Create the directories MSM needs:
+3. Create the user and directories MSM needs:
 
     First create the folder where MSM will store server, jars, and other files:
 
         sudo mkdir /opt/msm
+
+    Second, add the user and set permissions
+
+        sudo useradd minecraft --home /opt/msm
         sudo chown minecraft /opt/msm
         sudo chmod -R 775 /opt/msm
 
@@ -65,7 +69,7 @@ Manual Installation
 
         sudo msm update
 
-8. Setup MSM's included cron script for sheduled tasks and force cron to load script:
+8. Setup MSM's included cron script for scheduled tasks and force cron to load script:
 
         sudo wget http://git.io/pczolg -O /etc/cron.d/msm
         sudo service cron reload
@@ -74,7 +78,7 @@ Manual Installation
 
 9. Create a jar group to manage current and future Minecraft versions:
 
-        sudo msm jargroup create minecraft https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar
+        sudo msm jargroup create minecraft minecraft
 
 10. Create a new server, and tell it to use the latest of those Minecraft jars:
 
