@@ -59,7 +59,7 @@ Manual Installation
 5. Set script permissions, and integrate script with startup/shutdown:
 
         sudo chmod 755 /etc/init.d/msm
-        sudo update-rc.d msm defaults
+        sudo update-rc.d msm defaults 99 10
 
 6. Create a shortcut so we can use just type `msm`:
 
