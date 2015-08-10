@@ -19,7 +19,7 @@ function enable_init() {
     if [[ $? == 0 ]]; then
         sudo insserv msm
     else
-        sudo update-rc.d msm defaults
+        sudo update-rc.d msm defaults 99 10
     fi
 }
 
