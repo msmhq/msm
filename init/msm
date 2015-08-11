@@ -60,6 +60,9 @@ follow_links "$COMPLETION"; COMPLETION="$RETURN"
 # The start of a regex to find a log line
 LOG_REGEX="^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\]"
 
+# Minecraft 1.7 logging regex
+LOG_REGEX_1_7="^\[[0-9]{2}:[0-9]{2}:[0-9]{2}\] \[.*\]:"
+
 # Lazy allocation status
 ALLOCATED_SERVERS="false"
 ALLOCATED_WORLDS="false"
@@ -295,7 +298,16 @@ now() {
 # $1: A server log line
 # returns: Time in seconds since 1970-01-01 00:00:00 UTC
 log_line_get_time() {
-	time_string="$(echo "$1" | awk '{print $1 " " $2}')"
+	# Verify that the log line matches the pre 1.7 timestamp pattern
+	if [[ $1 =~ $LOG_REGEX ]]; then
+		time_string="$(echo "$1" | awk '{print $1 " " $2}')"
+	elif [[ $1 =~ $LOG_REGEX_1_7 ]]; then
+		# New 1.7 logging! Notice that we do _not_ have a date so the timestamp will be resolved against todays date, which might lead to undesirable results!
+		time_string="$(echo "$1" | awk -F'[][]' '{print $2}')"
+		# TODO: Test rigorously!
+		# Test case 1: Command whose execution time crosses midnight
+		# Test case 2: Servers infrequently writing to logs over the course of days
+	fi
 	date -d "$time_string" "+%s" 2> /dev/null
 }
 
@@ -813,6 +825,7 @@ server_log_get_line() {
 	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
 	local regex="${LOG_REGEX} ($3)"
+	local regex1_7="${LOG_REGEX_1_7} ($3)"
 	local timeout_deadline=$(( $(now) + $4 ))
 
 	# Read log, break if nothing is read in $4 seconds
@@ -823,12 +836,15 @@ server_log_get_line() {
 		[[ "$(now)" -gt "$timeout_deadline" ]] && break
 
 		# If the entry is old enough
-		if [[ "$line_time" -ge "$2" ]] && [[ "$line" =~ $regex ]]; then
-			# Return the line
-			RETURN="${BASH_REMATCH[1]}"
-			return 0
+		if [[ "$line_time" -ge "$2" ]]; then
+			# And the entry matches the log pattern
+			if [[ "$line" =~ $regex ]] || [[ "$line" =~ $regex1_7 ]]; then
+				# Return the line
+				RETURN="${BASH_REMATCH[1]}"
+				return 0
+			fi
 		fi
-	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=20 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
+	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ -F --lines=20 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\" 2>/dev/null")
 }
 
 # The same as server_log_get_line, but prints a dot instead of the log line
@@ -846,6 +862,7 @@ server_log_dots_for_lines() {
 	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
 	local regex="${LOG_REGEX} ($3)"
+	local regex1_7="${LOG_REGEX_1_7} ($3)"
 	local timeout_deadline=$(( $(now) + $4 ))
 
 	# Read log, break if nothing is read in $4 seconds
@@ -862,11 +879,11 @@ server_log_dots_for_lines() {
 			echo -n '.'
 
 			# and if it matches the regular expression, return
-			if [[ "$line" =~ $regex ]]; then
+			if [[ "$line" =~ $regex ]] || [[ "$line" =~ $regex1_7 ]]; then
 				return 0
 			fi
 		fi
-	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
+	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ -F --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\" 2>/dev/null")
 }
 
 # Sends as string to a server for execution
