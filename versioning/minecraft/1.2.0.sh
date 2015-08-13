@@ -1,5 +1,6 @@
 # MSM version file for Minecraft 1.2.0 and above
 
+console_event REGEX "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\]"
 console_event START:30 "Done"
 
 console_command WHITELIST_ON "whitelist on"
