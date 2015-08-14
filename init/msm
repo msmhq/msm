@@ -826,7 +826,7 @@ server_log_get_line() {
 			RETURN="${BASH_REMATCH[1]}"
 			return 0
 		fi
-	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=20 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
+	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow=name --retry --lines=20 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
 }
 
 # The same as server_log_get_line, but prints a dot instead of the log line
@@ -865,7 +865,7 @@ server_log_dots_for_lines() {
 				return 0
 			fi
 		fi
-	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
+	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow=name --retry --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\"")
 }
 
 # Sends as string to a server for execution
@@ -3150,7 +3150,7 @@ command_server_cmdlog() {
 		echo "Now watching logs (press Ctrl+C to exit):"
 		echo "..."
 		server_eval "$1" "${*:2}"
-		as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow --lines=5 --sleep-interval=0.1 ${SERVER_LOG_PATH[$1]}"
+		as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow=name --retry --lines=5 --sleep-interval=0.1 ${SERVER_LOG_PATH[$1]}"
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
