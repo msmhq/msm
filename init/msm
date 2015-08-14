@@ -292,7 +292,7 @@ now() {
 # $1: A server log line
 # returns: Time in seconds since 1970-01-01 00:00:00 UTC
 log_line_get_time() {
-	time_string="$(echo "$1" | awk 'BEGIN{FS="[ \][/:]+"}; {print  $1 " " $2 ":" $3 ":" $4}')"
+	time_string="$(echo "$1" | awk -F'[] [/:]+' '{print  $1 " " $2 ":" $3 ":" $4}')"
 	date -d "$time_string" "+%s" 2> /dev/null
 }
 
