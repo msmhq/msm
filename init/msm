@@ -807,8 +807,6 @@ server_log_get_line() {
 	server_property "$1" CONSOLE_EVENT_REGEX
 
 	unset RETURN
-	# Make sure there is a server log to check
-	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
 	local regex="${SERVER_CONSOLE_EVENT_OUTPUT_REGEX[$1]} ($3)"
 	local timeout_deadline=$(( $(now) + $4 ))
@@ -840,9 +838,6 @@ server_log_dots_for_lines() {
 	server_property "$1" USERNAME
 	server_property "$1" LOG_PATH
 	server_property "$1" CONSOLE_EVENT_REGEX
-
-	# Make sure there is a server log to check
-	as_user "${SERVER_USERNAME[$1]}" "touch ${SERVER_LOG_PATH[$1]}"
 
 	local regex="${SERVER_CONSOLE_EVENT_OUTPUT_REGEX[$1]} ($3)"
 	local timeout_deadline=$(( $(now) + $4 ))
