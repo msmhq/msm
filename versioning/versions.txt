@@ -5,6 +5,7 @@
 # Vanilla Minecraft versions
 minecraft/1.2.0
 minecraft/1.3.0
+minecraft/1.7.0
 
 # CraftBukkit versions
 craftbukkit/1.2.0
