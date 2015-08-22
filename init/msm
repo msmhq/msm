@@ -4043,6 +4043,13 @@ console_command() {
 	eval SERVER_CONSOLE_COMMAND_TIMEOUT_${command_name}[$VERSIONING_SERVER_ID]=\"$command_timeout\"
 }
 
+# Defines a servers property variables, VERSIONING_SERVER_ID
+# must be set before calling this function
+# $1: The name of the property
+# $2: The value of the property
+set_property() {
+	server_set_property "$VERSIONING_SERVER_ID" "$1" "$2"
+}
 
 
 
