@@ -6,6 +6,12 @@ Visit https://github.com/msmhq/msm for more information.
 Change Log
 ----------
 
+### [0.9.3](https://github.com/msmhq/msm/compare/0.9.2...0.9.3)
+
+* Added pre and post 1.7.0 log support [#308][#308]
+
+[#308]: https://github.com/msmhq/msm/pull/308
+
 ### [0.9.2](https://github.com/msmhq/msm/compare/0.9.1...0.9.2)
 
 * Added check and warning if eula isn't set to true [#271][#271]
