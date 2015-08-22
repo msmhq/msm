@@ -89,12 +89,15 @@ Manual Installation
 
     Before you start make sure to let MSM know which version of Minecraft you are running by adding the following line to `/opt/msm/servers/<server-name>/server.properties`
 
-        msm-version=minecraft/1.3.1
+        msm-version=minecraft/1.7.0
 
     The available strings are currently:
 
-    * `minecraft/1.2.0` and above.
-    * `craftbukkit/1.2.0` and above.
+    * `minecraft/1.2.0`
+    * `minecraft/1.3.0`
+    * `minecraft/1.7.0` and above
+    * `craftbukkit/1.2.0`
+    * `craftbukkit/1.3.0` and above
 
     See [versioning/versions.txt][versions] for the up to the minute list.
 
