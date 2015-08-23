@@ -1800,7 +1800,9 @@ server_property() {
 				SERVER_VERSIONING_LOADED[$1]="true"
 			fi
 
-			return 0
+			if [[ "$2" =~ ^CONSOLE_ ]]; then
+				return 0
+			fi
 		fi
 
 		# If not a non-overridable load from conf
