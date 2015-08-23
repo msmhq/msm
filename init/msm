@@ -1826,28 +1826,38 @@ server_property() {
 		fi
 
 		# If not a non-overridable load from conf
-		to_properties_name "$2"
-		local name="$RETURN"
+		read_server_conf "$1" "$2"
 
-		if [[ "$name" =~ ^properties\-(.*)$ ]]; then
-			name="${BASH_REMATCH[1]}"
-		else
-			name="msm-$name"
-		fi
-
-		server_property "$1" CONF
-
-		local from_conf="$(sed -rn "s/^$name=('|\"|)(.*)\1/\2/ip" "${SERVER_CONF[$1]}" | tail -n 1)"
-
-		if [ ! -z "$from_conf" ]; then
-			# If the value is found in the server conf file (server.properties)
-			# then set that as value for the property
-			server_set_property "$1" "$2" "$from_conf"
-		else
-			# Otherwise use the default value
+		local target_varname=SERVER_$2[$1]
+		if [ -z ${!target_varname} ]; then
+			# if its still empty use the default value
 			manager_property "DEFAULT_$2"
 			server_set_property "$1" "$2" "\$SETTINGS_DEFAULT_$2"
 		fi
+	fi
+}
+
+#Checks server config for overriding value
+# $1: The ID of the server
+# $2: The name of the server property
+read_server_conf(){
+	server_property "$1" CONF
+
+	to_properties_name "$2"
+	local name="$RETURN"
+
+	if [[ "$name" =~ ^properties\-(.*)$ ]]; then
+		name="${BASH_REMATCH[1]}"
+	else
+		name="msm-$name"
+	fi
+
+	local from_conf="$(sed -rn "s/^$name=('|\"|)(.*)\1/\2/ip" "${SERVER_CONF[$1]}" | tail -n 1)"
+
+	if [ ! -z "$from_conf" ]; then
+		# If the value is found in the server conf file (server.properties)
+		# then set that as value for the property
+		server_set_property "$1" "$2" "$from_conf"
 	fi
 }
 
