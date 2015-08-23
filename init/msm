@@ -1814,11 +1814,11 @@ server_property() {
 		if [ ! -z "$from_conf" ]; then
 			# If the value is found in the server conf file (server.properties)
 			# then set that as value for the property
-			eval SERVER_$2[$1]=\"$from_conf\"
+			server_set_property "$1" "$2" "$from_conf"
 		else
 			# Otherwise use the default value
 			manager_property "DEFAULT_$2"
-			eval SERVER_$2[$1]=\"\$SETTINGS_DEFAULT_$2\"
+			server_set_property "$1" "$2" "\$SETTINGS_DEFAULT_$2"
 		fi
 
 		### Post-changes to variables after loading
