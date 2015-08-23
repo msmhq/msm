@@ -1789,8 +1789,8 @@ server_property() {
 				;;
 		esac
 
-		# If its a command lookup, load from versioning files
-		if [[ "$2" =~ ^CONSOLE_ ]]; then
+		# If its a command lookup or server path, load from versioning files
+		if [[ "$2" =~ ^CONSOLE_ ]] || [[ "$2" =~ _PATH$ ]]; then
 			server_property "$1" VERSION_CONF
 
 			if [[ -f "${SERVER_VERSION_CONF[$1]}" ]]; then
