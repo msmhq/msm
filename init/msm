@@ -1714,7 +1714,13 @@ server_connected() {
 # $2: The name of the server property
 # $3: The value for the property
 server_set_property() {
-	eval SERVER_$2[$1]=\"$3\"
+	# If it is a path make that path absolute
+	if [[ "$2" =~ _PATH$ ]]; then
+		server_property "$1" PATH
+		eval SERVER_$2[$1]=\"${SERVER_PATH[$1]}/$3\"
+	else
+		eval SERVER_$2[$1]=\"$3\"
+	fi
 }
 
 # Get the value of a server property
@@ -1822,12 +1828,6 @@ server_property() {
 		fi
 
 		### Post-changes to variables after loading
-
-		# If it is a path make that path absolute
-		if [[ "$2" =~ _PATH$ ]]; then
-			server_property "$1" PATH
-			eval SERVER_$2[$1]=\"${SERVER_PATH[$1]}/\${SERVER_$2[$1]}\"
-		fi
 
 		# Replace any place holders in a property we just loaded
 		case "$2" in
