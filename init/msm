@@ -1721,6 +1721,26 @@ server_set_property() {
 	else
 		eval SERVER_$2[$1]=\"$3\"
 	fi
+	### Changes to values before setting
+	case "$2" in
+		SCREEN_NAME)
+			eval SERVER_$2[$1]=\"${SERVER_SCREEN_NAME[$1]//\{SERVER_NAME\}/${SERVER_NAME[$1]}}\"
+			;;
+		MESSAGE_STOP)
+			server_property "$1" STOP_DELAY
+			eval SERVER_$2[$1]=\"${SERVER_MESSAGE_STOP[$1]//\{DELAY\}/${SERVER_STOP_DELAY[$1]}}\"
+			;;
+		MESSAGE_RESTART)
+			server_property "$1" RESTART_DELAY
+			eval SERVER_$2[$1]=\"${SERVER_MESSAGE_RESTART[$1]//\{DELAY\}/${SERVER_RESTART_DELAY[$1]}}\"
+			;;
+		INVOCATION)
+			server_property "$1" RAM
+			server_property "$1" JAR_PATH
+			eval SERVER_$2[$1]=\"${SERVER_INVOCATION[$1]//\{RAM\}/${SERVER_RAM[$1]}}\"
+			eval SERVER_$2[$1]=\"${SERVER_INVOCATION[$1]//\{JAR\}/${SERVER_JAR_PATH[$1]}}\"
+			;;
+	esac
 }
 
 # Get the value of a server property
@@ -1828,29 +1848,6 @@ server_property() {
 			manager_property "DEFAULT_$2"
 			server_set_property "$1" "$2" "\$SETTINGS_DEFAULT_$2"
 		fi
-
-		### Post-changes to variables after loading
-
-		# Replace any place holders in a property we just loaded
-		case "$2" in
-			SCREEN_NAME)
-				server_set_property "$1" "$2" "${SERVER_SCREEN_NAME[$1]//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
-				;;
-			MESSAGE_STOP)
-				server_property "$1" STOP_DELAY
-				server_set_property "$1" "$2" "${SERVER_MESSAGE_STOP[$1]//\{DELAY\}/${SERVER_STOP_DELAY[$1]}}"
-				;;
-			MESSAGE_RESTART)
-				server_property "$1" RESTART_DELAY
-				server_set_property "$1" "$2" "${SERVER_MESSAGE_RESTART[$1]//\{DELAY\}/${SERVER_RESTART_DELAY[$1]}}"
-				;;
-			INVOCATION)
-				server_property "$1" RAM
-				server_property "$1" JAR_PATH
-				server_set_property "$1" "$2" "${SERVER_INVOCATION[$1]//\{RAM\}/${SERVER_RAM[$1]}}"
-				server_set_property "$1" "$2" "${SERVER_INVOCATION[$1]//\{JAR\}/${SERVER_JAR_PATH[$1]}}"
-				;;
-		esac
 	fi
 }
 
