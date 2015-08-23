@@ -4058,6 +4058,7 @@ console_command() {
 # $2: The value of the property
 set_property() {
 	server_set_property "$VERSIONING_SERVER_ID" "$1" "$2"
+	read_server_conf "$VERSIONING_SERVER_ID" "$1"
 }
 
 
