@@ -3157,7 +3157,7 @@ command_server_cmdlog() {
 command_server_console() {
 	if server_is_running "$1"; then
 		server_property "$1" USERNAME
-		as_user "${SERVER_USERNAME[$1]}" "screen -r ${SERVER_SCREEN_NAME[$1]}"
+		as_user "${SERVER_USERNAME[$1]}" "script -q -c 'screen -r ${SERVER_SCREEN_NAME[$1]}' /dev/null"
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
