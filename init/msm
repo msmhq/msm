@@ -1715,6 +1715,32 @@ server_connected() {
 # $3: The value for the property
 server_set_property() {
 	eval SERVER_$2[$1]=\"$3\"
+	### Changes to values before setting
+	case "$2" in
+		*_PATH)
+			server_property "$1" PATH
+			if [[ ! "$3" =~ ^${SERVER_PATH[$1]} ]]; then
+				eval SERVER_$2[$1]=\"${SERVER_PATH[$1]}/$3\"
+			fi
+			;;
+		SCREEN_NAME)
+			eval SERVER_$2[$1]=\"${SERVER_SCREEN_NAME[$1]//\{SERVER_NAME\}/${SERVER_NAME[$1]}}\"
+			;;
+		MESSAGE_STOP)
+			server_property "$1" STOP_DELAY
+			eval SERVER_$2[$1]=\"${SERVER_MESSAGE_STOP[$1]//\{DELAY\}/${SERVER_STOP_DELAY[$1]}}\"
+			;;
+		MESSAGE_RESTART)
+			server_property "$1" RESTART_DELAY
+			eval SERVER_$2[$1]=\"${SERVER_MESSAGE_RESTART[$1]//\{DELAY\}/${SERVER_RESTART_DELAY[$1]}}\"
+			;;
+		INVOCATION)
+			server_property "$1" RAM
+			server_property "$1" JAR_PATH
+			eval SERVER_$2[$1]=\"${SERVER_INVOCATION[$1]//\{RAM\}/${SERVER_RAM[$1]}}\"
+			eval SERVER_$2[$1]=\"${SERVER_INVOCATION[$1]//\{JAR\}/${SERVER_JAR_PATH[$1]}}\"
+			;;
+	esac
 }
 
 # Get the value of a server property
@@ -1783,8 +1809,8 @@ server_property() {
 				;;
 		esac
 
-		# If its a command lookup, load from versioning files
-		if [[ "$2" =~ ^CONSOLE_ ]]; then
+		# If its a command lookup or server path, load from versioning files
+		if [[ "$2" =~ ^CONSOLE_ ]] || [[ "$2" =~ _PATH$ ]]; then
 			server_property "$1" VERSION_CONF
 
 			if [[ -f "${SERVER_VERSION_CONF[$1]}" ]]; then
@@ -1794,61 +1820,44 @@ server_property() {
 				SERVER_VERSIONING_LOADED[$1]="true"
 			fi
 
-			return 0
+			if [[ "$2" =~ ^CONSOLE_ ]]; then
+				return 0
+			fi
 		fi
 
 		# If not a non-overridable load from conf
-		to_properties_name "$2"
-		local name="$RETURN"
+		read_server_conf "$1" "$2"
 
-		if [[ "$name" =~ ^properties\-(.*)$ ]]; then
-			name="${BASH_REMATCH[1]}"
-		else
-			name="msm-$name"
-		fi
-
-		server_property "$1" CONF
-
-		local from_conf="$(sed -rn "s/^$name=('|\"|)(.*)\1/\2/ip" "${SERVER_CONF[$1]}" | tail -n 1)"
-
-		if [ ! -z "$from_conf" ]; then
-			# If the value is found in the server conf file (server.properties)
-			# then set that as value for the property
-			eval SERVER_$2[$1]=\"$from_conf\"
-		else
-			# Otherwise use the default value
+		local target_varname=SERVER_$2[$1]
+		if [ -z ${!target_varname} ]; then
+			# if its still empty use the default value
 			manager_property "DEFAULT_$2"
-			eval SERVER_$2[$1]=\"\$SETTINGS_DEFAULT_$2\"
+			server_set_property "$1" "$2" "\$SETTINGS_DEFAULT_$2"
 		fi
+	fi
+}
 
-		### Post-changes to variables after loading
+#Checks server config for overriding value
+# $1: The ID of the server
+# $2: The name of the server property
+read_server_conf(){
+	server_property "$1" CONF
 
-		# If it is a path make that path absolute
-		if [[ "$2" =~ _PATH$ ]]; then
-			server_property "$1" PATH
-			eval SERVER_$2[$1]=\"${SERVER_PATH[$1]}/\${SERVER_$2[$1]}\"
-		fi
+	to_properties_name "$2"
+	local name="$RETURN"
 
-		# Replace any place holders in a property we just loaded
-		case "$2" in
-			SCREEN_NAME)
-				server_set_property "$1" "$2" "${SERVER_SCREEN_NAME[$1]//\{SERVER_NAME\}/${SERVER_NAME[$1]}}"
-				;;
-			MESSAGE_STOP)
-				server_property "$1" STOP_DELAY
-				server_set_property "$1" "$2" "${SERVER_MESSAGE_STOP[$1]//\{DELAY\}/${SERVER_STOP_DELAY[$1]}}"
-				;;
-			MESSAGE_RESTART)
-				server_property "$1" RESTART_DELAY
-				server_set_property "$1" "$2" "${SERVER_MESSAGE_RESTART[$1]//\{DELAY\}/${SERVER_RESTART_DELAY[$1]}}"
-				;;
-			INVOCATION)
-				server_property "$1" RAM
-				server_property "$1" JAR_PATH
-				server_set_property "$1" "$2" "${SERVER_INVOCATION[$1]//\{RAM\}/${SERVER_RAM[$1]}}"
-				server_set_property "$1" "$2" "${SERVER_INVOCATION[$1]//\{JAR\}/${SERVER_JAR_PATH[$1]}}"
-				;;
-		esac
+	if [[ "$name" =~ ^properties\-(.*)$ ]]; then
+		name="${BASH_REMATCH[1]}"
+	else
+		name="msm-$name"
+	fi
+
+	local from_conf="$(sed -rn "s/^$name=('|\"|)(.*)\1/\2/ip" "${SERVER_CONF[$1]}" | tail -n 1)"
+
+	if [ ! -z "$from_conf" ]; then
+		# If the value is found in the server conf file (server.properties)
+		# then set that as value for the property
+		server_set_property "$1" "$2" "$from_conf"
 	fi
 }
 
@@ -4043,6 +4052,14 @@ console_command() {
 	eval SERVER_CONSOLE_COMMAND_TIMEOUT_${command_name}[$VERSIONING_SERVER_ID]=\"$command_timeout\"
 }
 
+# Defines a servers property variables, VERSIONING_SERVER_ID
+# must be set before calling this function
+# $1: The name of the property
+# $2: The value of the property
+set_property() {
+	server_set_property "$VERSIONING_SERVER_ID" "$1" "$2"
+	read_server_conf "$VERSIONING_SERVER_ID" "$1"
+}
 
 
 
