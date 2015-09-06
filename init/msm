@@ -1747,7 +1747,7 @@ server_set_property() {
 # $1: The ID of the server
 # $2: The name of the server property
 server_property() {
-	local VERSIONABLE_PROPERTIES="LOG_PATH;WHITELIST_PATH;BANNED_PLAYERS_PATH;BANNED_IPS_PATH;OPS_PATH OPS_LIST;"
+	local versionable_properties="LOG_PATH;WHITELIST_PATH;BANNED_PLAYERS_PATH;BANNED_IPS_PATH;OPS_PATH OPS_LIST;"
 
 	# Do nothing if we want to load a property handled
 	# by a versioning file that is already loaded.
@@ -1812,7 +1812,7 @@ server_property() {
 		esac
 
 		# If its a command lookup or server path, load from versioning files
-		if [[ "$2" =~ ^CONSOLE_ ]] || [[ "$VERSIONABLE_PROPERTIES" == *"$2;"* ]]; then
+		if [[ "$2" =~ ^CONSOLE_ ]] || [[ "$versionable_properties" == *"$2;"* ]]; then
 			server_property "$1" VERSION_CONF
 
 			if [[ -f "${SERVER_VERSION_CONF[$1]}" ]]; then
