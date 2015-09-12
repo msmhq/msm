@@ -1718,8 +1718,8 @@ server_set_property() {
 	### Changes to values before setting
 	case "$2" in
 		*_PATH)
-			server_property "$1" PATH
-			if [[ ! "$3" =~ ^${SERVER_PATH[$1]} ]]; then
+			if [[ ! "$3" =~ ^/.+ ]]; then
+				server_property "$1" PATH
 				eval SERVER_$2[$1]=\"${SERVER_PATH[$1]}/$3\"
 			fi
 			;;
