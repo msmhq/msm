@@ -1,5 +1,7 @@
 # MSM version file for Minecraft 1.2.0 and above
 
+set_property LOG_PATH "server.log"
+
 console_event REGEX "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \[.*\]"
 console_event START:30 "Done"
 
