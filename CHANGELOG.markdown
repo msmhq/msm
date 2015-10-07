@@ -6,6 +6,14 @@ Visit https://github.com/msmhq/msm for more information.
 Change Log
 ----------
 
+### [0.9.4](https://github.com/msmhq/msm/compare/0.9.3...0.9.4)
+
+* Added versioning support for the following properties. [#310][#310]
+  LOG_PATH;WHITELIST_PATH;BANNED_PLAYERS_PATH;BANNED_IPS_PATH;OPS_PATH;OPS_LIST;
+* Moved LOG_PATH to the version files.
+
+[#310]: https://github.com/msmhq/msm/pull/310
+
 ### [0.9.3](https://github.com/msmhq/msm/compare/0.9.2...0.9.3)
 
 * Added pre and post 1.7.0 log support [#308][#308]
