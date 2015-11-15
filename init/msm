@@ -2080,6 +2080,8 @@ manager_dirty_all() {
 
 # Starts all servers
 command_start() {
+	# Required lock file for init.d to properly shutdown
+	touch /var/lock/subsys/msm
 	# Required start option, for debian init.d scripts
 	for ((server=0; server<${NUM_SERVERS}; server++)); do
 
@@ -2105,11 +2107,15 @@ command_start() {
 
 # Stops all servers after a delay
 command_stop() {
+	# Required lock file for init.d to properly shutdown
+	rm -f /var/lock/subsys/msm
 	manager_stop_all_servers "stop"
 }
 
 # Stops all servers without delay
 command_stop_now() {
+	# Required lock file for init.d to properly shutdown
+	rm -f /var/lock/subsys/msm
 	manager_stop_all_servers_now
 }
 
