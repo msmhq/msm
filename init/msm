@@ -1117,10 +1117,18 @@ jargroup_getlatest() {
 
                     fi
                 fi
-                if [[ -n "$jar_url" ]]; then
-				    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' '$jar_url'"
+                                if [[ -n "$jar_url" ]]; then
+                        if [[ "$jar_url" =~ ^file:// ]]; then 
+                                as_user "$SETTINGS_USERNAME" "cp ${jar_url##file://} $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR"
+                        else
+                                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' '$jar_url'"
+                        fi
                 else
-				    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
+                        if grep -q -e "^file://" $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET ; then
+                                as_user "$SETTINGS_USERNAME" "cp -v $(cat $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET | sed 's/file:\/\///g') $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR"
+                        else
+                                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
+                        fi
                 fi
 				echo "Done."
 
