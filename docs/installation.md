@@ -115,7 +115,10 @@ Manual Installation
     
     See [Concepts &rarr; Server Layout][layout] for further explanation.
 
-
+    Then create links to the worlds you moved to the `worldstorage` folder:
+    
+        sudo msm <server-name> worlds load
+    
 Check Out The Commands
 ----------------------
 
