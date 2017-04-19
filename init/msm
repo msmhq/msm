@@ -1116,6 +1116,23 @@ jargroup_getlatest() {
 
                     fi
                 fi
+				
+                # If target contains the word 'minecraftSnapshot' check JSON version file for correct filename
+                if [[ "$target" == "minecraftSnapshot" ]]; then
+                    printf "Checking minecraft snapshot version JSON... "
+                    local versions_url="http://s3.amazonaws.com/Minecraft.Download/versions/versions.json"
+                    local versions_file="/tmp/minecraft_versions.json"
+                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
+                    local snapshot_version=$(as_user "$SETTINGS_USERNAME" "cat '$versions_file' | egrep '^[[:space:]]*\"snapshot\"' | cut -d':' -f2 | egrep -o '[[:digit:]]{2}w[[:digit:]]{2}[a-z]'")
+                    if [[ -n "$snapshot_version" ]]; then
+                        local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$snapshot_version/minecraft_server.$snapshot_version.jar"
+                    else
+                        local snapshot_version=$(as_user "$SETTINGS_USERNAME" "cat '$versions_file' | egrep '^[[:space:]]*\"snapshot\"' | cut -d':' -f2 | egrep -o '[[:digit:].]*'")
+                        if [[ -n "$snapshot_version" ]]; then
+                                local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$snapshot_version/minecraft_server.$snapshot_version.jar"
+                        fi
+                    fi
+                fi
                 if [[ -n "$jar_url" ]]; then
 				    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' '$jar_url'"
                 else
@@ -1162,6 +1179,102 @@ jargroup_getlatest() {
 					echo "Error. URL downloads multiple files."
 				fi
 
+				# Clean up the temp download folder
+				as_user "$SETTINGS_USERNAME" "rm -fr '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
+			else
+				error_exit FILE_NOT_FOUND "Target URL not found, use $0 jargroup seturl <download-url>"
+			fi
+		else
+			error_exit NAME_NOT_FOUND "There is no jar group with the name \"$1\"."
+		fi
+	fi
+}
+
+jargroup_getversion() {
+	if is_valid_name "$1"; then
+		manager_property JAR_STORAGE_PATH
+		manager_property JARGROUP_TARGET
+		manager_property USERNAME
+		manager_property JARGROUP_DOWNLOAD_DIR
+
+		if [[ -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
+			if [[ -f "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET" ]]; then
+				printf "Downloading version $2 ... "
+			
+				# Try and make 
+				local error="$(as_user_stderr "$SETTINGS_USERNAME" "mkdir -p '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'")"
+				if [[ "$error" != "" ]]; then
+					echo "Failed."
+					error_exit FILE_NOT_FOUND "$error"
+				fi
+			
+                                # test wget for --trust-server-names option
+                                local wget_opts="--trust-server-names"
+                                wget $wget_opts >/dev/null 2>&1
+                                if [[ $? != 1 ]]; then
+                                    wget_opts=""
+                                fi
+
+                # If target contains the word 'minecraft' check JSON version file for correct filename
+                local target="$(as_user "$SETTINGS_USERNAME" "cat $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET")"
+                if [[ "$target" == "minecraft" ]]; then
+                    printf "Checking minecraft version JSON... "
+                    local versions_url="http://s3.amazonaws.com/Minecraft.Download/versions/versions.json"
+                    local versions_file="/tmp/minecraft_versions.json"
+                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
+                    local specified_version=$2
+                    if [[ -n "$latest_version" ]]; then
+                        local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$latest_version/minecraft_server.$latest_version.jar"
+
+                    fi
+					if [[ -n "$jar_url" ]]; then
+						as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' '$jar_url'"
+					else
+						as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
+					fi
+					echo "Done."
+				
+					local num_files="$(as_user "$SETTINGS_USERNAME" "ls -1 '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' | wc -l")"
+				
+					if [[ "$num_files" == 1 ]]; then
+						# There was 1 file downloaded
+					
+						local file_name="$(ls -1 "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR")"
+						local new_name="$(date +%F-%H-%M-%S)-$file_name"
+
+						get_latest_file "$SETTINGS_JAR_STORAGE_PATH/$1"
+						local most_recent_jar="$RETURN"
+						
+					
+						if [[ ! -f "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR/$file_name" > /dev/null; then
+							# There is not a previous version to do a comparison against, or
+							# The previous version is different:
+							# Add it to the group
+						
+							[[ -f "$most_recent_jar" ]]
+							local was_previous="$?"
+						
+							as_user "$SETTINGS_USERNAME" "mv '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR/$file_name' '$SETTINGS_JAR_STORAGE_PATH/$1/$new_name'"
+						
+							if [[ ! -z "$most_recent_jar" ]]; then
+								echo "Downloaded version was different to previous latest. Saved as \"$SETTINGS_JAR_STORAGE_PATH/$1/$new_name\"."
+							else
+								echo "Saved as \"$SETTINGS_JAR_STORAGE_PATH/$1/$new_name\"."
+							fi
+						else
+							echo "Existing version \"$most_recent_jar\" was already up to date."
+						fi
+					
+					elif [[ "$num_files" == 0 ]]; then
+						# No file was downloaded
+						echo "Failed. No files were downloaded."
+					else
+						# Multiple files were
+						echo "Error. URL downloads multiple files."
+					fi
+				else
+					echo "Get specific version can be done only on jargroup with 'minecraft' in URL"
+				fi
 				# Clean up the temp download folder
 				as_user "$SETTINGS_USERNAME" "rm -fr '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
 			else
@@ -2501,6 +2614,13 @@ command_jargroup_getlatest() {
 	jargroup_getlatest "$1"
 }
 
+# Downloads a specific version for a jar group
+# $1: The name of the jar group
+# $2: The version to download
+command_jargroup_getversion() {
+	jargroup_getversion "$1" "$2"
+}
+
 # Displays a list of possible commands and help strings
 command_help() {
 	# Outputs a list of all commands
@@ -3695,6 +3815,7 @@ register_commands() {
 	register_command "jargroup rename <name> <name>" "command_jargroup_rename"
 	register_command "jargroup changeurl <name> <string>" "command_jargroup_changeurl"
 	register_command "jargroup getlatest <name>" "command_jargroup_getlatest"
+	register_command "jargroup getversion <name> <string>" "command_jargroup_getversion"
 
 	register_command "help" "command_help"
 
