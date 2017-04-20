@@ -823,7 +823,7 @@ server_log_get_line() {
 			RETURN="${BASH_REMATCH[1]}"
 			return 0
 		fi
-	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow=name --retry --lines=20 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\" 2>/dev/null")
+	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ -F --lines=20 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\" 2>/dev/null")
 }
 
 # The same as server_log_get_line, but prints a dot instead of the log line
@@ -859,7 +859,7 @@ server_log_dots_for_lines() {
 				return 0
 			fi
 		fi
-	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ --follow=name --retry --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\" 2>/dev/null")
+	done < <(as_user "${SERVER_USERNAME[$1]}" "tail --pid=$$ -F --lines=100 --sleep-interval=0.1 \"${SERVER_LOG_PATH[$1]}\" 2>/dev/null")
 }
 
 # Sends as string to a server for execution
