@@ -1,6 +1,6 @@
 # Minecraft Server Manager [![Build Status][status-img]][status] [![Donate to MSM][donate-img]][donate]
 
-[status-img]: https://api.travis-ci.org/msmhq/msm.png?branch=master
+[status-img]: https://api.travis-ci.org/msmhq/msm.svg?branch=master
 [status]: http://travis-ci.org/msmhq/msm
 [donate-img]: https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif
 [donate]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z7XQDNF7U5GLL
@@ -50,7 +50,7 @@ As well as starting, stopping and restarting MSM has the following features:
 
 1. If you find a problem with MSM and you think the problem is one that requires changing code [submit an issue][issues] via GitHub.
 
-## Upcomming features
+## Upcoming features
 
 * **QuickBackup:** If you store your backups non-locally (maybe on a NAS), QuickBackup optionally creates a backup locally for speed, and then moves it after your players are building again! My initial testing shows a 54 second network backup confaltes to 23 seconds of in-game time.
 * **Restore:** Roll-back to an old world or whole server backup automatically.

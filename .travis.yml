@@ -1,12 +1,13 @@
-
 # Use python as its the simplest language which can run a test script
 language: python
 
 before_install:
   # Print out the bash version
   - sudo /bin/bash --version
+  # Update Package Lists
+  - sudo apt-get -qq update
   # Install dependencies
-  - sudo apt-get install shunit2
+  - sudo apt-get install -y shunit2
   # Remove this troublesome script
   - sudo rm -f /etc/profile.d/phpenv.sh
 
