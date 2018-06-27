@@ -28,7 +28,7 @@
 
 
 # The Minecraft Server Manager version, use "msm version" to check yours.
-VERSION="0.9.5"
+VERSION="0.9.6"
 
 # Source, if it exists, the msm profile.d script
 if [ -f "/etc/profile.d/msm.sh" ]; then
@@ -1107,20 +1107,25 @@ jargroup_getlatest() {
                         local versions_target="snapshot"
                     fi
                     printf "Checking minecraft version JSON... "
-                    local versions_url="http://s3.amazonaws.com/Minecraft.Download/versions/versions.json"
+                    local versions_url="https://launchermeta.mojang.com/mc/game/version_manifest.json"
                     local versions_file="/tmp/minecraft_versions.json"
                     as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
-                    local latest_version=$(as_user "$SETTINGS_USERNAME" "sed -n '/"latest"/,/}/p' $versions_file | grep $versions_target | egrep -o '([0-9]+\.?)+|([0-9]+[a-zA-Z])+'")
-                    if [[ -n "$latest_version" ]]; then
-                        local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$latest_version/minecraft_server.$latest_version.jar"
+                    local latest_package_url=$(as_user "$SETTINGS_USERNAME" "egrep -o "\""(\{[^}]*\\"\"type\\"\"\:\\"\"${versions_target}\\"\"[^}]*\})"\"" $versions_file | egrep -o -m1 'https\\:\\/\\/launchermeta\\.mojang\\.com[^\"]*'")
+                    local latest_version=$(as_user "$SETTINGS_USERNAME" "echo ${latest_package_url##*/} | sed s/.json//")
 
+                    if [[ -n "$latest_package_url" ]]; then
+			local package_file="/tmp/minecraft_package.json"
+			as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$package_file' '$latest_package_url'"
+			local jar_url=$(as_user "$SETTINGS_USERNAME" "egrep -o -m1 'https.*server\\.jar' $package_file")
                     fi
                 fi
+
                 if [[ -n "$jar_url" ]]; then
-				    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' '$jar_url'"
+                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR/minecraft_server.$latest_version.jar' '$jar_url'"
                 else
-				    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
+                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
                 fi
+
 				echo "Done."
 
 				local num_files="$(as_user "$SETTINGS_USERNAME" "ls -1 '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' | wc -l")"
