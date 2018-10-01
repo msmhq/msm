@@ -1110,13 +1110,13 @@ jargroup_getlatest() {
                     local versions_url="https://launchermeta.mojang.com/mc/game/version_manifest.json"
                     local versions_file="/tmp/minecraft_versions.json"
                     as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
-                    local latest_package_url=$(as_user "$SETTINGS_USERNAME" "egrep -o "\""(\{[^}]*\\"\"type\\"\"\:\\"\"${versions_target}\\"\"[^}]*\})"\"" $versions_file | egrep -o -m1 'https\\:\\/\\/launchermeta\\.mojang\\.com[^\"]*'")
+                    local latest_package_url=$(as_user "$SETTINGS_USERNAME" "cat $versions_file | jq -r '.versions | sort_by(.releaseTime) | map(select(.type | contains ("\""release"\""))) | last | .url'")
                     local latest_version=$(as_user "$SETTINGS_USERNAME" "echo ${latest_package_url##*/} | sed s/.json//")
 
-                    if [[ -n "$latest_package_url" ]]; then
-			local package_file="/tmp/minecraft_package.json"
-			as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$package_file' '$latest_package_url'"
-			local jar_url=$(as_user "$SETTINGS_USERNAME" "egrep -o -m1 'https.*server\\.jar' $package_file")
+		            if [[ -n "$latest_package_url" ]]; then
+			            local package_file="/tmp/minecraft_package.json"
+			            as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$package_file' '$latest_package_url'"
+                        local jar_url=$(as_user "$SETTINGS_USERNAME" "cat $package_file | jq -r '.downloads.server.url'")
                     fi
                 fi
 
