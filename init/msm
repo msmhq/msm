@@ -1090,12 +1090,12 @@ jargroup_getlatest() {
 					error_exit FILE_NOT_FOUND "$error"
 				fi
 
-                                # test wget for --trust-server-names option
-                                local wget_opts="--trust-server-names"
-                                wget $wget_opts >/dev/null 2>&1
-                                if [[ $? != 1 ]]; then
-                                    wget_opts=""
-                                fi
+                # test wget for --trust-server-names option
+                local wget_opts="--trust-server-names"
+                wget $wget_opts >/dev/null 2>&1
+                if [[ $? != 1 ]]; then
+                    wget_opts=""
+                fi
 
                 # If target contains the word 'minecraft' or 'minecraft-snapshot', check JSON version file for correct filename
                 # This method allows for backwards compatibility with previous releases
@@ -1423,7 +1423,7 @@ server_start() {
 
 		if [[ -f "${SERVER_PATH[$1]}"/eula.txt ]]; then
 			if ! grep -q -i 'eula=true' "${SERVER_PATH[$1]}"/eula.txt; then
-				echo " Could not start the server as you first need to agree to an EULA. See eula.txt for more info."
+				echo " Could not start the server as you first need to agree to an EULA. See eula.txt for more info (${SERVER_PATH[$1]}/eula.txt)."
 				return
 			fi
 		fi
