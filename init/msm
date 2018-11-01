@@ -1105,6 +1105,14 @@ jargroup_getlatest() {
                     if [[ "$target" == "minecraft-snapshot" ]]; then
                         local versions_target="snapshot"
                     fi
+
+                    # Check if jq is installed on the local computer
+                    as_user "$SETTINGS_USERNAME" "which jq > /dev/null"
+                    if [[ "$?" != "0" ]]; then
+                        echo "jq is required to download server updates. Please ensure it is installed and the path is set correctly."
+                        return 1
+                    fi
+
                     printf "Checking minecraft version JSON... "
                     local versions_url="https://launchermeta.mojang.com/mc/game/version_manifest.json"
                     local versions_file="/tmp/minecraft_versions.json"
