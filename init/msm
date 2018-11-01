@@ -28,7 +28,7 @@
 
 
 # The Minecraft Server Manager version, use "msm version" to check yours.
-VERSION="0.9.9"
+VERSION="0.9.10"
 
 # Source, if it exists, the msm profile.d script
 if [ -f "/etc/profile.d/msm.sh" ]; then
@@ -1101,16 +1101,15 @@ jargroup_getlatest() {
                 # This method allows for backwards compatibility with previous releases
                 local target="$(as_user "$SETTINGS_USERNAME" "cat $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET")"
                 if [[ "$target" =~ ^minecraft ]]; then
-                    if [[ "$target" == "minecraft" ]]; then
-                        local versions_target="release"
-                    elif [[ "$target" == "minecraft-snapshot" ]]; then
+                    local versions_target="release"
+                    if [[ "$target" == "minecraft-snapshot" ]]; then
                         local versions_target="snapshot"
                     fi
                     printf "Checking minecraft version JSON... "
                     local versions_url="https://launchermeta.mojang.com/mc/game/version_manifest.json"
                     local versions_file="/tmp/minecraft_versions.json"
                     as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
-                    local latest_package_url=$(as_user "$SETTINGS_USERNAME" "cat $versions_file | jq -r '.versions | sort_by(.releaseTime) | map(select(.type | contains ("\""release"\""))) | last | .url'")
+                    local latest_package_url=$(as_user "$SETTINGS_USERNAME" "cat $versions_file | jq -r '.versions | sort_by(.releaseTime) | map(select(.type | contains ("\""$versions_target"\""))) | last | .url'")
                     local latest_version=$(as_user "$SETTINGS_USERNAME" "echo ${latest_package_url##*/} | sed s/.json//")
 
 		            if [[ -n "$latest_package_url" ]]; then
