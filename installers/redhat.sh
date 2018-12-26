@@ -9,7 +9,7 @@ function update_system_packages() {
 
 function install_dependencies() {
     install_log "Installing required packages"
-    sudo yum install screen rsync zip java || install_error "Couldn't install dependencies"
+    sudo yum install screen rsync zip java jq || install_error "Couldn't install dependencies"
 }
 
 function enable_init() {
