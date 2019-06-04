@@ -25,10 +25,10 @@ You can paste the links in your browser to read the script that will be executed
 Manual Installation
 -------------------
 
-1. This script uses the following tools: **screen**, **rsync**, **zip**. Let's install them:
+1. This script uses the following tools: **screen**, **rsync**, **zip**, **jq**. Let's install them:
 
         sudo apt-get update
-        sudo apt-get install screen rsync zip
+        sudo apt-get install screen rsync zip jq
 
 2. Download MSM's default configuration file, then **read through it** and change anything you want. Be sure to carry any changes you make forwards through this guide.
 
