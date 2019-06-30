@@ -8,7 +8,7 @@ function update_system_packages() {
     install_log "Updating sources"
     if [ -f /etc/os-release ]; then
         . /etc/os-release
-        if [ $NAME == 'Ubuntu' ]; then
+        if [ "$NAME" == 'Ubuntu' ]; then
             sudo add-apt-repository universe || install_error "Couldn't enable universe repository"
         fi
     fi
