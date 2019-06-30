@@ -3284,7 +3284,7 @@ register_settings() {
 	register_setting RDIFF_BACKUP_ROTATION "7"
 
 
-	register_setting UPDATE_URL "https://raw.githubusercontent.com/msmhq/msm/latest"
+	register_setting UPDATE_URL "https://raw.githubusercontent.com/hdon/msm/master"
 
 	register_setting WORLD_ARCHIVE_PATH "/opt/msm/archives/worlds"
 	register_setting LOG_ARCHIVE_PATH "/opt/msm/archives/logs"
