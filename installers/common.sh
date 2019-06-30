@@ -33,7 +33,7 @@ function config_installation() {
 
     echo -n "Add new user as system account? [y/N]: "
     read answer
-    if [[ $answer != "y" ]]; then
+    if [ $answer = "y" ]; then
         msm_user_system=true
     fi
 
