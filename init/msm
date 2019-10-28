@@ -1196,7 +1196,7 @@ jargroup_delete() {
 			printf "Are you sure you want to delete this jar group [y/N]: "
 
 			read answer
-			if [[ "$answer" =~ ^y|Y|yes$ ]]; then
+			if [[ "$answer" =~ (^y|Y|yes$) ]]; then
 				as_user "$SETTINGS_USERNAME" "rm -rf \"$SETTINGS_JAR_STORAGE_PATH/$1\""
 				echo "Jar group deleted."
 			else
@@ -1793,7 +1793,7 @@ server_property() {
 					if [[ -z "${VERSIONS_NEWEST_MINECRAFT_PATH}" ]]; then
 						msm_warning "No version set for server, and no default found. Please use 'msm update' to download defaults"
 					else
-						if [[ ! "$arg" =~ logroll|config ]]; then
+						if [[ ! "$arg" =~ (logroll|config) ]]; then
 							msm_info "Assuming 'minecraft/${VERSIONS_NEWEST_MINECRAFT_VERSION}' for this server. You should override this value by adding 'msm-version=minecraft/x.x.x' to '${SERVER_CONF[$1]}' to make this message go away"
 						fi
 						SERVER_VERSION_CONF[$1]="${VERSIONS_NEWEST_MINECRAFT_PATH}"
