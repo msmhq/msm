@@ -47,7 +47,7 @@ setUp() {
 	echo "BACKUP_ARCHIVE_PATH=\"${TMP_DIR}/archives/backups\"" >> "$MSM_CONF"
 	echo "DEBUG=\"true\"" >> "$MSM_CONF"
 	echo "DEFAULT_USERNAME=\"${USERNAME}\"" >> "$MSM_CONF"
-	echo "DEFAULT_SCREEN_NAME=\"msmtest-{SERVER_NAME}\"" >> "$MSM_CONF"
+	echo "DEFAULT_SCREEN_NAME=\"msmtest-${SERVER_NAME}\"" >> "$MSM_CONF"
 	echo "DEFAULT_INVOCATION=\"java -Xmx${TEST_RAM}M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:+AggressiveOpts -jar {JAR} nogui\"" >> "$MSM_CONF"
 
 	source $TEST_SCRIPT
