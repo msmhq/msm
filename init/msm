@@ -1843,7 +1843,7 @@ server_property() {
 		# If not a non-overridable load from conf
 		read_server_conf "$1" "$2"
 
- 		eval local target_varname=\$SERVER_$2[$1]
+ 		eval local target_varname=\"\${SERVER_$2[$1]}\"
                 if [[ -z "$target_varname" ]]; then
 			# if its still empty use the default value
 			manager_property "DEFAULT_$2"
