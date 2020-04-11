@@ -1,0 +1,15 @@
+[Unit]
+Description=Minecraft Server Manager - %i
+Requires=network.target
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/msm %i start
+ExecStop=/usr/local/bin/msm %i stop
+ExecReload=/usr/local/bin/msm %i restart
+
+[Install]
+WantedBy=multi-user.target
+
