@@ -2,7 +2,7 @@
 # Minecraft Server Manager Cron
 # 
 # Backs up worlds, rolls logs, moves worlds in RAM to disk,
-# and starts crashed servers
+# starts crashed servers, and deletes old archives
 # 
 # For more information visit the project home page:
 # https://github.com/msmhq/msm
@@ -20,3 +20,15 @@
 
 # Start any crashed servers again each hour
 @hourly               minecraft   /etc/init.d/msm start
+
+# Deletes all server log files older than the number of days specified in the mtime parameter value
+10    05  *   *   *   minecraft   find /opt/msm/servers/*/logs -maxdepth 1 -mtime +30 -type f -name "*.log.gz" | xargs rm --force
+
+# Deletes all server backup files older than the number of days specified in the mtime parameter value
+12    05  *   *   *   minecraft   find /opt/msm/archives/backups -maxdepth 2 -mtime +30 -type f -name "*.zip" | xargs rm --force
+
+# Deletes all msm log files older than the number of days specified in the mtime parameter value
+14    05  *   *   *   minecraft   find /opt/msm/archives/logs -maxdepth 2 -mtime +30 -type f -name "*.log.gz" | xargs rm --force
+
+# Deletes all server world backup files older than the number of days specified in the mtime parameter value
+16    05  *   *   *   minecraft   find /opt/msm/archives/worlds -maxdepth 3 -mtime +30 -type f -name "*.zip" | xargs rm --force
