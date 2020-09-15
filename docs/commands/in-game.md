@@ -89,7 +89,7 @@ Sends a command to the server, for example: `msm creativeserver cmd tp craftysau
 Like the previous command, sends a string to the server to execute, but in addition outputs the server log to the screen afterwards. You can stop watching the log output by pressing Ctrl+C.
 
 
-[op]: http://www.minecraftwiki.net/wiki/Operator
-[survival]: http://www.minecraftwiki.net/wiki/Survival
-[creative]: http://www.minecraftwiki.net/wiki/Creative
-[data-values]: http://www.minecraftwiki.net/wiki/Data_values
+[op]: https://www.minecraftwiki.net/wiki/Operator
+[survival]: https://www.minecraftwiki.net/wiki/Survival
+[creative]: https://www.minecraftwiki.net/wiki/Creative
+[data-values]: https://www.minecraftwiki.net/wiki/Data_values

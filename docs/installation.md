@@ -12,11 +12,11 @@ Installation
 
 Install MSM on a Debian server (Ubuntu etc.) by pasting this line in your terminal:
 
-    wget -q http://git.io/Sxpr9g -O /tmp/msm && bash /tmp/msm
+    wget -q https://git.io/Sxpr9g -O /tmp/msm && bash /tmp/msm
 
 Or on RedHat using:
 
-    wget -q http://git.io/lu0ULA -O /tmp/msm && bash /tmp/msm
+    wget -q https://git.io/lu0ULA -O /tmp/msm && bash /tmp/msm
 
 Or [suggest a new platform][issues].
 
@@ -32,7 +32,7 @@ Manual Installation
 
 2. Download MSM's default configuration file, then **read through it** and change anything you want. Be sure to carry any changes you make forwards through this guide.
 
-        sudo wget http://git.io/6eiCSg -O /etc/msm.conf
+        sudo wget https://git.io/6eiCSg -O /etc/msm.conf
 
 3. Create the user and directories MSM needs:
 
@@ -54,7 +54,7 @@ Manual Installation
 
 4. Download the MSM script and place it in `/etc/init.d`:
 
-        sudo wget http://git.io/J1GAxA -O /etc/init.d/msm
+        sudo wget https://git.io/J1GAxA -O /etc/init.d/msm
 
 5. Set script permissions, and integrate script with startup/shutdown:
 
@@ -71,7 +71,7 @@ Manual Installation
 
 8. Setup MSM's included cron script for scheduled tasks and force cron to load script:
 
-        sudo wget http://git.io/pczolg -O /etc/cron.d/msm
+        sudo wget https://git.io/pczolg -O /etc/cron.d/msm
         sudo service cron reload
 
     If you understand cron, give it a read and alter the timings to your liking.
