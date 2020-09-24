@@ -94,5 +94,5 @@ This command may be a good entry point for admins not familiar with command line
 
 
 
-[we-snapshots]: http://wiki.sk89q.com/wiki/WorldEdit/Snapshots
+[we-snapshots]: https://wiki.sk89q.com/wiki/WorldEdit/Snapshots
 [active-vs-inactive]: {{ site.baseurl }}/docs/concepts/active-vs-inactive.html

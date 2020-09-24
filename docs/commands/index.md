@@ -80,8 +80,8 @@ You can always get a quick list of commands by typing `msm help`, which outputs 
 
 
 
-[op]: http://www.minecraftwiki.net/wiki/Operator
-[survival]: http://www.minecraftwiki.net/wiki/Survival
-[creative]: http://www.minecraftwiki.net/wiki/Creative
-[we-snapshots]: http://wiki.sk89q.com/wiki/WorldEdit/Snapshots
+[op]: https://www.minecraftwiki.net/wiki/Operator
+[survival]: https://www.minecraftwiki.net/wiki/Survival
+[creative]: https://www.minecraftwiki.net/wiki/Creative
+[we-snapshots]: https://wiki.sk89q.com/wiki/WorldEdit/Snapshots
 [active-vs-inactive]: https://github.com/marcuswhybrow/minecraft-server-manager/wiki/Active-vs-Inactive-Servers
