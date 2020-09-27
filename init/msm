@@ -1301,15 +1301,19 @@ server_create() {
 		else
 			printf "Creating server directory... "
 			as_user "$SETTINGS_USERNAME" "mkdir -p '$SETTINGS_SERVER_STORAGE_PATH/$1'"
-			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WHITELIST_PATH'"
-			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_BANNED_IPS_PATH'"
-			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_BANNED_PLAYERS_PATH'"
-			as_user "$SETTINGS_USERNAME" "touch '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_OPS_PATH'"
+			as_user "$SETTINGS_USERNAME" "echo '[]' > '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_WHITELIST_PATH'"
+			as_user "$SETTINGS_USERNAME" "echo '[]' > '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_BANNED_IPS_PATH'"
+			as_user "$SETTINGS_USERNAME" "echo '[]' > '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_BANNED_PLAYERS_PATH'"
+			as_user "$SETTINGS_USERNAME" "echo '[]' > '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_OPS_PATH'"
 
 			# Set default ops users as appropriate
+			# Adding usernames to ops.txt means on first startup minecraft server will
+			# fetch UUIDs for the users and add them to ops.json in the correct format.
+			# Relying on minecraft server to convert isn't ideal in the long term since
+			# it could deprecate the conversion.
 			if [ ! -z "$SETTINGS_DEFAULT_OPS_LIST" ]; then
 				IFS=","; for default_ops_user in $SETTINGS_DEFAULT_OPS_LIST; do
-					as_user "$SETTINGS_USERNAME" "echo $default_ops_user | tr -d ' ' >> '$SETTINGS_SERVER_STORAGE_PATH/$1/$SETTINGS_DEFAULT_OPS_PATH'"
+					as_user "$SETTINGS_USERNAME" "echo $default_ops_user | tr -d ' ' >> '$SETTINGS_SERVER_STORAGE_PATH/$1/ops.txt'"
 				done
 			fi
 
@@ -3304,10 +3308,10 @@ register_settings() {
 	register_server_setting WORLD_STORAGE_PATH "worldstorage"
 	register_server_setting WORLD_STORAGE_INACTIVE_PATH "worldstorage_inactive"
 	register_server_setting LOG_PATH "server.log"
-	register_server_setting WHITELIST_PATH "white-list.txt"
-	register_server_setting BANNED_PLAYERS_PATH "banned-players.txt"
-	register_server_setting BANNED_IPS_PATH "banned-ips.txt"
-	register_server_setting OPS_PATH "ops.txt"
+	register_server_setting WHITELIST_PATH "whitelist.json"
+	register_server_setting BANNED_PLAYERS_PATH "banned-players.json"
+	register_server_setting BANNED_IPS_PATH "banned-ips.json"
+	register_server_setting OPS_PATH "ops.json"
 	register_server_setting OPS_LIST ""
 	register_server_setting JAR_PATH "server.jar"
 
