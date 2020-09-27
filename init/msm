@@ -2780,14 +2780,7 @@ command_server_whitelist_add() {
 			echo_fallback "$RETURN" "Player $player is now whitelisted."
 		done
 	else
-		server_property "$1" WHITELIST_PATH
-
-		for player in "${@:2}"; do
-			if ! grep "^$player\$" "${SERVER_WHITELIST_PATH[$1]}" >/dev/null; then
-				echo "$player" >> "${SERVER_WHITELIST_PATH[$1]}"
-				echo_fallback "$RETURN" "Player $player is now whitelisted."
-			fi
-		done
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
 }
 
@@ -2802,12 +2795,7 @@ command_server_whitelist_remove() {
 			echo_fallback "$RETURN" "Player $player is no longer whitelisted."
 		done
 	else
-		server_property "$1" WHITELIST_PATH
-
-		for player in "${@:2}"; do
-			sed -ri "/^$player\$/d" "${SERVER_WHITELIST_PATH[$1]}"
-			echo_fallback "$RETURN" "Player $player is no longer whitelisted."
-		done
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
 }
 
@@ -2839,14 +2827,7 @@ command_server_blacklist_player_add() {
 			echo_fallback "$RETURN" "Player $player is now blacklisted."
 		done
 	else
-		server_property "$1" BANNED_PLAYERS_PATH
-
-		for player in "${@:2}"; do
-			if ! grep "^$player\$" "${SERVER_BANNED_PLAYERS_PATH[$1]}" >/dev/null; then
-				echo "$player" >> "${SERVER_BANNED_PLAYERS_PATH[$1]}"
-				echo "Player $player is now blacklisted."
-			fi
-		done
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
 }
 
@@ -2860,12 +2841,7 @@ command_server_blacklist_player_remove() {
 			echo_fallback "$RETURN" "Player $player is no longer blacklisted."
 		done
 	else
-		server_property "$1" BANNED_PLAYERS_PATH
-
-		for player in "${@:2}"; do
-			sed -ri "/^$player\$/d" "${SERVER_BANNED_PLAYERS_PATH[$1]}"
-			echo "Player $player is no longer blacklisted."
-		done
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
 }
 
@@ -2879,14 +2855,7 @@ command_server_blacklist_ip_add() {
 			echo_fallback "$RETURN" "IP address $address is now blacklisted."
 		done
 	else
-		server_property "$1" BANNED_IPS_PATH
-
-		for address in "${@:2}"; do
-			if ! grep "^$address\$" "${SERVER_BANNED_IPS_PATH[$1]}" >/dev/null; then
-				echo "$address" >> "${SERVER_BANNED_IPS_PATH[$1]}"
-				echo "IP address $address is now blacklisted."
-			fi
-		done
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
 }
 
@@ -2900,12 +2869,7 @@ command_server_blacklist_ip_remove() {
 			echo_fallback "$RETURN" "IP address $address is no longer blacklisted."
 		done
 	else
-		server_property "$1" BANNED_PLAYERS_PATH
-
-		for address in "${@:2}"; do
-			sed -ri "/^$address\$/d" "${SERVER_BANNED_PLAYERS_PATH[$1]}"
-			echo "IP address $address is no longer blacklisted."
-		done
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
 }
 
@@ -2955,24 +2919,7 @@ command_server_operator_add() {
 			echo_fallback "$RETURN" "Player $player is now an operator."
 		done
 	else
-		server_property "$1" OPS_PATH
-
-		for player in "${@:2}"; do
-			if ! grep "^$player\$" "${SERVER_OPS_PATH[$1]}" >/dev/null; then
-				echo "$player" >> "${SERVER_OPS_PATH[$1]}"
-			fi
-		done
-	fi
-
-	if [[ $# -gt 2 ]]; then
-		echo -n "The following players are now operators: "
-		echo -n "$2"
-		for player in "${@:3}"; do
-		 	echo -n ", $player"
-		done
-		echo "."
-	else
-		echo "\"$2\" is now an operator."
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
 }
 
@@ -2987,24 +2934,7 @@ command_server_operator_remove() {
 			echo_fallback "$RETURN" "Player $player is no longer an operator."
 		done
 	else
-		server_property "$1" OPS_PATH
-
-		for player in "${@:2}"; do
-			for player in "${@:2}"; do
-				sed -ri "/^$player\$/d" "${SERVER_OPS_PATH[$1]}"
-			done
-		done
-	fi
-
-	if [[ $# -gt 2 ]]; then
-		echo -n "The following players are no longer operators: "
-		echo -n "$2"
-		for player in "${@:3}"; do
-		 	echo -n ", $player"
-		done
-		echo "."
-	else
-		echo "\"$2\" is no longer an operator."
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
 }
 
