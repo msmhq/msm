@@ -3317,7 +3317,7 @@ register_settings() {
 	register_server_setting WORLDS_FLAG_INRAM "inram"
 
 	register_server_setting RAM "1024"
-	register_server_setting INVOCATION "java -Xms{RAM}M -Xmx{RAM}M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalPacing -XX:+AggressiveOpts -jar {JAR} nogui"
+	register_server_setting INVOCATION "java -Xms{RAM}M -Xmx{RAM}M -jar {JAR} nogui"
 	register_server_setting STOP_DELAY "10"
 	register_server_setting RESTART_DELAY "10"
 
