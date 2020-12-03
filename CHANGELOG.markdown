@@ -6,6 +6,18 @@ Visit https://github.com/msmhq/msm for more information.
 Change Log
 ----------
 
+### [0.9.4](https://github.com/msmhq/msm/compare/0.9.4...0.10.0)
+
+First minor version in 4 years.
+
+* Allow snapshots to be downloaded [#369][#369]
+* Add dollar sign for interpolation [#389][#389]
+* Add new instantiated Systemd unit file [#352][#352]
+* Add configurable archive cleanup [#394][#394]
+* Fix bash variable expansion for Debian installer [#401][#401]
+* Remove invalid java invocation arguments [#403][#403]
+* Convert server txt files to json [#405][#405]
+
 ### [0.9.4](https://github.com/msmhq/msm/compare/0.9.3...0.9.4)
 
 * Added versioning support for the following properties. [#310][#310]
