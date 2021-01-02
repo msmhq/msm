@@ -84,4 +84,4 @@ You can always get a quick list of commands by typing `msm help`, which outputs 
 [survival]: https://www.minecraftwiki.net/wiki/Survival
 [creative]: https://www.minecraftwiki.net/wiki/Creative
 [we-snapshots]: https://wiki.sk89q.com/wiki/WorldEdit/Snapshots
-[active-vs-inactive]: https://github.com/msmhq/msm/wiki/Active-vs-Inactive-Servers
+[active-vs-inactive]: {{ site.baseurl }}/docs/concepts/active-vs-inactive.html
