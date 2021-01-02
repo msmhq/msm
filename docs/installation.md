@@ -38,18 +38,18 @@ Manual Installation
 
     First create the folder where MSM will store server, jars, and other files:
 
-        sudo mkdir /opt/msm
+        sudo mkdir -p /opt/msm
 
     Second, add the user and set permissions
 
         sudo useradd minecraft --home /opt/msm
-        sudo chown minecraft /opt/msm
+        sudo chown -R minecraft:minecraft /opt/msm
         sudo chmod -R 775 /opt/msm
 
     If you want to store your world folders in RAM for a performance boost, create this directory in ramdisk (`/dev/shm` is the default in Ubuntu):
 
         sudo mkdir /dev/shm/msm
-        sudo chown minecraft /dev/shm/msm
+        sudo chown -R minecraft:minecraft /dev/shm/msm
         sudo chmod -R 775 /dev/shm/msm
 
 4. Download the MSM script and place it in `/etc/init.d`:
