@@ -167,9 +167,4 @@ $(function() {
   $('.donator').tooltip({
     placement: 'bottom',
   });
-
-  $('a.ga-track').live('click', function() {
-    var $this = $(this);
-    _gaq.push(['_trackEvent', 'External Link', $this.text(), $this.attr('href')]);
-  });
 });
