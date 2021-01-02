@@ -124,7 +124,7 @@ If stuck, you can always type `msm help` for a quick list of all commands, or if
 [config]: {{ site.baseurl }}/docs/configuration/
 [cron]: {{ site.baseurl }}/docs/concepts/cron.html
 [commands]: {{ site.baseurl }}/docs/commands/
-[#26]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/26
-[versions]: https://github.com/marcuswhybrow/minecraft-server-manager/blob/latest/versioning/versions.txt
+[#26]: https://github.com/msmhq/msm/issues/26
+[versions]: https://github.com/msmhq/msm/blob/latest/versioning/versions.txt
 [layout]: {{ site.baseurl }}/docs/concepts/layout.html
-[issues]: https://github.com/marcuswhybrow/minecraft-server-manager/issues
+[issues]: https://github.com/msmhq/msm/issues

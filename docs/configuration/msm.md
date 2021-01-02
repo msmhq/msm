@@ -24,7 +24,7 @@ Default Values
 
 MSM has default values for all possible settings. This means that `/etc/msm.conf` could be left blank and MSM would still work with sensible defaults.
 
-It is however advised that each value be explicitly defined nonetheless, allowing admins to be sure of what MSM is doing. The <a href="{{ site.baseurl }}/docs/installation.html">installation documentation</a> encourages this approach by downloading the <a href="https://github.com/marcuswhybrow/minecraft-server-manager/blob/latest/msm.conf">msm.conf file</a> ready with default values.
+It is however advised that each value be explicitly defined nonetheless, allowing admins to be sure of what MSM is doing. The <a href="{{ site.baseurl }}/docs/installation.html">installation documentation</a> encourages this approach by downloading the <a href="https://github.com/msmhq/msm/blob/latest/msm.conf">msm.conf file</a> ready with default values.
 
 Server Defaults
 ---------------

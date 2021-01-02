@@ -50,7 +50,7 @@ MSM selects, using this code, the most appropiate included versioning file, so t
 
 If you are running a unique server type, maybe Tekkit for instance, pick the closest available version. Or let me know, by [creating an issue][issues], that you think MSM should accomodate it.
 
-[issues]: https://github.com/marcuswhybrow/minecraft-server-manager/issues/
+[issues]: https://github.com/msmhq/msm/issues/
     
 ## Delays
 
