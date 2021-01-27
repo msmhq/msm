@@ -1,8 +1,8 @@
 $(function() {
-  var milestonesUrl = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/milestones?callback=?",
-      tagsUrl       = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/tags?callback=?"
-      stargazersUrl = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/stargazers?per_page=100&callback=?",
-      contributorsUrl = "https://api.github.com/repos/marcuswhybrow/minecraft-server-manager/contributors?per_page=100&callback=?";
+  var milestonesUrl = "https://api.github.com/repos/msmhq/msm/milestones?callback=?",
+      tagsUrl       = "https://api.github.com/repos/msmhq/msm/tags?callback=?"
+      stargazersUrl = "https://api.github.com/repos/msmhq/msm/stargazers?per_page=100&callback=?",
+      contributorsUrl = "https://api.github.com/repos/msmhq/msm/contributors?per_page=100&callback=?";
 
   var maintainers = [
     "marcuswhybrow",
@@ -113,7 +113,7 @@ $(function() {
       
       var $div = $("<div>").addClass("milestone");
       var $link = $("<a>")
-            .attr("href", "https://github.com/marcuswhybrow/minecraft-server-manager/issues?state=open&milestone=" + milestone.number)
+            .attr("href", "https://github.com/msmhq/msm/issues?state=open&milestone=" + milestone.number)
             .addClass("ga-track")
             .appendTo($div);
       $("<h2>").text(milestone.title).appendTo($link);
@@ -166,10 +166,5 @@ $(function() {
   $('.player').tooltip();
   $('.donator').tooltip({
     placement: 'bottom',
-  });
-
-  $('a.ga-track').live('click', function() {
-    var $this = $(this);
-    _gaq.push(['_trackEvent', 'External Link', $this.text(), $this.attr('href')]);
   });
 });

@@ -14,4 +14,4 @@ From wikipedia:
 
 MSM uses cron to run periodical backups, syncronise worlds that are in RAM back to disk every half hour to prevent data loss in the event of a crash and roll Minecraft log files to prevent them getting too large each night.
 
-See the <a href="https://github.com/marcuswhybrow/minecraft-server-manager/blob/latest/cron/msm">MSM cron file</a> in the repository for a detailed example.
+See the <a href="https://github.com/msmhq/msm/blob/latest/cron/msm">MSM cron file</a> in the repository for a detailed example.
