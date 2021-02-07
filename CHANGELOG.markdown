@@ -6,9 +6,10 @@ Visit https://github.com/msmhq/msm for more information.
 Change Log
 ----------
 
-### [0.9.4](https://github.com/msmhq/msm/compare/0.9.4...0.10.0)
+### [0.10.0](https://github.com/msmhq/msm/compare/0.9.4...0.10.0)
 
-First minor version in 4 years.
+First change log entry in 4 years. There were versions from `0.9.5` to `0.9.10` in the interim period,
+which were not reflected in the change log and some of them haven't been tagged.
 
 * Allow snapshots to be downloaded [#369][#369]
 * Add dollar sign for interpolation [#389][#389]
