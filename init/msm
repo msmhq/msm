@@ -1091,7 +1091,8 @@ jargroup_getlatest() {
 				fi
 
                 # test wget for --trust-server-names option
-                local wget_opts="--trust-server-names"
+		# --content-disposition for keeping the remote filename
+                local wget_opts="--trust-server-names --content-disposition"
                 wget $wget_opts >/dev/null 2>&1
                 if [[ $? != 1 ]]; then
                     wget_opts=""
