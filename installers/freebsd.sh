@@ -24,8 +24,9 @@ install_minecraft()
 	pkg install tmux dialog4ports screen rsync || exit
 
 	echo "installing minecraft"
-        if grep -qs minecraft /etc/make.conf; then
-        # already configured
+	if grep -qs minecraft /etc/make.conf;
+	then
+		# already configured
 	else
 		echo "games_minecraft-server_SET=DAEMON" | tee -a /etc/make.conf
 	fi
