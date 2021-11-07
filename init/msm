@@ -1432,14 +1432,21 @@ server_start() {
 		# Wait for the server to fully start
 		server_log_dots_for_lines "$1" "$time_now" "${SERVER_CONSOLE_EVENT_OUTPUT_START[$1]}" "${SERVER_CONSOLE_EVENT_TIMEOUT_START[$1]}"
 
-		if [[ -f "${SERVER_PATH[$1]}"/eula.txt ]]; then
-			if ! grep -q -i 'eula=true' "${SERVER_PATH[$1]}"/eula.txt; then
-				echo " Could not start the server as you first need to agree to an EULA. See eula.txt for more info (${SERVER_PATH[$1]}/eula.txt)."
-				return
+		# Ensure the server started
+		if server_is_running "$1"; then
+			echo " Done."
+		else
+			if [[ -f "${SERVER_PATH[$1]}"/eula.txt ]]; then
+				if ! grep -q -i 'eula=true' "${SERVER_PATH[$1]}"/eula.txt; then
+					echo " Failed."
+					echo "Could not start the server as you first need to agree to an EULA. See eula.txt for more info (${SERVER_PATH[$1]}/eula.txt)."
+					return
+				fi
 			fi
-		fi
 
-		echo " Done."
+			# TODO: trap and return the error to help troubleshoot startup issues
+			echo " Failed."
+		fi
 	fi
 }
 
