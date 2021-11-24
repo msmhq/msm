@@ -1,12 +1,12 @@
 # 
 # Minecraft Server Manager Cron
-# 
+#
 # Backs up worlds, rolls logs, moves worlds in RAM to disk,
 # starts crashed servers, and deletes old archives
-# 
+#
 # For more information visit the project home page:
 # https://github.com/msmhq/msm
-# 
+#
 
 
 # Backs up all worlds for all servers at 2 minutes past 5 in the morning
