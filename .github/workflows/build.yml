@@ -11,7 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: Release
-      uses: docker://antonyurchenko/git-release:latest
+      uses: docker://antonyurchenko/git-release:v4
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DRAFT_RELEASE: "false"
