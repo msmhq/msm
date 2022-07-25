@@ -45,6 +45,19 @@ function config_installation() {
     fi
 }
 
+# Verifies if the system has sudo installed and, if not, installs it
+function check_sudo() {
+    if ! command -v sudo > /dev/null 2>&1; then
+        install_sudo
+    fi
+}
+
+# Installs sudo if it is not installed
+function install_sudo() {
+    # OVERLOAD THIS
+    install_error "No function definition for install_sudo"
+}
+
 # Runs a system software update to make sure we're using all fresh packages
 function update_system_packages() {
     # OVERLOAD THIS
@@ -163,9 +176,10 @@ function install_complete() {
 
 function install_msm() {
     config_installation
-    add_minecraft_user
+    check_sudo
     update_system_packages
     install_dependencies
+    add_minecraft_user
     create_msm_directories
     download_latest_files
     patch_latest_files
