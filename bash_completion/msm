@@ -21,14 +21,14 @@ MSM="${MSM_SCRIPT:-/etc/init.d/msm}"
 
 _msm() {
 	source "$MSM"
-	
+
 	local base current options
 	COMPREPLY=()
-	
+
 	current="${COMP_WORDS[$COMP_CWORD]}"
 
 	manager_property SERVER_STORAGE_PATH
-	
+
 	if [[ $COMP_CWORD == 1 ]]; then
 		if [ -d "$SETTINGS_SERVER_STORAGE_PATH" ]; then
 			local servers="$(ls -1 "$SETTINGS_SERVER_STORAGE_PATH")"
@@ -80,9 +80,9 @@ _msm() {
 					server_get_id "${COMP_WORDS[1]}"
 					local sid="$RETURN"
 				fi
-				
 
-				local server_path="$SETTINGS_SERVER_STORAGE_PATH/${COMP_WORDS[1]}"	
+
+				local server_path="$SETTINGS_SERVER_STORAGE_PATH/${COMP_WORDS[1]}"
 				if [[ "${COMP_WORDS[1]}" == "all" ]] || [ -e "$server_path" ]; then
 					if [[ $COMP_CWORD == 2 ]]; then
 						options="start stop restart status connected worlds logroll backup jar whitelist blacklist operator gamemode kick say time toggledownfall give xp save cmd cmdlog console config"
@@ -132,7 +132,7 @@ _msm() {
 								if [[ $COMP_CWORD == 3 && -d "$SETTINGS_JAR_STORAGE_PATH" ]]; then
 									options="$(ls -1 "$SETTINGS_JAR_STORAGE_PATH")"
 								fi
-								
+
 								if [[ $COMP_CWORD == 4 && -d "$SETTINGS_JAR_STORAGE_PATH/${COMP_WORDS[3]}" ]]; then
 									options="$(find "$SETTINGS_JAR_STORAGE_PATH/${COMP_WORDS[3]}" -type f -name "*.jar" -exec basename {} \;)"
 								fi
@@ -241,13 +241,13 @@ _msm() {
 								fi
 								;;
 						esac
-								
+
 					fi
 				fi
 				;;
 		esac
 	fi
-	
+
 	COMPREPLY=( $(compgen -W "${options}" -- ${current}) )
 	return 0
 }

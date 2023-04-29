@@ -16,7 +16,7 @@ function enable_init() {
     install_log "Installing systemd service unit"
     sudo wget ${UPDATE_URL}/init/msm.service \
         -O /etc/systemd/system/msm.service
-    
+
     install_log "Enabling automatic startup and shutdown"
     sudo systemctl enable msm.service
 }
@@ -28,7 +28,7 @@ function create_msm_directories() {
         sudo mkdir -p "$msm_dir" || install_error "Couldn't create directory '$msm_dir'"
     fi
     sudo chown -R $msm_user:$msm_user "$msm_dir" || install_error "Couldn't change file ownership for '$msm_dir'"
-    
+
     if [ ! -d "/etc/init.d" ]; then
         sudo mkdir -p "/etc/init.d/" || install_error "Couldn't create directory '/etc/init.d'"
     fi
