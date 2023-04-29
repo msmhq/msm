@@ -1,0 +1,21 @@
+name: Run tests
+on:
+  push:
+    branches-ignore:
+      - 'gh-pages'
+  pull_request:
+    branches-ignore:
+      - 'gh-pages'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: sudo apt-get install shunit2
+      - name: Check out branch
+        uses: actions/checkout@v2
+      - name: Create the minecraft user
+        run: sudo adduser --system minecraft
+      - name: Run tests
+        run: sudo /bin/bash ./test.sh
