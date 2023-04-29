@@ -6,6 +6,17 @@ Visit https://github.com/msmhq/msm for more information.
 Change Log
 ----------
 
+### [0.11.0](https://github.com/msmhq/msm/compare/0.10.1...0.11.0)
+
+* Very minor - clean up extraneous whitespace by @Next-Door-Tech in [#431][#431]
+* Add check for successful server startup by @renderorange in [#428][#428]
+* Switch testing to GitHub actions by @renderorange in [#429][#429]
+* Fix non-interactive install, and java, software-properties-common, sudo and wget dependencies by @Touratica in [#442][#442]
+
+### [0.10.1](https://github.com/msmhq/msm/compare/0.10.0...0.10.1)
+
+This includes fixes to the build pipeline by @Next-Door-Tech in [#432][#432], which, along with some tagging issues, prevented release `0.10.0` from being published.
+
 ### [0.10.0](https://github.com/msmhq/msm/compare/0.9.4...0.10.0)
 
 First change log entry in 4 years. There were versions from `0.9.5` to `0.9.10` in the interim period,
