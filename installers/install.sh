@@ -1,3 +1,4 @@
+#!/bin/sh
 BASE_URL="https://raw.githubusercontent.com/msmhq/msm/master/installers/"
 
 function check_os() {
@@ -5,6 +6,8 @@ function check_os() {
         INSTALL_SCRIPT="debian.sh"
     elif [[ -f /etc/redhat-release ]]; then
         INSTALL_SCRIPT="redhat.sh"
+        sudo yum install wget --skip-broken
+
     elif [[ -f /etc/arch-release ]]; then
         INSTALL_SCRIPT="arch.sh"
     else
