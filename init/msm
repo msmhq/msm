@@ -1528,7 +1528,12 @@ server_stop_now() {
 
 		echo -n "Stopping the server... "
 
-		server_eval "$1" "stop"
+		TYPE=$(server_read_config "$1" "msm-version")
+		if [[ $(echo $TYPE | cut -f1 -d/) -eq "bungeecord" ]]; then
+			server_eval "$1" "end"
+		else
+			server_eval "$1" "stop"
+		fi
 		STOP_COUNTDOWN[$1]="false"
 		RESTART_COUNTDOWN[$1]="false"
 		server_wait_for_stop "$1"
