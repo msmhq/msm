@@ -1,21 +1,87 @@
-name: Create Release
+name: Release
+
 on:
   push:
     tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+
     steps:
-    - uses: actions/checkout@master
-    - name: Release
-      uses: docker://antonyurchenko/git-release:v4
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        DRAFT_RELEASE: "false"
-        PRE_RELEASE: "false"
-        CHANGELOG_FILE: "none"
-        ALLOW_EMPTY_CHANGELOG: "false"
-      with:
-        args: |
-            build/*-amd64.zip
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          BINARY_NAME=msm-${{ matrix.goos }}-${{ matrix.goarch }}
+          go build -ldflags "-X github.com/msmhq/msm/cmd/msm/cmd.Version=${{ steps.version.outputs.VERSION }}" \
+            -o dist/${BINARY_NAME} ./cmd/msm
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: msm-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/msm-${{ matrix.goos }}-${{ matrix.goarch }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum msm-* > checksums.txt
+          cat checksums.txt
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ steps.version.outputs.VERSION }} \
+            --title "MSM ${{ steps.version.outputs.VERSION }}" \
+            --generate-notes \
+            dist/*

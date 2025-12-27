@@ -1,21 +1,33 @@
-name: Run tests
+name: Test
+
 on:
   push:
-    branches-ignore:
-      - 'gh-pages'
+    branches:
+      - main
   pull_request:
-    branches-ignore:
-      - 'gh-pages'
+    branches:
+      - main
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Install dependencies
-        run: sudo apt-get install shunit2
-      - name: Check out branch
-        uses: actions/checkout@v2
-      - name: Create the minecraft user
-        run: sudo adduser --system minecraft
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Run go vet
+        run: go vet ./...
+
       - name: Run tests
-        run: sudo /bin/bash ./test.sh
+        run: go test -v -race ./...

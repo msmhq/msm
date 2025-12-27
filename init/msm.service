@@ -1,7 +1,7 @@
 [Unit]
 Description=Minecraft Server Manager
-Requires=network.target
-After=network.target
+After=network.target local-fs.target
+Wants=network.target
 
 [Service]
 Type=oneshot
@@ -9,6 +9,10 @@ RemainAfterExit=yes
 ExecStart=/usr/local/bin/msm start
 ExecStop=/usr/local/bin/msm stop
 ExecReload=/usr/local/bin/msm restart
+
+# Allow time for graceful shutdown (player warning + world save)
+# 10s player warning + 30s stop wait + buffer for large worlds
+TimeoutStopSec=120
 
 [Install]
 WantedBy=multi-user.target

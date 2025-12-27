@@ -1,0 +1,16 @@
+extends: minecraft/1.7.0
+
+commands:
+  SAVE_ON:
+    pattern: "save-on"
+    output:
+      - "Enabled level saving.."
+  SAVE_OFF:
+    pattern: "save-off"
+    output:
+      - "Disabled level saving.."
+  SAVE_ALL:
+    pattern: "save-all"
+    output:
+      - "Save complete."
+    timeout: 10

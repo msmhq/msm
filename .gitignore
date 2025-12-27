@@ -1,2 +1,8 @@
 .DS_Store
 _*/*
+
+# JetBrains IDE
+.idea
+
+# compiled binary
+/bin/
