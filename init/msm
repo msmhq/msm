@@ -2557,6 +2557,7 @@ command_help() {
 	echo -e "  <server> wl on|off                            Enables/disables server whitelist checking"
 	echo -e "  <server> wl add|remove <player>               Add/remove a player to/from a server's whitelist"
 	echo -e "  <server> wl list                              List the players whitelisted for a server"
+	echo -e "  <server> wl reload                            Reloads a running server's whitelist"
 	echo -e "  <server> bl player add|remove <player>        Ban/pardon a player from/for a server"
 	echo -e "  <server> bl ip add|remove <ip address>        Ban/pardon an IP address from/for a server"
 	echo -e "  <server> bl list                              Lists the banned players and IP address for a server"
@@ -2568,6 +2569,7 @@ command_help() {
 	echo -e "  <server> time set|add <number>                Set/increment time on a server (0-24000)"
 	echo -e "  <server> toggledownfall                       Toggles rain and snow on a server"
 	echo -e "  <server> give <player> <item> [amount] [data] Gives an entity to a player"
+	echo -e "  <server> clear <player> [item] [data]         Clears a player's inventory"
 	echo -e "  <server> xp <player> <amount>                 Gives XP to, or takes away (when negative) XP from, a player"
 	echo -e "  <server> save on|off                          Enable/disable writing world changes to file"
 	echo -e "  <server> save all                             Force the writing of all non-saved world changes to file"
@@ -2824,6 +2826,19 @@ command_server_whitelist_list() {
 	fi
 }
 
+# Reloads the whitelist of players to the live server
+# $1: The server ID
+command_server_whitelist_reload() {
+	server_property "$1" WHITELIST_PATH
+
+	if server_is_running "$1"; then
+		server_command "$1" WHITELIST_RELOAD
+		echo_fallback "$RETURN" "Whitelist reloaded."
+	else
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
+	fi
+}
+
 # Adds player names to a server's ban list
 # $1: The server ID
 # $2->: The player names
@@ -3050,6 +3065,20 @@ command_server_give() {
 		local amount="x1"
 		[ ! -z "$4" ] && amount="x$4"
 		echo_fallback "$RETURN" "Given item $3 ${amount} to $2."
+	else
+		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
+	fi
+}
+
+# Clears entity from a player's inventory
+# $1: The server ID
+# $2: The player name
+# $3: The entity id/name
+# $4: The entitiy data
+command_server_clear() {
+	if server_is_running "$1"; then
+		server_command "$1" CLEAR player="$2" item="$3" data="$4"
+		echo_fallback "$RETURN" "Cleared $3 of $2's inventory."
 	else
 		error_exit SERVER_STOPPED "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
@@ -3283,6 +3312,7 @@ register_settings() {
 	register_server_setting CONFIRM_TOGGLEDOWNFALL
 	register_server_setting CONFIRM_GAMEMODE
 	register_server_setting CONFIRM_GIVE
+	register_server_setting CONFIRM_CLEAR
 	register_server_setting CONFIRM_XP
 }
 
@@ -3679,6 +3709,7 @@ register_commands() {
 	register_command "<name:server> whitelist|wl add <strings>" "command_server_whitelist_add"
 	register_command "<name:server> whitelist|wl remove <strings>" "command_server_whitelist_remove"
 	register_command "<name:server> whitelist|wl list" "command_server_whitelist_list"
+	register_command "<name:server> whitelist|wl reload" "command_server_whitelist_reload"
 	register_command "<name:server> blacklist|bl player add <strings>" "command_server_blacklist_player_add"
 	register_command "<name:server> blacklist|bl player remove <strings>" "command_server_blacklist_player_remove"
 	register_command "<name:server> blacklist|bl ip add <strings>" "command_server_blacklist_ip_add"
@@ -3696,6 +3727,9 @@ register_commands() {
 	register_command "<name:server> give <string> <string>" "command_server_give"
 	register_command "<name:server> give <string> <string> <string>" "command_server_give"
 	register_command "<name:server> give <string> <string> <string> <string>" "command_server_give"
+	register_command "<name:server> clear <string>" "command_server_clear"
+	register_command "<name:server> clear <string> <string>" "command_server_clear"
+	register_command "<name:server> clear <string> <string> <string>" "command_server_clear"
 	register_command "<name:server> xp <string> <string>" "command_server_xp"
 	register_command "<name:server> save on" "command_server_save_on"
 	register_command "<name:server> save off" "command_server_save_off"
