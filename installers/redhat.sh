@@ -1,4 +1,10 @@
+#/bin/sh
+PATH=/usr/bin
 UPDATE_URL="https://raw.githubusercontent.com/msmhq/msm/master"
+if [ ! -f "/usr/bin/wget" ]; then
+  echo "/usr/bin/wget not found, installing via RPM"
+  sudo yum install wget --skip-broken
+fi
 wget -q ${UPDATE_URL}/installers/common.sh -O /tmp/msmcommon.sh
 source /tmp/msmcommon.sh && rm -f /tmp/msmcommon.sh
 
