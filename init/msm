@@ -3139,7 +3139,7 @@ command_server_config() {
 		server_property "$1" CONF
 		if [[ -f "${SERVER_CONF[$1]}" ]]; then
 			if grep "$2" "${SERVER_CONF[$1]}" >/dev/null; then
-				sed -i /$2=/s/.*/"$2=$3"/g "${SERVER_CONF[$1]}"
+				sed -i "s"$'\x01'"^$2=.*"$'\x01'"$2=$3"$'\x01'"g" "${SERVER_CONF[$1]}"
 			else
 				echo "$2=$3" >> "${SERVER_CONF[$1]}"
 			fi
