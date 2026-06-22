@@ -1078,6 +1078,7 @@ jargroup_getlatest() {
 		manager_property JARGROUP_TARGET
 		manager_property USERNAME
 		manager_property JARGROUP_DOWNLOAD_DIR
+        manager_property JAVABIN
 
 		if [[ -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
 			if [[ -f "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET" ]]; then
@@ -1097,36 +1098,307 @@ jargroup_getlatest() {
                     wget_opts=""
                 fi
 
-                # If target contains the word 'minecraft' or 'minecraft-snapshot', check JSON version file for correct filename
-                # This method allows for backwards compatibility with previous releases
-                local target="$(as_user "$SETTINGS_USERNAME" "cat $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET")"
-                if [[ "$target" =~ ^minecraft ]]; then
-                    local versions_target="release"
-                    if [[ "$target" == "minecraft-snapshot" ]]; then
-                        local versions_target="snapshot"
-                    fi
+				# If target contains the word 'minecraft' or 'minecraft-snapshot', check JSON version file for correct filename
+				# This method allows for backwards compatibility with previous releases
+				local target="$(as_user "$SETTINGS_USERNAME" "cat $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET")"
 
-                    # Check if jq is installed on the local computer
-                    as_user "$SETTINGS_USERNAME" "which jq > /dev/null"
-                    if [[ "$?" != "0" ]]; then
-                        echo "jq is required to download server updates. Please ensure it is installed and the path is set correctly."
-                        return 1
-                    fi
+				local java_exec="java"
+	            if [ ! -z $SETTINGS_JAVABIN ]; then
+	                java_exec=$SETTINGS_JAVABIN
+				elif [ -x "/etc/alternatives/jre_21/bin/java" ]; then
+					java_exec="/etc/alternatives/jre_21/bin/java"
+				elif [ -x "/etc/alternatives/jre_17/bin/java" ]; then
+					java_exec="/etc/alternatives/jre_17/bin/java"
+				fi
 
-                    printf "Checking minecraft version JSON... "
-                    local versions_url="https://launchermeta.mojang.com/mc/game/version_manifest.json"
-                    local versions_file="/tmp/minecraft_versions.json"
-                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
-                    local latest_package_url=$(as_user "$SETTINGS_USERNAME" "cat $versions_file | jq -r '.versions | sort_by(.releaseTime) | map(select(.type | contains ("\""$versions_target"\""))) | last | .url'")
-                    local latest_version=$(as_user "$SETTINGS_USERNAME" "echo ${latest_package_url##*/} | sed s/.json//")
+				# --- PAPERMC ---
+				if [[ "$target" =~ ^paper ]]; then
+	                    printf "Checking PaperMC version API (v3)... "
+	                    local api_url="https://fill.papermc.io/v3/projects/paper"
+	
+	                    # extract target version (ex: could contain "paper-1.21.4")
+	                    local paper_version=$(echo "$target" | sed 's/^paper-//')
+	
+	                    # if target only contains "paper" or "paper-latest", we get the global higher version
+	                    if [[ "$paper_version" == "paper" || "$paper_version" == "latest" || -z "$paper_version" ]]; then
+	                        # Récupération sécurisée de la toute dernière version stable
+	                        paper_version=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$api_url'" | jq -r '.versions | to_entries | first | .value | first' | tr -d '\r\n' | xargs)
+	                    fi
 
-		            if [[ -n "$latest_package_url" ]]; then
-			            local package_file="/tmp/minecraft_package.json"
-			            as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$package_file' '$latest_package_url'"
-                        local jar_url=$(as_user "$SETTINGS_USERNAME" "cat $package_file | jq -r '.downloads.server.url'")
-                    fi
-                fi
+                    local version_url="$api_url/versions/$paper_version"
+	                    local version_data=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$version_url'")
+	
+	                    if echo "$version_data" | jq -e '.error' &> /dev/null || [[ -z "$version_data" ]]; then
+	                        echo "Error: PaperMC version '$paper_version' not found."
+	                        echo "available: "
+	                        as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$api_url'" | jq -r '.versions | [.[]] | flatten | join(", ")'
+ 	                        return 1
+	                    fi
+	
+                    # Récupération du build le plus récent et du nom du jar associé
+	                    local latest_build=$(echo "$version_data" | jq -r '.builds| first' | tr -d '\r\n' | xargs)
 
+                    # build info
+	                    local build_url="$version_url/builds/$latest_build"
+	                    local build_data=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$build_url'")
+	 
+	                    local file_name=$(echo "$build_data" | jq -r '.downloads["server:default"].name' | tr -d '\r\n' | xargs)
+	                    local jar_url=$(echo "$build_data" | jq -r '.downloads["server:default"].url' | tr -d '\r\n' | xargs)
+	                    local latest_version="paper-${paper_version}-${latest_build}"
+	
+	                # --- FOLIA --- same api as paper
+	                elif [[ "$target" =~ ^folia ]]; then
+	                    printf "Checking FoliaMC version API (v3)... "
+	                    local api_url="https://fill.papermc.io/v3/projects/folia"
+	
+	                    # extract target version (ex: could contain "paper-1.21.4")
+	                    local paper_version=$(echo "$target" | sed 's/^folia-//')
+	
+	                    # if target only contains "folia" or "folia-latest", we get the global higher version
+	                    if [[ "$paper_version" == "folia" || "$paper_version" == "latest" || -z "$paper_version" ]]; then
+	                        paper_version=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$api_url'" | jq -r '.versions | to_entries | first | .value | first' | tr -d '\r\n' | xargs)
+	                    fi
+
+                        local version_url="$api_url/versions/$paper_version"
+	                    local version_data=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$version_url'")
+	
+	                    if echo "$version_data" | jq -e '.error' &> /dev/null || [[ -z "$version_data" ]]; then
+	                        echo "Error: Folia version '$paper_version' not found."
+	                        echo "available: "
+	                        as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$api_url'" | jq -r '.versions | [.[]] | flatten | join(", ")'
+	                        return 1
+	                    fi
+	
+	                    # get latest build for this version and jar name
+	                    local latest_build=$(echo "$version_data" | jq -r '.builds| first' | tr -d '\r\n' | xargs)
+	
+	                    # build info
+	                    local build_url="$version_url/builds/$latest_build"
+	                    local build_data=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$build_url'")
+	
+	                    local file_name=$(echo "$build_data" | jq -r '.downloads["server:default"].name' | tr -d '\r\n' | xargs)
+	                    local jar_url=$(echo "$build_data" | jq -r '.downloads["server:default"].url' | tr -d '\r\n' | xargs)
+	                    local latest_version="folia-${paper_version}-${latest_build}"
+	
+	
+	                # --- PURPUR (API v2) ---
+	                elif [[ "$target" =~ ^purpur ]]; then
+	                    printf "Checking Purpur version API (v2)... "
+	                    local api_url="https://api.purpurmc.org/v2/purpur"
+	                    local purpur_version=$(echo "$target" | sed 's/^purpur-//')
+	
+	                    # if target only contains "purpur" or "latest", we get the global higher version
+	                    if [[ "$purpur_version" == "purpur" || "$purpur_version" == "latest" || -z "$purpur_version" ]]; then
+	                        purpur_version=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$api_url'" | jq -r '.versions | last' | tr -d '\r\n' | xargs)
+	                    fi
+	
+	                    # get latest build
+	                    local version_url="$api_url/$purpur_version/latest"
+	                    local version_data=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$version_url'")
+	
+	                    if echo "$version_data" | jq -e '.error' &> /dev/null || [[ -z "$version_data" ]]; then
+	                        echo "Error: Purpur version '$purpur_version' not found."
+	                        echo "available: "
+	                        as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$api_url'" | jq -r '.versions | join(", ")'
+	                        return 1
+	                    fi
+	
+	                    local latest_build=$(echo "$version_data" | jq -r '.build' | tr -d '\r\n' | xargs)
+	
+	                    jar_url="$api_url/$purpur_version/latest/download"
+	                    file_name="purpur-${purpur_version}-${latest_build}.jar"
+	                    latest_version="purpur-${purpur_version}-${latest_build}"
+	
+	                # --- LEAF (API v2) ---
+	                elif [[ "$target" =~ ^leaf ]]; then
+	                    printf "Checking Leaf version API (v2)... "
+	                    local api_url="https://api.leafmc.one/v2/projects/leaf"
+	                    local leaf_version=$(echo "$target" | sed 's/^leaf-//')
+	
+	                    if [[ "$leaf_version" == "leaf" || "$leaf_version" == "latest" || -z "$leaf_version" ]]; then
+	                        leaf_version=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$api_url'" | jq -r '.versions[-1]' | tr -d '\r\n' | xargs)
+	                    fi
+	
+	                    local version_url="$api_url/versions/$leaf_version"
+	                    local version_data=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$version_url'")
+	
+	                    if echo "$version_data" | jq -e '.error' &> /dev/null || [[ -z "$version_data" ]]; then
+	                        echo "Error: Leaf version '$leaf_version' not found."
+	                        echo "available: "
+	                        as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$api_url'" | jq -r '.versions | join(", ")'
+	                        return 1
+	                    fi
+	
+	                    local latest_build=$(echo "$version_data" | jq -r '.builds[-1]' | tr -d '\r\n' | xargs)
+	 
+	                    jar_url="$version_url/builds/$latest_build/downloads/leaf-${leaf_version}-${latest_build}.jar"
+	                    file_name="leaf-${leaf_version}-${latest_build}.jar"
+	                    latest_version="leaf-${leaf_version}-${latest_build}"
+	
+	                # --- LEAVES (API v2) ---
+	                elif [[ "$target" =~ ^leaves ]]; then
+	                    printf "Checking Leaves version API (v2)... "
+	                    local api_url="https://api.leavesmc.org/v2/projects/leaves"
+	                    local leaves_version=$(echo "$target" | sed 's/^leaves-//')
+	
+	                    if [[ "$leaves_version" == "leaves" || "$leaves_version" == "latest" || -z "$leaves_version" ]]; then
+	                        local api_data=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$api_url'")
+	
+	                        leaves_version=$(echo "$api_data" | jq -r '.versions[-1]' | tr -d '\r\n' | xargs)
+	                        local check_builds=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$api_url/versions/$leaves_version'")
+	
+	                        # if no build we try previous version [-2]
+	                        if [[ -z "$check_builds" ]] || echo "$check_builds" | jq -e '.error' &> /dev/null || [[ "$(echo "$check_builds" | jq -r '.builds')" == "null" ]]; then
+	                            leaves_version=$(echo "$api_data" | jq -r '.versions[-2]' | tr -d '\r\n' | xargs)
+	                        fi
+	                    fi
+	
+	                    # get build list
+	                    local version_url="$api_url/versions/$leaves_version"
+	                    local version_data=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$version_url'")
+	
+	                    if echo "$version_data" | jq -e '.error' &> /dev/null || [[ -z "$version_data" ]]; then
+	                        echo "Error: Leaves version '$leaves_version' not found."
+	                        echo "available: "
+	                        as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$api_url'" | jq -r '.versions | join(", ")'
+	                        return 1
+	                    fi
+	
+	                    local latest_build=$(echo "$version_data" | jq -r '.builds[-1]' | tr -d '\r\n' | xargs)
+	
+	                    jar_url="$version_url/builds/$latest_build/downloads/leaves-${leaves_version}-${latest_build}.jar"
+	                    file_name="leaves-${leaves_version}-${latest_build}.jar"
+	                    latest_version="leaves-${leaves_version}-${latest_build}"
+	
+	                # --- FABRIC (API v2) ---
+	                elif [[ "$target" =~ ^fabric ]]; then
+	                    printf "Checking Fabric version API... "
+	                    local meta_url="https://meta.fabricmc.net/v2"
+	                    local mc_version=$(echo "$target" | sed 's/^fabric-//')
+	
+	                    if [[ "$mc_version" == "fabric" || "$mc_version" == "latest" || -z "$mc_version" ]]; then
+	                        local versions_url="https://launchermeta.mojang.com/mc/game/version_manifest.json"
+	                        local versions_file="/tmp/minecraft_versions.json"
+	                        as_user "$SETTINGS_USERNAME" "wget --quiet --no-check-certificate -O '$versions_file' '$versions_url'"
+	                        mc_version=$(as_user "$SETTINGS_USERNAME" "cat $versions_file" | jq -r '.latest.release' | tr -d '\r\n' | xargs)
+	                    fi
+	
+	                    local check_version=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$meta_url/versions/loader/$mc_version'")
+	
+	                    if [[ -z "$check_version" || "$check_version" == "[]" ]]; then
+	                        echo "Error: Fabric version '$mc_version' not found."
+	                        echo "available: "
+	                        as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$meta_url/versions'" | jq -r '.game | map(select(.stable == true)) | map(.version) | join(", ")'
+	                        return 1
+	                    fi
+	
+	                    # LOADER
+	                    local loader_version=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$meta_url/versions/loader'" | jq -r 'map(select(.stable == true)) | first | .version' | tr -d '\r\n' | xargs)
+	
+	                    # INSTALLER
+	                    local installer_version=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- '$meta_url/versions/installer'" | jq -r 'map(select(.stable == true)) | first | .version' | tr -d '\r\n' | xargs)
+	
+	                    if [[ -z "$loader_version" || -z "$installer_version" ]]; then
+	                        echo "Error: Fabric meta API unreachable."
+	                        return 1
+	                    fi
+	
+	                    jar_url="$meta_url/versions/loader/$mc_version/$loader_version/$installer_version/server/jar"
+	                    latest_version="fabric-${mc_version}-loader${loader_version}"
+	
+	                # --- QUILTMC ---
+	                elif [[ "$target" =~ ^quilt ]]; then
+	                    printf "Checking QuiltMC version API... "
+	                    local meta_url="https://meta.quiltmc.org/v3"
+	                    local quilt_version=$(echo "$target" | sed 's/^quilt-//')
+	
+	                    if [[ "$quilt_version" == "quilt" || "$quilt_version" == "latest" || -z "$quilt_version" ]]; then
+	                        quilt_version=$(as_user "$SETTINGS_USERNAME" "wget --quiet -O- $meta_url/versions/game | jq -r 'map(select(.stable == true)) | map(.version) | join(\",\")' | cut -d',' -f1")
+	                    fi
+	
+	                    # download universal installer in /tmp
+	                    local tmp_installer="/tmp/quilt-installer.jar"
+	                    as_user "$SETTINGS_USERNAME" "wget --quiet -O '$tmp_installer' 'https://quiltmc.org/api/v1/download-latest-installer/java-universal'"
+	
+	                    # we call installer directly in the folder, we can not handle multiple versions in one folder because of the multiple files needed
+	                    local target_download_folder="$SETTINGS_JAR_STORAGE_PATH/$1" #/$SETTINGS_JARGROUP_DOWNLOAD_DIR"
+	                    echo "Building Quilt Server Jar for Minecraft $quilt_version..."
+	
+	                    as_user "$SETTINGS_USERNAME" "$java_exec -jar '$tmp_installer' install server '$quilt_version' --download-server --install-dir='$target_download_folder' "
+	
+	                    # cleanup and quit as we do not need to download anything
+	                    rm -f "$tmp_installer"
+	                    exit 0
+	
+	                # --- SPIGOT ---
+	                elif [[ "$target" =~ ^spigot ]]; then
+	                    printf "Preparing Spigot BuildTools compilation... "
+	 
+	                    local spigot_version=$(echo "$target" | sed 's/^spigot-//')
+	                    if [[ "$spigot_version" == "spigot" || "$spigot_version" == "latest" || -z "$spigot_version" ]]; then
+	                        spigot_version="latest"
+	                    fi
+	
+	                    local my_buildtools="/opt/msm/BuildTools/BuildTools.jar"
+	                    local build_dir="/tmp/spigot_build"
+	 
+	                    if [[ ! -f "$my_buildtools" ]]; then
+	                        echo "Error: BuildTools.jar not found at $my_buildtools"
+	                        return 1
+	                    fi
+	
+	                    as_user "$SETTINGS_USERNAME" "mkdir -p '$build_dir'"
+	
+	                    local target_download_folder="$SETTINGS_JAR_STORAGE_PATH/$1"
+	                    echo "Compiling Spigot v$spigot_version using local BuildTools (This may take several minutes)..."
+	
+	                    # we build in tmp dir /tmp/spigot_build
+	                    as_user "$SETTINGS_USERNAME" "cd '$build_dir' && $java_exec -jar '$my_buildtools' --rev '$spigot_version' "
+	
+	                    # extract jar and rename it before deleting build_dir content
+	                    local compiled_file=$(as_user "$SETTINGS_USERNAME" "ls -1 '$build_dir' | grep 'spigot-' | grep -v 'shaded' | head -n 1")
+	
+	                    if [[ -n "$compiled_file" ]]; then
+	                        as_user "$SETTINGS_USERNAME" "mv '$build_dir/$compiled_file' '$target_download_folder/$compiled_file'"
+	                        echo "Compilation successful: $compiled_file moved to MSM workspace."
+	                    else
+	                        echo "Error: Spigot compilation failed. No JAR file was generated."
+	                        rm -fr "$build_dir"
+	                        return 1
+	                    fi
+	                    # cleanup and quit as we do not need to download anything
+	                    rm -fr "$build_dir"
+											exit 0
+	
+						# --- MINECRAFT VANILLA ---
+						elif [[ "$target" =~ ^minecraft ]]; then
+									local versions_target="release"
+									if [[ "$target" == "minecraft-snapshot" ]]; then
+											local versions_target="snapshot"
+									fi
+	
+									# Check if jq is installed on the local computer
+									as_user "$SETTINGS_USERNAME" "which jq > /dev/null"
+									if [[ "$?" != "0" ]]; then
+											echo "jq is required to download server updates. Please ensure it is installed and the path is set correctly."
+											return 1
+									fi
+	
+										printf "Checking minecraft version JSON... "
+										local versions_url="https://launchermeta.mojang.com/mc/game/version_manifest.json"
+										local versions_file="/tmp/minecraft_versions.json"
+										as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
+									local latest_package_url=$(as_user "$SETTINGS_USERNAME" "cat $versions_file | jq -r '.versions | sort_by(.releaseTime) | map(select(.type | contains ("\""$versions_target"\""))) | last | .url'")
+									local latest_version=$(as_user "$SETTINGS_USERNAME" "echo ${latest_package_url##*/} | sed s/.json//")
+	
+								if [[ -n "$latest_package_url" ]]; then
+									local package_file="/tmp/minecraft_package.json"
+									as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$package_file' '$latest_package_url'"
+												local jar_url=$(as_user "$SETTINGS_USERNAME" "cat $package_file | jq -r '.downloads.server.url'")
+										fi
+								fi
+	
+	            # --- DOWNLOAD ---
                 if [[ -n "$jar_url" ]]; then
                     as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR/minecraft_server.$latest_version.jar' '$jar_url'"
                 else
@@ -3211,6 +3483,7 @@ register_settings() {
 	register_setting DEBUG "false"
 
 	register_setting USERNAME "minecraft"
+	register_setting JAVABIN ""
 	register_setting SERVER_STORAGE_PATH "/opt/msm/servers"
 	register_setting JAR_STORAGE_PATH "/opt/msm/jars"
 	register_setting VERSIONING_STORAGE_PATH "/opt/msm/versioning"
